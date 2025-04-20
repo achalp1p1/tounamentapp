@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Indian Table Tennis Foundation Tournament Management System
 
 A web-based tournament management system for the Indian Table Tennis Foundation, built with Flask.
@@ -60,3 +61,6 @@ python app.py
 5. Access the application at `http://localhost:5000`
 
 ## Project Structure 
+=======
+# tounamentapp
+>>>>>>> f87c77a2dc7ebb689fa47c2e1f9dfbf03752e1eb
