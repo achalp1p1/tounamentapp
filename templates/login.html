@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Indian Table Tennis Foundation - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2vh;
+            overflow: hidden;
+        }
+
+        .main-title {
+            color: white;
+            font-size: min(32px, 4vh);
+            font-weight: 700;
+            margin: 2vh 0;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            letter-spacing: 1px;
+        }
+
+        .content-container {
+            height: 88vh;
+            width: 100%;
+            display: flex;
+            gap: 3vh;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-container {
+            flex: 1;
+            height: 88vh;
+            max-width: 50%;
+            background: white;
+            padding: 1vh;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+        }
+
+        .facility-image {
+            width: 100%;
+            height: auto;
+            max-height: 86vh;
+            border-radius: 8px;
+            object-fit: contain;
+        }
+
+        .login-container {
+            width: 40%;
+            max-width: 400px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 3vh;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 2vh;
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            background: #2a5298;
+            border-radius: 50%;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo span {
+            color: white;
+            font-size: 30px;
+            font-weight: bold;
+        }
+
+        h2 {
+            color: #1e3c72;
+            font-size: min(24px, 3vh);
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 2vh;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 1vh;
+            color: #333;
+            font-weight: 500;
+            font-size: min(16px, 2vh);
+        }
+
+        input {
+            width: 100%;
+            padding: 1.5vh;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: min(16px, 2vh);
+        }
+
+        button {
+            width: 100%;
+            padding: 1.5vh;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: min(16px, 2vh);
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 2vh;
+        }
+
+        .welcome-text {
+            color: #666;
+            font-size: min(14px, 1.8vh);
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .content-container {
+                flex-direction: column;
+                gap: 2vh;
+            }
+
+            .image-container {
+                max-width: 90%;
+                height: 40vh;
+            }
+
+            .login-container {
+                width: 90%;
+            }
+
+            .facility-image {
+                max-height: 38vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 class="main-title">Welcome to Indian Table Tennis Foundation</h1>
+    <div class="content-container">
+        <div class="image-container">
+            {% if image_data %}
+                <img src="{{ image_data }}" alt="Table Tennis Facility" class="facility-image">
+            {% else %}
+                <div style="padding: 20px; color: #666;">Image not available</div>
+            {% endif %}
+        </div>
+        <div class="login-container">
+            <div class="logo">
+                <span>TT</span>
+            </div>
+            <h2>Login</h2>
+            <p class="welcome-text">
+                Enter your credentials to access the player registration system
+            </p>
+            <form method="POST">
+                <div class="form-group">
+                    <label for="user_id">User Id</label>
+                    <input type="text" id="user_id" name="user_id" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit">Login</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

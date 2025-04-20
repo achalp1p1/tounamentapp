@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Indian Table Tennis Foundation - Search Players</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            background: #f0f2f5;
+            overflow: hidden;
+        }
+
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 2vh;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: min(32px, 4vh);
+            margin-bottom: 1vh;
+        }
+
+        .search-content {
+            padding: 3vh;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .search-form {
+            background: white;
+            padding: 3vh;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin: 0 auto 3vh;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 2vh;
+            margin-bottom: 2vh;
+        }
+
+        .form-group {
+            flex: 1;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 1vh;
+            color: #333;
+            font-weight: 500;
+            font-size: min(15px, 2vh);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 1.5vh;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: min(15px, 2vh);
+        }
+
+        .search-button {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 1.5vh;
+            border: none;
+            border-radius: 8px;
+            font-size: min(16px, 2vh);
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .results-table {
+            width: 100%;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #1e3c72;
+            color: white;
+            padding: 1.5vh;
+            text-align: left;
+        }
+
+        th:first-child {
+            background: #1e3c72;
+            color: white;
+            border-right: none;
+        }
+
+        td {
+            padding: 1.5vh;
+            border-bottom: 1px solid #eee;
+        }
+
+        td:first-child {
+            background-color: #f8f9fa;
+            border-right: 1px solid #eee;
+            text-align: center;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: #f8f9fa;
+        }
+
+        .back-button {
+            background: #f8f9fa;
+            color: #1e3c72;
+            border: 2px solid #1e3c72;
+            padding: 1vh 2vh;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-block;
+            margin-bottom: 2vh;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3vh;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+            }
+        }
+
+        .seeding-cell {
+            font-weight: 500;
+            color: #1e3c72;
+        }
+
+        .unseeded {
+            color: #666;
+            font-style: italic;
+        }
+
+        .dashboard-link {
+            background: #f8f9fa;
+            color: #1e3c72;
+            border: 2px solid #1e3c72;
+            padding: 1vh 2vh;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-block;
+            margin-top: 2vh;
+        }
+
+        .log-off {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 2px solid white;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .log-off:hover {
+            background: white;
+            color: #1e3c72;
+        }
+
+        @media (max-width: 768px) {
+            .log-off {
+                padding: 6px 12px;
+                font-size: 14px;
+                top: 15px;
+                right: 15px;
+            }
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Search Players</h1>
+            <a href="{{ url_for('login') }}" class="log-off">Log Off</a>
+        </div>
+        
+        <div class="search-content">
+            <a href="{{ url_for('dashboard') }}" class="back-button">← Back to Dashboard</a>
+            
+            <div class="search-form">
+                <form method="GET" action="{{ url_for('search_players') }}">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="player_name">Player Name</label>
+                            <input type="text" id="player_name" name="player_name" value="{{ request.args.get('player_name', '') }}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="category">Category</label>
+                            <select id="category" name="category">
+                                <option value="">All Categories</option>
+                                <!-- Singles Categories -->
+                                <option value="Women Singles" {% if request.args.get('category') == 'Women Singles' %}selected{% endif %}>Women Singles</option>
+                                <option value="Men Singles" {% if request.args.get('category') == 'Men Singles' %}selected{% endif %}>Men Singles</option>
+                                <option value="Women Singles 40+" {% if request.args.get('category') == 'Women Singles 40+' %}selected{% endif %}>Women Singles 40+</option>
+                                <option value="Men Singles 40+" {% if request.args.get('category') == 'Men Singles 40+' %}selected{% endif %}>Men Singles 40+</option>
+                                
+                                <!-- Doubles Categories -->
+                                <option value="Women Doubles" {% if request.args.get('category') == 'Women Doubles' %}selected{% endif %}>Women Doubles</option>
+                                <option value="Women Doubles 40+" {% if request.args.get('category') == 'Women Doubles 40+' %}selected{% endif %}>Women Doubles 40+</option>
+                                <option value="Men Doubles" {% if request.args.get('category') == 'Men Doubles' %}selected{% endif %}>Men Doubles</option>
+                                <option value="Men Doubles 40+" {% if request.args.get('category') == 'Men Doubles 40+' %}selected{% endif %}>Men Doubles 40+</option>
+                                
+                                <!-- Under 11 Categories -->
+                                <option value="Girls Under 11" {% if request.args.get('category') == 'Girls Under 11' %}selected{% endif %}>Girls Under 11</option>
+                                <option value="Boys Under 11" {% if request.args.get('category') == 'Boys Under 11' %}selected{% endif %}>Boys Under 11</option>
+                                
+                                <!-- Under 13 Categories -->
+                                <option value="Girls Under 13" {% if request.args.get('category') == 'Girls Under 13' %}selected{% endif %}>Girls Under 13</option>
+                                <option value="Boys Under 13" {% if request.args.get('category') == 'Boys Under 13' %}selected{% endif %}>Boys Under 13</option>
+                                
+                                <!-- Under 15 Categories -->
+                                <option value="Girls Under 15" {% if request.args.get('category') == 'Girls Under 15' %}selected{% endif %}>Girls Under 15</option>
+                                <option value="Boys Under 15" {% if request.args.get('category') == 'Boys Under 15' %}selected{% endif %}>Boys Under 15</option>
+                                
+                                <!-- Under 17 Categories -->
+                                <option value="Girls Under 17" {% if request.args.get('category') == 'Girls Under 17' %}selected{% endif %}>Girls Under 17</option>
+                                <option value="Boys Under 17" {% if request.args.get('category') == 'Boys Under 17' %}selected{% endif %}>Boys Under 17</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="search-button">Search Players</button>
+                </form>
+            </div>
+
+            {% if players %}
+            <div class="results-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Seeding</th>
+                            <th>Player Name</th>
+                            <th>Date of Birth</th>
+                            <th>Category</th>
+                            <th>Academy</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for player in players %}
+                        <tr>
+                            <td class="seeding-cell">{{ player['Seeding'] }}</td>
+                            <td>{{ player['Player Name'] }}</td>
+                            <td>{{ player['DOB'] }}</td>
+                            <td>{{ player['Category'] }}</td>
+                            <td>{{ player['Academy'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% elif search_performed %}
+            <div class="empty-state">No players found matching your search criteria.</div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

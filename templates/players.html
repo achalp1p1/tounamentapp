@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Indian Table Tennis Foundation - Player Registration</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            background: #f0f2f5;
+            padding: 2vh;
+            overflow: hidden;
+        }
+
+        .container {
+            height: 96vh;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 2vh;
+            border-radius: 15px;
+            margin-bottom: 2vh;
+            text-align: center;
+            width: 100%;
+            position: relative;
+        }
+
+        .registration-form {
+            background: white;
+            padding: 2vh;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            width: 50%;
+            min-width: 300px;
+            height: auto;
+            overflow-y: auto;
+        }
+
+        /* Back button styling from Search Players page */
+        .back-button {
+            background: #f8f9fa;
+            color: #1e3c72;
+            border: 2px solid #1e3c72;
+            padding: 1vh 2vh;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-block;
+            margin-bottom: 2vh;
+            align-self: flex-start;
+        }
+
+        .back-button:hover {
+            background: #1e3c72;
+            color: white;
+        }
+
+        h1, h2 {
+            margin-bottom: 2vh;
+            color: #1e3c72;
+            font-weight: 500;
+            text-align: center;
+            font-size: min(24px, 3vh);
+        }
+
+        .header h1 {
+            color: white;
+            margin-bottom: 0;
+            font-size: min(28px, 3.5vh);
+        }
+
+        .form-group {
+            margin-bottom: 2vh;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 1vh;
+            color: #333;
+            font-weight: 500;
+            font-size: min(15px, 2vh);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 1.5vh;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: min(15px, 2vh);
+        }
+
+        button {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 1.5vh;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: min(16px, 2vh);
+            font-weight: 500;
+            width: 100%;
+            margin-top: 2vh;
+        }
+
+        .error-message {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 1.5vh;
+            border-radius: 8px;
+            margin-bottom: 2vh;
+            text-align: center;
+            font-weight: 500;
+            font-size: min(14px, 1.8vh);
+        }
+
+        @media (max-width: 768px) {
+            .registration-form {
+                width: 90%;
+            }
+            
+            body {
+                padding: 1vh;
+            }
+
+            .back-button {
+                padding: 0.8vh 1.6vh;
+                font-size: 14px;
+            }
+        }
+
+        .log-off {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 2px solid white;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .log-off:hover {
+            background: white;
+            color: #1e3c72;
+        }
+
+        @media (max-width: 768px) {
+            .log-off {
+                padding: 6px 12px;
+                font-size: 14px;
+                top: 15px;
+                right: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Player Registration</h1>
+            <a href="{{ url_for('login') }}" class="log-off">Log Off</a>
+        </div>
+
+        <a href="{{ url_for('dashboard') }}" class="back-button">← Back to Dashboard</a>
+
+        {% if error %}
+        <div class="error-message">
+            {{ error }}
+        </div>
+        {% endif %}
+        
+        <div class="registration-form">
+            <h2>New Player Registration</h2>
+            <form method="POST">
+                <div class="form-group">
+                    <label for="player_name">Player Name</label>
+                    <input type="text" id="player_name" name="player_name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="date_of_birth">Date of Birth</label>
+                    <input type="date" id="date_of_birth" name="date_of_birth" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select id="category" name="category" required>
+                        <option value="">Select Category</option>
+                        <!-- Singles Categories -->
+                        <option value="Women Singles">Women Singles</option>
+                        <option value="Men Singles">Men Singles</option>
+                        <option value="Women Singles 40+">Women Singles 40+</option>
+                        <option value="Men Singles 40+">Men Singles 40+</option>
+                        
+                        <!-- Doubles Categories -->
+                        <option value="Women Doubles">Women Doubles</option>
+                        <option value="Women Doubles 40+">Women Doubles 40+</option>
+                        <option value="Men Doubles">Men Doubles</option>
+                        <option value="Men Doubles 40+">Men Doubles 40+</option>
+                        
+                        <!-- Under 11 Categories -->
+                        <option value="Girls Under 11">Girls Under 11</option>
+                        <option value="Boys Under 11">Boys Under 11</option>
+                        
+                        <!-- Under 13 Categories -->
+                        <option value="Girls Under 13">Girls Under 13</option>
+                        <option value="Boys Under 13">Boys Under 13</option>
+                        
+                        <!-- Under 15 Categories -->
+                        <option value="Girls Under 15">Girls Under 15</option>
+                        <option value="Boys Under 15">Boys Under 15</option>
+                        
+                        <!-- Under 17 Categories -->
+                        <option value="Girls Under 17">Girls Under 17</option>
+                        <option value="Boys Under 17">Boys Under 17</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="academy">Academy</label>
+                    <input type="text" id="academy" name="academy" required>
+                </div>
+                
+                <button type="submit">Register Player</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
