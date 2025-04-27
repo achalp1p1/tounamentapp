@@ -2,14 +2,21 @@ from flask import Flask, render_template, request, redirect, url_for, session
 import csv
 import os
 import base64
+from datetime import datetime, timedelta
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
 # Define the CSV file path
 CSV_FILE = 'players_data.csv'
+TOURNAMENTS_CSV = 'tournaments.csv'
 
 # Add this if not already present
 app.secret_key = 'your_secret_key_here'  # Replace with a secure secret key
+
+UPLOAD_FOLDER = os.path.join(os.getcwd(), 'logo')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def get_image_base64():
     image_path = os.path.join('static', 'tt_facility.jpg')
@@ -239,6 +246,76 @@ def save_seeding():
                               category=category,
                               success='false',
                               message=f"Error saving seeding: {str(e)}"))
+
+@app.route('/create-draws')
+def create_draws():
+    return render_template('create_draws.html')
+
+@app.route('/tournament-creation', methods=['GET', 'POST'])
+def tournament_creation():
+    if request.method == 'POST':
+        tournament_logo = request.files.get('tournament_logo')
+        logo_filename = None
+        if tournament_logo and tournament_logo.filename:
+            logo_filename = secure_filename(tournament_logo.filename)
+            logo_path = os.path.join(app.config['UPLOAD_FOLDER'], logo_filename)
+            tournament_logo.save(logo_path)
+            print(f"Logo saved to: {logo_path}")  # Debug print
+
+        sponsor_logos = request.files.getlist('sponsor_logos')
+        sponsor_logo_filenames = []
+        for sponsor_logo in sponsor_logos:
+            if sponsor_logo and sponsor_logo.filename:
+                sponsor_logo_filename = secure_filename(sponsor_logo.filename)
+                sponsor_logo_path = os.path.join(app.config['UPLOAD_FOLDER'], sponsor_logo_filename)
+                sponsor_logo.save(sponsor_logo_path)
+                sponsor_logo_filenames.append(sponsor_logo_filename)
+                print(f"Sponsor logo saved to: {sponsor_logo_path}")  # Debug print
+
+        tournament_name = request.form.get('tournament_name')
+        categories = request.form.getlist('categories[]')
+        fees = request.form.getlist('fees[]')
+        venue = request.form.get('venue')
+        date = request.form.get('date')
+        last_registration_date = request.form.get('last_registration_date')
+
+        # Save to CSV
+        file_exists = os.path.isfile(TOURNAMENTS_CSV)
+        with open(TOURNAMENTS_CSV, 'a', newline='', encoding='utf-8') as csvfile:
+            fieldnames = ['Tournament Name', 'Categories', 'Fees', 'Venue', 'Date', 'Last Registration Date']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            if not file_exists:
+                writer.writeheader()
+            writer.writerow({
+                'Tournament Name': tournament_name,
+                'Categories': ', '.join(categories),
+                'Fees': ', '.join(fees),
+                'Venue': venue,
+                'Date': date,
+                'Last Registration Date': last_registration_date
+            })
+
+        return render_template(
+            'tournament_success.html',
+            logo_filename=logo_filename,
+            tournament_name=tournament_name,
+            categories=categories,
+            fees=fees,
+            venue=venue,
+            date=date,
+            last_registration_date=last_registration_date,
+            sponsor_logo_filenames=sponsor_logo_filenames
+        )
+
+    # Calculate default dates
+    today = datetime.today().date()
+    tournament_date = today + timedelta(days=10)
+    last_reg_date = tournament_date - timedelta(days=2)
+    return render_template(
+        'tournament_creation.html',
+        default_tournament_date=tournament_date.strftime('%Y-%m-%d'),
+        default_last_reg_date=last_reg_date.strftime('%Y-%m-%d')
+    )
 
 if __name__ == '__main__':
     app.run(debug=True)

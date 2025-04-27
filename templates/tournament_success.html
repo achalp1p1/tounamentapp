@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tournament Created</title>
+    <style>
+        body { font-family: 'Roboto', sans-serif; background: #f0f2f5; }
+        .container { max-width: 400px; margin: 60px auto; background: #fff; padding: 32px; border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.1);}
+        h2 { color: #1e3c72; margin-bottom: 24px; }
+        .back-link { display: inline-block; margin-top: 16px; color: #1e3c72; text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Tournament "{{ tournament_name }}" Created Successfully!</h2>
+        <a href="{{ url_for('dashboard') }}" class="back-link">Back to Dashboard</a>
+    </div>
+</body>
+</html>

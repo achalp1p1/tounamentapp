@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Indian Table Tennis Foundation - Create Draws</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            background: #f0f2f5;
+            overflow: hidden;
+        }
+
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 2vh;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: min(32px, 4vh);
+            margin-bottom: 1vh;
+        }
+
+        .content {
+            padding: 3vh;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .back-button {
+            background: #f8f9fa;
+            color: #1e3c72;
+            border: 2px solid #1e3c72;
+            padding: 1vh 2vh;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-block;
+            margin-bottom: 2vh;
+        }
+
+        .back-button:hover {
+            background: #1e3c72;
+            color: white;
+        }
+
+        .log-off {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 2px solid white;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .log-off:hover {
+            background: white;
+            color: #1e3c72;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Create Tournament Draws</h1>
+            <a href="{{ url_for('login') }}" class="log-off">Log Off</a>
+        </div>
+        
+        <div class="content">
+            <a href="{{ url_for('dashboard') }}" class="back-button">← Back to Dashboard</a>
+            
+            <!-- Draw creation form will go here -->
+            <div class="draw-form">
+                <h2>Draw Creation Form Coming Soon</h2>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

@@ -26,32 +26,101 @@
         .header {
             background: linear-gradient(135deg, #1e3c72, #2a5298);
             color: white;
-            padding: 2vh;
+            padding: 1.5vh;
             text-align: center;
             position: relative;
         }
 
         .header h1 {
-            font-size: min(32px, 4vh);
-            margin-bottom: 1vh;
+            font-size: min(28px, 3.5vh);
+            margin-bottom: 0.5vh;
         }
 
         .welcome-text {
-            font-size: min(18px, 2.5vh);
+            font-size: min(16px, 2vh);
             opacity: 0.9;
+            margin-bottom: 0.5vh;
+        }
+
+        .dashboard-content {
+            flex: 1;
+            padding: 2vh;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2vh;
+            max-width: 1200px;
+            margin: 0 auto;
+            align-items: center;
+        }
+
+        .dashboard-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            height: 250px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+            padding: 1.5vh;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-icon {
+            font-size: 2em;
+            margin-bottom: 1.5vh;
+            color: #1e3c72;
+        }
+
+        .card-title {
+            font-size: 1.2em;
+            color: #1e3c72;
+            margin-bottom: 0.8vh;
+            text-align: center;
+        }
+
+        .card-description {
+            text-align: center;
+            color: #666;
+            margin-bottom: 1.5vh;
+            padding: 0 1vh;
+            line-height: 1.3;
+            font-size: 0.9em;
+        }
+
+        .card-button {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 1vh 2vh;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .card-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
         }
 
         .log-off {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: 15px;
+            right: 15px;
             color: white;
             text-decoration: none;
-            padding: 8px 16px;
+            padding: 6px 12px;
             border: 2px solid white;
-            border-radius: 8px;
+            border-radius: 6px;
             font-weight: 500;
             transition: all 0.3s ease;
+            font-size: 0.9em;
         }
 
         .log-off:hover {
@@ -59,103 +128,18 @@
             color: #1e3c72;
         }
 
-        .dashboard-content {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
-            flex-grow: 1;
-            padding: 4vh;
-            gap: 4vh;
-        }
-
-        .dashboard-card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            width: 300px;
-            height: 400px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.3s ease;
-            padding: 2vh;
-        }
-
-        .dashboard-card:hover {
-            transform: translateY(-10px);
-        }
-
-        .card-icon {
-            width: 80px;
-            height: 80px;
-            background: #f0f2f5;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 3vh;
-        }
-
-        .card-icon span {
-            font-size: 40px;
-            color: #1e3c72;
-        }
-
-        .card-title {
-            font-size: min(24px, 3vh);
-            color: #1e3c72;
-            margin-bottom: 2vh;
-            text-align: center;
-        }
-
-        .card-description {
-            color: #666;
-            text-align: center;
-            font-size: min(16px, 2vh);
-            margin-bottom: 3vh;
-            padding: 0 2vh;
-            line-height: 1.5;
-        }
-
-        .card-button {
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            color: white;
-            padding: 1.5vh 3vh;
-            border: none;
-            border-radius: 8px;
-            font-size: min(16px, 2vh);
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
-        }
-
-        .card-button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-
         @media (max-width: 768px) {
             .dashboard-content {
-                flex-direction: column;
-                padding: 2vh;
+                grid-template-columns: 1fr;
+                padding: 1vh;
             }
 
             .dashboard-card {
-                width: 90%;
-                height: auto;
-                padding: 4vh 2vh;
+                height: 200px;
             }
 
-            .log-off {
-                padding: 6px 12px;
-                font-size: 14px;
-                top: 15px;
-                right: 15px;
+            .card-description {
+                font-size: 0.8em;
             }
         }
     </style>
@@ -170,35 +154,47 @@
         
         <div class="dashboard-content">
             <div class="dashboard-card">
-                <div class="card-icon">
-                    <span>➕</span>
-                </div>
-                <h2 class="card-title">Register Player</h2>
-                <p class="card-description">Add new players to the tournament system with their details and categories.</p>
-                <form action="{{ url_for('player_registration') }}" method="get">
-                    <button type="submit" class="card-button">Register Now</button>
+                <div class="card-icon">🏟️</div>
+                <h2 class="card-title">Tournament Creation</h2>
+                <p class="card-description">Create a new tournament and set its details.</p>
+                <form action="{{ url_for('tournament_creation') }}" method="get">
+                    <button type="submit" class="card-button">Create Tournament</button>
                 </form>
             </div>
             
             <div class="dashboard-card">
-                <div class="card-icon">
-                    <span>🔍</span>
-                </div>
+                <div class="card-icon">➕</div>
+                <h2 class="card-title">Register Player</h2>
+                <p class="card-description">Add new players to the tournament system.</p>
+                <form action="{{ url_for('player_registration') }}" method="get">
+                    <button type="submit" class="card-button">Register Now</button>
+                </form>
+            </div>
+
+            <div class="dashboard-card">
+                <div class="card-icon">🔍</div>
                 <h2 class="card-title">Search Players</h2>
-                <p class="card-description">Search and view registered players by name, gender, or category.</p>
+                <p class="card-description">Search and view registered players.</p>
                 <form action="{{ url_for('search_players') }}" method="get">
                     <button type="submit" class="card-button">Search Players</button>
                 </form>
             </div>
 
             <div class="dashboard-card">
-                <div class="card-icon">
-                    <span>🏆</span>
-                </div>
+                <div class="card-icon">🏆</div>
                 <h2 class="card-title">Update Seeding</h2>
-                <p class="card-description">Update player seedings for tournament organization.</p>
+                <p class="card-description">Update player seedings for tournament.</p>
                 <form action="{{ url_for('update_seeding') }}" method="get">
                     <button type="submit" class="card-button">Update Seeding</button>
+                </form>
+            </div>
+
+            <div class="dashboard-card">
+                <div class="card-icon">🎯</div>
+                <h2 class="card-title">Create Draws</h2>
+                <p class="card-description">Generate and manage tournament draws.</p>
+                <form action="{{ url_for('create_draws') }}" method="get">
+                    <button type="submit" class="card-button">Create Draws</button>
                 </form>
             </div>
         </div>

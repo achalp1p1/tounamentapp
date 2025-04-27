@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tournament Creation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
+        body { min-height: 100vh; background: #f0f2f5; }
+        .container { min-height: 100vh; display: flex; flex-direction: column; }
+        .header {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 2vh;
+            text-align: center;
+            position: relative;
+        }
+        .header h1 {
+            font-size: min(32px, 4vh);
+            margin-bottom: 1vh;
+        }
+        .log-off {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 2px solid white;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .log-off:hover {
+            background: white;
+            color: #1e3c72;
+        }
+        .dashboard-link {
+            background: #f8f9fa;
+            color: #1e3c72;
+            border: 2px solid #1e3c72;
+            padding: 1vh 2vh;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-block;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .dashboard-link:hover {
+            background: #1e3c72;
+            color: white;
+        }
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 3vh 0;
+        }
+        .form-card {
+            background: white;
+            padding: 32px 32px 24px 32px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 900px;
+            margin-top: 2vh;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+        input[type="text"], input[type="date"], input[type="number"], select {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 1em;
+            margin-bottom: 18px;
+            box-sizing: border-box;
+            height: 44px;
+            background: #fff;
+            appearance: none;
+            display: block;
+        }
+        .category-fee-header {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin-bottom: 6px;
+            font-size: 1em;
+            color: #1e3c72;
+            font-weight: 500;
+        }
+        .category-fee-header > div {
+            flex: 1 1 0;
+            min-width: 120px;
+            text-align: left;
+        }
+        .category-fee-header .remove-header {
+            min-width: 90px;
+        }
+        .category-fee-row {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 18px;
+            margin-bottom: 12px;
+        }
+        .category-select, .fee-input, .prize-input {
+            width: 100%;
+            margin-bottom: 0;
+            height: 44px;
+        }
+        .fee-input::-webkit-inner-spin-button,
+        .fee-input::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .remove-category-btn {
+            background: #e74c3c;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 0 18px;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: background 0.2s;
+            min-width: 90px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .remove-category-btn:hover {
+            background: #c0392b;
+        }
+        #add-category-btn {
+            background: #1e3c72;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 18px;
+            font-size: 1em;
+            cursor: pointer;
+            font-weight: 500;
+            margin-bottom: 18px;
+            margin-top: 6px;
+            transition: background 0.2s;
+        }
+        #add-category-btn:hover {
+            background: #2a5298;
+        }
+        button[type="submit"] {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 24px;
+            font-size: 1em;
+            cursor: pointer;
+            font-weight: 500;
+            width: 100%;
+            margin-top: 8px;
+            transition: background 0.2s;
+        }
+        button[type="submit"]:hover {
+            background: #1e3c72;
+        }
+        @media (max-width: 1100px) {
+            .form-card { max-width: 98vw; }
+            .category-fee-row { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 600px) {
+            .form-card { padding: 16px 8px 12px 8px; }
+            .header h1 { font-size: 22px; }
+            .category-fee-row { flex-direction: column; gap: 6px; }
+            .category-select, .fee-input { width: 100%; min-width: 0; }
+            .remove-category-btn { width: 100%; min-width: 0; margin-left: 0; margin-top: 6px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="{{ url_for('dashboard') }}" class="dashboard-link">&#8592; Back to Dashboard</a>
+            <h1>Tournament Creation</h1>
+            <a href="{{ url_for('login') }}" class="log-off">Log Off</a>
+        </div>
+        <div class="content">
+            <div class="form-card">
+                <form method="post" enctype="multipart/form-data">
+                    <label for="tournament_name">Tournament Name</label>
+                    <input type="text" id="tournament_name" name="tournament_name" required>
+
+                    <label>Categories, Fees & Prizes</label>
+                    <div id="categories-container">
+                        <div class="category-fee-row">
+                            <select name="categories[]" class="category-select" required>
+                                <option value="">Select Category</option>
+                                <option value="Women Singles">Women Singles</option>
+                                <option value="Men Singles">Men Singles</option>
+                                <option value="Women Singles 40+">Women Singles 40+</option>
+                                <option value="Men Singles 40+">Men Singles 40+</option>
+                                <option value="Women Doubles">Women Doubles</option>
+                                <option value="Women Doubles 40+">Women Doubles 40+</option>
+                                <option value="Men Doubles">Men Doubles</option>
+                                <option value="Men Doubles 40+">Men Doubles 40+</option>
+                                <option value="Girls Under 11">Girls Under 11</option>
+                                <option value="Boys Under 11">Boys Under 11</option>
+                                <option value="Girls Under 13">Girls Under 13</option>
+                                <option value="Boys Under 13">Boys Under 13</option>
+                                <option value="Girls Under 15">Girls Under 15</option>
+                                <option value="Boys Under 15">Boys Under 15</option>
+                                <option value="Girls Under 17">Girls Under 17</option>
+                                <option value="Boys Under 17">Boys Under 17</option>
+                            </select>
+                            <input type="number" name="fees[]" class="fee-input" min="0" placeholder="Fee" required>
+                            <input type="text" name="first_prizes[]" class="prize-input" placeholder="First Prize" required>
+                            <input type="text" name="second_prizes[]" class="prize-input" placeholder="Second Prize" required>
+                            <input type="text" name="third_prizes[]" class="prize-input" placeholder="Third Prize" required>
+                            <button type="button" class="remove-category-btn" style="display:none;">Remove</button>
+                        </div>
+                    </div>
+                    <button type="button" id="add-category-btn">Add Category</button>
+
+                    <label for="venue">Venue</label>
+                    <input type="text" id="venue" name="venue" required>
+
+                    <label for="date">Tournament Date</label>
+                    <input type="date" id="date" name="date" required value="{{ default_tournament_date }}">
+
+                    <label for="last_registration_date">Last Registration Date</label>
+                    <input type="date" id="last_registration_date" name="last_registration_date" required value="{{ default_last_reg_date }}">
+
+                    <label for="general_info">General Information</label>
+                    <textarea id="general_info" name="general_info" rows="4" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid #ccc; font-size:1em; margin-bottom:18px; box-sizing:border-box; resize:vertical;" placeholder="Enter tournament details here..."></textarea>
+
+                    <label for="tournament_logo">Tournament Logo</label>
+                    <input type="file" id="tournament_logo" name="tournament_logo" accept="image/*" style="margin-bottom:18px;">
+
+                    <label for="sponsor_logos">Sponsor Logos</label>
+                    <input type="file" id="sponsor_logos" name="sponsor_logos" accept="image/*" multiple style="margin-bottom:18px;">
+
+                    <button type="submit">Create Tournament</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+    document.getElementById('add-category-btn').addEventListener('click', function() {
+        const container = document.getElementById('categories-container');
+        const firstRow = container.querySelector('.category-fee-row');
+        const newRow = firstRow.cloneNode(true);
+
+        // Reset values
+        newRow.querySelector('select').selectedIndex = 0;
+        newRow.querySelector('input[name="fees[]"]').value = '';
+        newRow.querySelector('input[name="first_prizes[]"]').value = '';
+        newRow.querySelector('input[name="second_prizes[]"]').value = '';
+        newRow.querySelector('input[name="third_prizes[]"]').value = '';
+        newRow.querySelector('.remove-category-btn').style.display = 'inline-block';
+
+        // Add remove functionality
+        newRow.querySelector('.remove-category-btn').onclick = function() {
+            newRow.remove();
+        };
+
+        container.appendChild(newRow);
+    });
+
+    // Show remove button for the initial row if needed
+    document.querySelector('.remove-category-btn').onclick = function() {
+        this.parentElement.remove();
+    };
+    </script>
+</body>
+</html>
