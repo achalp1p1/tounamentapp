@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="tournament-header">
+    <div class="tournament-title">
+        <h1>{{ tournament['Tournament Name'] }}</h1>
+    </div>
+    {% include 'tournament_submenu.html' %}
+</div>
+
+<div class="container">
+    <div class="content">
+        <div class="seeding-section">
+            <h2>Update Seeding</h2>
+            
+            <!-- Category Selection -->
+            <div class="category-select">
+                <label for="category">Select Category:</label>
+                <select id="category" class="form-control" onchange="loadPlayers()">
+                    <option value="">Select Category</option>
+                    {% for category in categories %}
+                    <option value="{{ category }}">{{ category }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Players List -->
+            <form id="seedingForm" method="POST">
+                <div id="playersList" class="players-list">
+                    <!-- Players will be loaded here -->
+                </div>
+                
+                <div class="button-section" style="display: none;">
+                    <button type="submit" class="save-btn">Save Seeding</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .seeding-section {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .category-select {
+        margin-bottom: 20px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-top: 5px;
+    }
+
+    .players-list {
+        margin-top: 20px;
+    }
+
+    .player-row {
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .player-row:last-child {
+        border-bottom: none;
+    }
+
+    .player-number {
+        width: 50px;
+        color: #666;
+    }
+
+    .player-name {
+        flex-grow: 1;
+    }
+
+    .seeding-input {
+        width: 80px;
+        padding: 6px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        text-align: center;
+    }
+
+    .save-btn {
+        background: #1e3c72;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 20px;
+    }
+
+    .save-btn:hover {
+        background: #2a5298;
+    }
+
+    .button-section {
+        margin-top: 20px;
+        text-align: right;
+    }
+
+    /* Error message styling */
+    .error-message {
+        color: #d32f2f;
+        font-size: 0.9em;
+        margin-top: 5px;
+    }
+</style>
+
+<script>
+    function loadPlayers() {
+        const category = document.getElementById('category').value;
+        const playersListDiv = document.getElementById('playersList');
+        const buttonSection = document.querySelector('.button-section');
+        
+        if (!category) {
+            playersListDiv.innerHTML = '';
+            buttonSection.style.display = 'none';
+            return;
+        }
+
+        fetch(`/tournament/{{ tournament['Tournament ID'] }}/get_players/${category}`)
+            .then(response => response.json())
+            .then(data => {
+                let html = '';
+                data.players.forEach((player, index) => {
+                    html += `
+                        <div class="player-row">
+                            <div class="player-number">${index + 1}.</div>
+                            <div class="player-name">${player.name}</div>
+                            <input type="hidden" name="player_ids[]" value="${player.player_id}">
+                            <input type="number" 
+                                   name="seedings[]" 
+                                   class="seeding-input" 
+                                   value="${player.seeding || ''}" 
+                                   min="1"
+                                   placeholder="Seeding">
+                        </div>
+                    `;
+                });
+                playersListDiv.innerHTML = html;
+                buttonSection.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                playersListDiv.innerHTML = '<div class="error-message">Error loading players</div>';
+                buttonSection.style.display = 'none';
+            });
+    }
+
+    document.getElementById('seedingForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        formData.append('category', document.getElementById('category').value);
+
+        fetch(`/tournament/{{ tournament['Tournament ID'] }}/update_seeding`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Seeding updated successfully');
+            } else {
+                alert('Error updating seeding: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error updating seeding');
+        });
+    });
+</script>
+{% endblock %} 

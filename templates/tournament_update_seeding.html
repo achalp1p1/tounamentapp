@@ -50,6 +50,108 @@
             padding: 24px;
         }
 
+        .form-group {
+            margin-top: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            max-width: 300px;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #1e3c72;
+            box-shadow: 0 0 0 2px rgba(30,60,114,0.1);
+        }
+
+        /* Players table styles */
+        .players-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        .players-table th {
+            background: #f5f5f5;
+            padding: 12px;
+            text-align: left;
+            font-weight: 500;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .players-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .players-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .seeding-input {
+            width: 80px;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .players-container {
+            margin-top: 20px;
+            display: none;  /* Hidden by default */
+        }
+
+        .save-btn {
+            background: #1e3c72;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 20px;
+            float: right;
+        }
+
+        .save-btn:hover {
+            background: #2a5298;
+        }
+
+        .save-btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .message {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .success-message {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #a5d6a7;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+
         @media (max-width: 768px) {
             .header {
                 padding: 16px 20px 0 20px;
@@ -72,9 +174,129 @@
         <div class="content">
             <div class="update-seeding-container">
                 <h2>Update Seeding</h2>
-                <!-- Content will be added later -->
+                <div class="form-group">
+                    <label for="category">Category:</label>
+                    <select id="category" class="form-control" onchange="loadPlayers()">
+                        <option value="">Select Category</option>
+                        {% for category in categories %}
+                        <option value="{{ category }}">{{ category }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div id="playersContainer" class="players-container">
+                    <form id="seedingForm" onsubmit="saveSeeding(event)">
+                        <table class="players-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">No.</th>
+                                    <th>Player Name</th>
+                                    <th style="width: 120px;">Seeding</th>
+                                </tr>
+                            </thead>
+                            <tbody id="playersTableBody">
+                                <!-- Players will be loaded here -->
+                            </tbody>
+                        </table>
+                        <button type="submit" id="saveButton" class="save-btn" style="display: none;">Save Changes</button>
+                    </form>
+                </div>
+                <div id="messageBox" class="message"></div>
             </div>
         </div>
     </div>
+
+    <script>
+        function loadPlayers() {
+            const category = document.getElementById('category').value;
+            const playersContainer = document.getElementById('playersContainer');
+            const playersTableBody = document.getElementById('playersTableBody');
+            const saveButton = document.getElementById('saveButton');
+            const messageBox = document.getElementById('messageBox');
+
+            if (!category) {
+                playersContainer.style.display = 'none';
+                saveButton.style.display = 'none';
+                messageBox.style.display = 'none';
+                return;
+            }
+
+            // Log the request details
+            console.log('Fetching players for:', {
+                tournamentId: '{{ tournament["Tournament Id"] }}',
+                category: category
+            });
+
+            // Update the URL to use the correct tournament ID field
+            fetch(`/tournament/{{ tournament["Tournament Id"] }}/get_category_players/${category}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Response:', data);  // Log the response
+                    if (data.success) {
+                        let html = '';
+                        data.players.forEach((player, index) => {
+                            html += `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${player.name}</td>
+                                    <td>
+                                        <input type="hidden" name="player_ids[]" value="${player.player_id}">
+                                        <input type="number" 
+                                               name="seedings[]" 
+                                               class="seeding-input" 
+                                               value="${player.seeding || ''}" 
+                                               min="1"
+                                               placeholder="Seeding">
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        playersTableBody.innerHTML = html;
+                        playersContainer.style.display = 'block';
+                        saveButton.style.display = data.players.length > 0 ? 'block' : 'none';
+                    } else {
+                        playersTableBody.innerHTML = `<tr><td colspan="3">Error: ${data.message || 'Failed to load players'}</td></tr>`;
+                        saveButton.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    playersTableBody.innerHTML = '<tr><td colspan="3">Error loading players</td></tr>';
+                    saveButton.style.display = 'none';
+                });
+        }
+
+        function saveSeeding(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            formData.append('category', document.getElementById('category').value);
+
+            const saveButton = document.getElementById('saveButton');
+            const messageBox = document.getElementById('messageBox');
+            
+            saveButton.disabled = true;
+            messageBox.style.display = 'none';
+
+            fetch(`/tournament/{{ tournament["Tournament Id"] }}/update_seeding`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                messageBox.className = 'message ' + (data.success ? 'success-message' : 'error-message');
+                messageBox.textContent = data.success ? 'Seeding updated successfully!' : 'Error: ' + data.message;
+                messageBox.style.display = 'block';
+                saveButton.disabled = false;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                messageBox.className = 'message error-message';
+                messageBox.textContent = 'Error updating seeding';
+                messageBox.style.display = 'block';
+                saveButton.disabled = false;
+            });
+        }
+    </script>
 </body>
 </html>

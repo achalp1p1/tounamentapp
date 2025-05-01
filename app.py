@@ -285,46 +285,6 @@ def search_players():
             search_performed=False
         )
 
-@app.route('/update-seeding', methods=['GET'])
-def update_seeding():
-    try:
-        category = request.args.get('category', '').strip()
-        search_performed = bool(category)
-        players = []
-        message = request.args.get('message')
-        success = request.args.get('success', 'false') == 'true'
-
-        print(f"Searching for category: {category}")  # Debug print
-
-        if category and os.path.exists(PLAYERS_CSV):
-            with open(PLAYERS_CSV, 'r', newline='') as file:
-                reader = csv.DictReader(file)
-                # Get all players in the selected category
-                players = [player for player in reader if player['Category'] == category]
-                
-                # Sort players by seeding (unseeded players last)
-                players.sort(key=lambda x: (
-                    int(x.get('Seeding', '999999')) if x.get('Seeding') and x['Seeding'].strip() else 999999,
-                    x['Player Name']
-                ))
-                
-                print(f"Found {len(players)} players in category {category}")  # Debug print
-                if players:
-                    print("Sample player data:", players[0])  # Debug print
-
-        return render_template('update_seeding.html',
-                             players=players,
-                             search_performed=search_performed,
-                             message=message,
-                             success=success)
-
-    except Exception as e:
-        print(f"Error in update_seeding: {e}")  # Debug print
-        return render_template('update_seeding.html',
-                             error=str(e),
-                             players=None,
-                             search_performed=False)
-
 @app.route('/save-seeding', methods=['POST'])
 def save_seeding():
     try:
@@ -1099,7 +1059,8 @@ def tournament_entries(tournament_id):
                 if player:
                     entry = {
                         'Name': player['Name'],
-                        'Category': reg['Category']
+                        'Category': reg['Category'],
+                        'Seeding': reg.get('Seeding', '')  # Get seeding value
                     }
                     
                     # Add to appropriate category
@@ -1108,12 +1069,22 @@ def tournament_entries(tournament_id):
                     elif reg['Category'] in boys_categories:
                         boys_entries[reg['Category']].append(entry)
 
-            # Sort entries in each category by name
+            # Sort entries in each category by seeding
+            def sort_by_seeding(entry):
+                seeding = entry.get('Seeding', '')
+                # Convert seeding to integer if it exists, otherwise use a large number
+                # This will put players without seeding at the end
+                try:
+                    return (int(seeding) if seeding else 999999, entry['Name'])
+                except ValueError:
+                    return (999999, entry['Name'])
+
+            # Sort each category's entries
             for category in girls_entries:
-                girls_entries[category].sort(key=lambda x: x['Name'])
+                girls_entries[category].sort(key=sort_by_seeding)
 
             for category in boys_entries:
-                boys_entries[category].sort(key=lambda x: x['Name'])
+                boys_entries[category].sort(key=sort_by_seeding)
 
         except Exception as e:
             print(f"Error processing entries: {str(e)}")
@@ -1143,20 +1114,156 @@ def tournament_results(tournament_id):
         print(f"Error in tournament_results: {str(e)}")
         return redirect(url_for('list_tournament'))
 
-@app.route('/tournament/<tournament_id>/update-seeding')
+@app.route('/tournament/<tournament_id>/update_seeding', methods=['GET', 'POST'])
 def tournament_update_seeding(tournament_id):
-    try:
-        # Get tournament details
-        tournament = get_tournament(tournament_id)
-        if not tournament:
+    if request.method == 'POST':
+        try:
+            # Log received data
+            category = request.form.get('category')
+            player_ids = request.form.getlist('player_ids[]')
+            seedings = request.form.getlist('seedings[]')
+            
+            print("\nReceived data:")
+            print(f"Tournament ID: {tournament_id}")
+            print(f"Category: {category}")
+            print(f"Player IDs: {player_ids}")
+            print(f"Seedings: {seedings}")
+
+            # Read all registrations
+            registrations = []
+            with open(TOURNAMENT_REGISTRATIONS_CSV, 'r', newline='', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                fieldnames = reader.fieldnames
+                registrations = list(reader)
+                print(f"\nTotal registrations read: {len(registrations)}")
+
+            # Debug: Print a few sample registrations
+            print("\nSample registrations:")
+            for reg in registrations[:3]:
+                print(reg)
+
+            # Update seedings
+            updates_made = 0
+            for i, player_id in enumerate(player_ids):
+                seeding = seedings[i]
+                print(f"\nTrying to update player {player_id} with seeding {seeding}")
+                
+                for reg in registrations:
+                    # Print exact values being compared
+                    print(f"\nComparing:")
+                    print(f"Tournament IDs: '{reg['Tournament ID']}' == '{tournament_id}' : {reg['Tournament ID'] == tournament_id}")
+                    print(f"Player IDs: '{reg['Player ID']}' == '{player_id}' : {reg['Player ID'] == player_id}")
+                    print(f"Categories: '{reg['Category']}' == '{category}' : {reg['Category'] == category}")
+                    
+                    if (reg['Tournament ID'] == tournament_id and 
+                        reg['Player ID'] == player_id and 
+                        reg['Category'] == category):
+                        print(f"Match found! Updating seeding from {reg.get('Seeding', '')} to {seeding}")
+                        reg['Seeding'] = seeding if seeding else ''
+                        updates_made += 1
+                        break  # Exit loop once update is made
+
+            print(f"\nUpdates made: {updates_made}")
+
+            if updates_made > 0:
+                # Write back to file
+                with open(TOURNAMENT_REGISTRATIONS_CSV, 'w', newline='', encoding='utf-8') as file:
+                    writer = csv.DictWriter(file, fieldnames=fieldnames)
+                    writer.writeheader()
+                    writer.writerows(registrations)
+                print("Successfully wrote updates to file")
+                return jsonify({'success': True, 'message': f'Updated {updates_made} records'})
+            else:
+                print("No matching records found to update")
+                return jsonify({'success': False, 'message': 'No matching records found to update'})
+
+        except Exception as e:
+            print(f"Error updating seeding: {str(e)}")
+            return jsonify({'success': False, 'message': str(e)})
+    else:
+        try:
+            tournament = get_tournament(tournament_id)
+            if not tournament:
+                return redirect(url_for('list_tournament'))
+
+            # Get categories for this tournament
+            categories = []
+            try:
+                with open('tournament_categories.csv', 'r', newline='', encoding='utf-8') as file:
+                    reader = csv.DictReader(file)
+                    for row in reader:
+                        if row['Tournament Id'] == tournament_id:
+                            categories.append(row['Category'])
+                    categories.sort()
+            except Exception as e:
+                print(f"Error reading tournament categories: {str(e)}")
+
+            return render_template('tournament_update_seeding.html',
+                                tournament=tournament,
+                                categories=categories,
+                                active_subpage='update_seeding')
+        except Exception as e:
+            print(f"Error in tournament_update_seeding: {str(e)}")
             return redirect(url_for('list_tournament'))
 
-        return render_template('tournament_update_seeding.html',
-                             tournament=tournament,
-                             active_subpage='update_seeding')
+@app.route('/tournament/<tournament_id>/get_category_players/<category>')
+def get_category_players(tournament_id, category):
+    try:
+        print(f"\nFetching players for tournament {tournament_id}, category {category}")
+        players = []
+
+        # Read tournament registrations
+        with open(TOURNAMENT_REGISTRATIONS_CSV, 'r', newline='', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            registrations = [row for row in reader 
+                           if row['Tournament ID'] == tournament_id 
+                           and row['Category'] == category
+                           and row['Status'].lower() == 'active']
+            
+            print(f"Found {len(registrations)} matching registrations")
+            # Debug: Print sample registrations
+            for reg in registrations[:2]:
+                print(f"Sample registration: {reg}")
+
+        # Get player details
+        if os.path.exists(PLAYERS_CSV):
+            with open(PLAYERS_CSV, 'r', newline='', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                player_details = {row['Player ID']: row for row in reader}
+
+            # Combine registration and player details
+            for reg in registrations:
+                player_id = reg.get('Player ID')
+                player = player_details.get(player_id)
+                if player:
+                    players.append({
+                        'name': player['Name'],
+                        'seeding': reg.get('Seeding', ''),
+                        'player_id': player_id  # Make sure we're including player_id
+                    })
+                    print(f"Added player: {player['Name']} with ID: {player_id}")
+
+            # Sort players by name
+            players.sort(key=lambda x: x['name'])
+            
+            return jsonify({
+                'success': True, 
+                'players': players,
+                'debug_info': {
+                    'tournament_id': tournament_id,
+                    'category': category,
+                    'registrations_found': len(registrations),
+                    'players_found': len(players)
+                }
+            })
+
+        else:
+            print("Players CSV file not found")
+            return jsonify({'success': False, 'message': 'Player data not found'})
+
     except Exception as e:
-        print(f"Error in tournament_update_seeding: {str(e)}")
-        return redirect(url_for('list_tournament'))
+        print(f"Error in get_category_players: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)})
 
 # Helper function to get tournament details
 def get_tournament(tournament_id):
