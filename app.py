@@ -1,15 +1,22 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 import csv
 import os
 import base64
 from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
+import uuid
+import shutil
+import glob
+import re
 
 app = Flask(__name__)
 
-# Define the CSV file path
-CSV_FILE = 'players_data.csv'
+# Define the CSV file paths with absolute paths
+PLAYERS_CSV = os.path.join(os.getcwd(), 'players_data.csv')
+print(f"Players CSV file path: {PLAYERS_CSV}")  # Debug print
+
 TOURNAMENTS_CSV = 'tournaments.csv'
+TOURNAMENT_REGISTRATIONS_CSV = 'tournament_registrations.csv'
 
 # Add this if not already present
 app.secret_key = 'your_secret_key_here'  # Replace with a secure secret key
@@ -28,15 +35,46 @@ def get_image_base64():
         print(f"Error reading image: {e}")
         return None
 
-# Create CSV file if it doesn't exist
 def initialize_csv():
-    if not os.path.exists(CSV_FILE):
-        with open(CSV_FILE, 'w', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerow(['Player Name', 'DOB', 'Category', 'Academy', 'Seeding'])
+    """Initialize the CSV file with correct headers if it doesn't exist"""
+    fieldnames = [
+        'Player ID',
+        'Name',
+        'Date of Birth',
+        'Gender',
+        'Phone Number',
+        'Email ID',
+        'Address',
+        'State',
+        'TTFI ID',
+        'DSTTA ID',
+        'School/Institution',
+        'Academy',
+        'UPI ID'
+    ]
+    
+    if not os.path.exists(PLAYERS_CSV):
+        with open(PLAYERS_CSV, 'w', newline='', encoding='utf-8') as file:
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+    return fieldnames
 
-# Initialize CSV file at startup
-initialize_csv()
+def initialize_tournament_registrations_csv():
+    """Initialize the tournament registrations CSV file with correct headers if it doesn't exist"""
+    fieldnames = [
+        'Tournament ID',  # Changed from 'Tournament Id' to match the code
+        'Player ID',      # Changed from 'Player Id' to match the code
+        'Registration Date',
+        'Category',
+        'Status',
+        'Seeding'
+    ]
+    
+    if not os.path.exists(TOURNAMENT_REGISTRATIONS_CSV):
+        with open(TOURNAMENT_REGISTRATIONS_CSV, 'w', newline='', encoding='utf-8') as file:
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+    return fieldnames
 
 @app.route('/logout')
 def logout():
@@ -59,86 +97,178 @@ def login():
 
 @app.route('/dashboard')
 def dashboard():
-    return render_template('dashboard.html')
+    return render_template('dashboard.html', active_page='dashboard')
 
 @app.route('/players', methods=['GET', 'POST'])
 def player_registration():
     if request.method == 'POST':
         try:
-            player_details = {
-                'Player Name': request.form['player_name'],
-                'DOB': request.form['date_of_birth'],
-                'Category': request.form['category'],
-                'Academy': request.form['academy']
-            }
+            print("\n=== Starting Player Registration Process ===")
+            print(f"Current working directory: {os.getcwd()}")
+            print(f"Players CSV path: {PLAYERS_CSV}")
             
-            file_exists = os.path.exists(CSV_FILE)
-            file_empty = file_exists and os.path.getsize(CSV_FILE) == 0
+            # Get form data
+            form_data = request.form.to_dict()
+            print(f"Received form data: {form_data}")
             
-            with open(CSV_FILE, 'a', newline='') as file:
-                writer = csv.DictWriter(file, fieldnames=['Player Name', 'DOB', 'Category', 'Academy'])
-                if not file_exists or file_empty:
-                    writer.writeheader()
-                writer.writerow(player_details)
-            
-            return render_template('registration_success.html', player_details=player_details)
-            
-        except Exception as e:
-            return render_template('players.html', error=str(e))
+            player_name = form_data.get('player_name', '').strip()
+            date_of_birth = form_data.get('date_of_birth', '').strip()
+            gender = form_data.get('gender', '').strip()
+            phone = form_data.get('phone', '').strip()
+            email = form_data.get('email', '').strip()
+            address = form_data.get('address', '').strip()
+            state = form_data.get('state', '').strip()
+            ttfi_id = form_data.get('ttfi_id', '').strip()
+            dstta_id = form_data.get('dstta_id', '').strip() if state == 'Delhi' else ''
+            institution = form_data.get('institution', '').strip()
+            academy = form_data.get('academy', '').strip()
+            upi_id = form_data.get('upi_id', '').strip()
 
-    return render_template('players.html')
+            print(f"Processed form data:")
+            print(f"Name: {player_name}")
+            print(f"DOB: {date_of_birth}")
+            print(f"Gender: {gender}")
+            print(f"Phone: {phone}")
+
+            # Basic validation
+            if not all([player_name, date_of_birth, gender, phone]):
+                raise ValueError("All required fields must be filled out")
+
+            if not phone.isdigit() or len(phone) != 10:
+                raise ValueError("Please enter a valid 10-digit phone number")
+
+            if not all(c.isalpha() or c.isspace() for c in player_name):
+                raise ValueError("Name should only contain letters and spaces")
+
+            # Generate Player ID
+            current_year = str(datetime.now().year)[-2:]
+            birth_year = str(datetime.strptime(date_of_birth, '%Y-%m-%d').year)[-2:]
+            
+            # Get the next sequence number
+            sequence = 1
+            id_prefix = f"{current_year}-{birth_year}-"
+            
+            if os.path.exists(PLAYERS_CSV):
+                print("Reading existing players file for sequence number")
+                with open(PLAYERS_CSV, 'r', newline='', encoding='utf-8') as file:
+                    reader = csv.DictReader(file)
+                    for row in reader:
+                        if row.get('Player ID', '').startswith(id_prefix):
+                            try:
+                                current_sequence = int(row['Player ID'].split('-')[2])
+                                sequence = max(sequence, current_sequence + 1)
+                            except (IndexError, ValueError) as e:
+                                print(f"Error parsing sequence number: {e}")
+                                continue
+            
+            player_id = f"{current_year}-{birth_year}-{sequence:04d}"
+            print(f"Generated Player ID: {player_id}")
+
+            # Prepare player data
+            fieldnames = [
+                'Player ID',
+                'Name',
+                'Date of Birth',
+                'Gender',
+                'Phone Number',
+                'Email ID',
+                'Address',
+                'State',
+                'TTFI ID',
+                'DSTTA ID',
+                'School/Institution',
+                'Academy',
+                'UPI ID'
+            ]
+
+            player_data = {
+                'Player ID': player_id,
+                'Name': player_name,
+                'Date of Birth': date_of_birth,
+                'Gender': gender,
+                'Phone Number': phone,
+                'Email ID': email,
+                'Address': address,
+                'State': state,
+                'TTFI ID': ttfi_id,
+                'DSTTA ID': dstta_id,
+                'School/Institution': institution,
+                'Academy': academy,
+                'UPI ID': upi_id
+            }
+
+            # Check if file exists and if player already exists
+            player_exists = False
+            if os.path.exists(PLAYERS_CSV):
+                print("Checking for existing player")
+                with open(PLAYERS_CSV, 'r', newline='', encoding='utf-8') as file:
+                    reader = csv.DictReader(file)
+                    for row in reader:
+                        if (row['Name'].lower() == player_name.lower() and 
+                            row['Phone Number'] == phone):
+                            player_exists = True
+                            player_data['Player ID'] = row['Player ID']
+                            print(f"Found existing player with ID: {row['Player ID']}")
+                            break
+
+            if not player_exists:
+                try:
+                    # Write to CSV file
+                    file_exists = os.path.exists(PLAYERS_CSV)
+                    print(f"Writing new player to CSV. File exists: {file_exists}")
+                    
+                    mode = 'a' if file_exists else 'w'
+                    print(f"Opening file in mode: {mode}")
+                    
+                    with open(PLAYERS_CSV, mode, newline='', encoding='utf-8') as file:
+                        writer = csv.DictWriter(file, fieldnames=fieldnames)
+                        if not file_exists:
+                            print("Writing CSV headers")
+                            writer.writeheader()
+                        print(f"Writing player data: {player_data}")
+                        writer.writerow(player_data)
+                        print("Successfully wrote player data to CSV")
+                except Exception as e:
+                    print(f"Error writing to CSV: {str(e)}")
+                    raise
+
+            print("=== Player Registration Process Completed ===\n")
+            return render_template('registration_success.html', player_details=player_data)
+
+        except Exception as e:
+            print(f"Error in player registration: {str(e)}")
+            return render_template('players.html', 
+                                 error=str(e),
+                                 today_date=datetime.now().strftime('%Y-%m-%d'))
+
+    # For GET request
+    return render_template('players.html', today_date=datetime.now().strftime('%Y-%m-%d'))
 
 @app.route('/search-players')
 def search_players():
     try:
-        # Get search parameters
+        # Get search parameter
         player_name = request.args.get('player_name', '').strip().lower()
-        category = request.args.get('category', '').strip()
         
-        # Debug prints
-        print(f"Search parameters received - Name: '{player_name}', Category: '{category}'")
-        
-        # Check if any search was performed
-        search_performed = bool(player_name or category)
+        # Check if search was performed
+        search_performed = bool(player_name)
         
         # Initialize empty list for players
         players = []
         
         # Only proceed with search if the CSV file exists
-        if os.path.exists(CSV_FILE):
-            with open(CSV_FILE, 'r', newline='') as file:
+        if os.path.exists(PLAYERS_CSV):
+            with open(PLAYERS_CSV, 'r', newline='', encoding='utf-8') as file:
                 reader = csv.DictReader(file)
                 all_players = list(reader)
                 
-                # Debug print
-                print(f"Total players in CSV: {len(all_players)}")
-                
-                # Filter players based on search criteria
-                filtered_players = all_players
-                
+                # Filter players based on name
                 if player_name:
                     filtered_players = [
-                        p for p in filtered_players 
-                        if player_name in p['Player Name'].lower()
+                        p for p in all_players 
+                        if player_name in p['Name'].lower()
                     ]
-                    print(f"Players after name filter: {len(filtered_players)}")
-                
-                if category:
-                    filtered_players = [
-                        p for p in filtered_players 
-                        if p['Category'] == category
-                    ]
-                    print(f"Players after category filter: {len(filtered_players)}")
-                
-                # Sort players by seeding (convert seeding to integer for proper sorting)
-                players = sorted(filtered_players, key=lambda x: int(x['Seeding']))
-                
-                # Debug print final results
-                print(f"Final number of players to display: {len(players)}")
-                if players:
-                    print("First few players after sorting:")
-                    for p in players[:3]:
-                        print(f"Seeding {p['Seeding']}: {p['Player Name']}")
+                    players = filtered_players
         
         return render_template(
             'search_players.html',
@@ -166,8 +296,8 @@ def update_seeding():
 
         print(f"Searching for category: {category}")  # Debug print
 
-        if category and os.path.exists(CSV_FILE):
-            with open(CSV_FILE, 'r', newline='') as file:
+        if category and os.path.exists(PLAYERS_CSV):
+            with open(PLAYERS_CSV, 'r', newline='') as file:
                 reader = csv.DictReader(file)
                 # Get all players in the selected category
                 players = [player for player in reader if player['Category'] == category]
@@ -202,7 +332,7 @@ def save_seeding():
         print(f"Saving seedings for category: {category}")  # Debug print
 
         # Read all players
-        with open(CSV_FILE, 'r', newline='') as file:
+        with open(PLAYERS_CSV, 'r', newline='') as file:
             reader = csv.DictReader(file)
             all_players = list(reader)
             fieldnames = reader.fieldnames
@@ -230,7 +360,7 @@ def save_seeding():
         print(f"Updated seeding for {updated_count} players")  # Debug print
 
         # Write back to CSV
-        with open(CSV_FILE, 'w', newline='') as file:
+        with open(PLAYERS_CSV, 'w', newline='') as file:
             writer = csv.DictWriter(file, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(all_players)
@@ -254,68 +384,912 @@ def create_draws():
 @app.route('/tournament-creation', methods=['GET', 'POST'])
 def tournament_creation():
     if request.method == 'POST':
-        tournament_logo = request.files.get('tournament_logo')
-        logo_filename = None
-        if tournament_logo and tournament_logo.filename:
-            logo_filename = secure_filename(tournament_logo.filename)
-            logo_path = os.path.join(app.config['UPLOAD_FOLDER'], logo_filename)
-            tournament_logo.save(logo_path)
-            print(f"Logo saved to: {logo_path}")  # Debug print
-
-        sponsor_logos = request.files.getlist('sponsor_logos')
-        sponsor_logo_filenames = []
-        for sponsor_logo in sponsor_logos:
-            if sponsor_logo and sponsor_logo.filename:
-                sponsor_logo_filename = secure_filename(sponsor_logo.filename)
-                sponsor_logo_path = os.path.join(app.config['UPLOAD_FOLDER'], sponsor_logo_filename)
-                sponsor_logo.save(sponsor_logo_path)
-                sponsor_logo_filenames.append(sponsor_logo_filename)
-                print(f"Sponsor logo saved to: {sponsor_logo_path}")  # Debug print
-
+        # Generate unique tournament ID
+        tournament_id = str(uuid.uuid4())
+        
+        # Get form data
         tournament_name = request.form.get('tournament_name')
+        venue = request.form.get('venue')
+        start_date = request.form.get('start_date')
+        end_date = request.form.get('end_date')
+        last_registration_date = request.form.get('last_registration_date')
+        total_prize = request.form.get('total_prize')
+        general_info = request.form.get('general_info')
+        
+        # Handle file uploads
+        tournament_logo = request.files.get('tournament_logo')
+        sponsor_logos = request.files.getlist('sponsor_logos')
+        
+        # Create logo directory if it doesn't exist
+        if not os.path.exists('logo'):
+            os.makedirs('logo')
+        
+        # Save tournament logo
+        tournament_logo_link = ''
+        if tournament_logo and tournament_logo.filename:
+            filename = f"{tournament_id}_tournament{os.path.splitext(tournament_logo.filename)[1]}"
+            tournament_logo.save(os.path.join('logo', filename))
+            tournament_logo_link = f"logo/{filename}"
+        
+        # Save sponsor logos
+        sponsor_logo_links = []
+        for i, logo in enumerate(sponsor_logos):
+            if logo and logo.filename:
+                filename = f"{tournament_id}_sponsor_{i}{os.path.splitext(logo.filename)[1]}"
+                logo.save(os.path.join('logo', filename))
+                sponsor_logo_links.append(f"logo/{filename}")
+        
+        # Get category information
         categories = request.form.getlist('categories[]')
         fees = request.form.getlist('fees[]')
-        venue = request.form.get('venue')
-        date = request.form.get('date')
-        last_registration_date = request.form.get('last_registration_date')
-
-        # Save to CSV
-        file_exists = os.path.isfile(TOURNAMENTS_CSV)
-        with open(TOURNAMENTS_CSV, 'a', newline='', encoding='utf-8') as csvfile:
-            fieldnames = ['Tournament Name', 'Categories', 'Fees', 'Venue', 'Date', 'Last Registration Date']
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            if not file_exists:
+        first_prizes = request.form.getlist('first_prizes[]')
+        second_prizes = request.form.getlist('second_prizes[]')
+        third_prizes = request.form.getlist('third_prizes[]')
+        formats = request.form.getlist('formats[]')
+        
+        # Prepare tournament data
+        tournament_data = {
+            'Tournament Id': tournament_id,
+            'Tournament Name': tournament_name,
+            'Categories': ','.join(categories),
+            'Venue': venue,
+            'Start Date': start_date,
+            'End Date': end_date,
+            'Last Registration Date': last_registration_date,
+            'Total Prize': total_prize,
+            'General Information': general_info,
+            'Tournament Logo Link': tournament_logo_link,
+            'Sponsor Logo Links': ','.join(sponsor_logo_links),
+            'Status': 'active'
+        }
+        
+        # Write to tournaments.csv
+        tournaments_file_exists = os.path.exists('tournaments.csv')
+        with open('tournaments.csv', 'a', newline='', encoding='utf-8') as file:
+            fieldnames = [
+                'Tournament Id', 'Tournament Name', 'Categories', 'Venue',
+                'Start Date', 'End Date', 'Last Registration Date', 'Total Prize',
+                'General Information', 'Tournament Logo Link', 'Sponsor Logo Links',
+                'Status'  # Adding status to fieldnames
+            ]
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            
+            # Write header only if file is newly created
+            if not tournaments_file_exists:
                 writer.writeheader()
-            writer.writerow({
+            
+            writer.writerow(tournament_data)
+        
+        # Write to tournament_categories.csv
+        categories_file_exists = os.path.exists('tournament_categories.csv')
+        with open('tournament_categories.csv', 'a', newline='', encoding='utf-8') as file:
+            fieldnames = [
+                'Tournament Id', 'Tournament Name', 'Category', 'Fee',
+                'First Prize', 'Second Prize', 'Third Prize', 'Format'
+            ]
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            
+            # Write header only if file is newly created
+            if not categories_file_exists:
+                writer.writeheader()
+            
+            # Write each category
+            for i in range(len(categories)):
+                category_data = {
+                    'Tournament Id': tournament_id,
+                    'Tournament Name': tournament_name,
+                    'Category': categories[i],
+                    'Fee': fees[i],
+                    'First Prize': first_prizes[i],
+                    'Second Prize': second_prizes[i],
+                    'Third Prize': third_prizes[i],
+                    'Format': formats[i]
+                }
+                writer.writerow(category_data)
+        
+        return redirect(url_for('list_tournament'))
+    
+    return render_template('tournament_creation.html')
+
+@app.route('/list-tournament')
+def list_tournament():
+    tournaments = []
+    categories_by_tid = {}
+    tournament_categories = {}
+    
+    try:
+        # Read tournaments
+        with open('tournaments.csv', 'r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if row.get('Status', '').lower() == 'active':
+                    tournaments.append({
+                        'Tournament Id': row['Tournament Id'],
+                        'Tournament Name': row['Tournament Name'],
+                        'Venue': row['Venue'],
+                        'Start Date': row.get('Start Date', row.get('Tournament Date', '')),
+                        'End Date': row.get('End Date', row.get('Tournament Date', '')),
+                        'Last Registration Date': row['Last Registration Date'],
+                        'Total Prize': row['Total Prize'],
+                        'Categories': row['Categories'],
+                        'Status': row['Status']
+                    })
+                    categories_by_tid[row['Tournament Id']] = []
+
+        # Read tournament categories
+        with open('tournament_categories.csv', 'r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                tournament_id = row.get('Tournament Id')
+                if tournament_id in categories_by_tid:
+                    if tournament_id not in tournament_categories:
+                        tournament_categories[tournament_id] = []
+                    tournament_categories[tournament_id].append({
+                        'Tournament Name': row['Tournament Name'],
+                        'Category': row['Category'],
+                        'Fee': row['Fee'],
+                        'First Prize': row['First Prize'],
+                        'Second Prize': row['Second Prize'],
+                        'Third Prize': row['Third Prize'],
+                        'Format': row['Format']
+                    })
+
+        # Sort tournaments by start date
+        tournaments.sort(key=lambda x: datetime.strptime(x['Start Date'], '%Y-%m-%d'))
+
+        return render_template('list_tournament.html', 
+                             tournaments=tournaments,
+                             tournament_categories=tournament_categories)
+    except Exception as e:
+        return render_template('list_tournament.html', 
+                             error=str(e),
+                             tournaments=[],
+                             tournament_categories={})
+
+@app.route('/delete-tournament/<tournament_id>', methods=['POST'])
+def delete_tournament(tournament_id):
+    try:
+        # Read all tournaments
+        tournaments = []
+        with open('tournaments.csv', 'r', newline='', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            fieldnames = reader.fieldnames
+            tournaments = list(reader)
+
+        # Find and mark the tournament as inactive
+        tournament_found = False
+        for tournament in tournaments:
+            if tournament['Tournament Id'] == tournament_id:
+                tournament['Status'] = 'inactive'
+                tournament_found = True
+                break
+        
+        # Write back all tournaments
+        with open('tournaments.csv', 'w', newline='', encoding='utf-8') as file:
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(tournaments)
+
+        if tournament_found:
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Tournament not found'})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/edit-tournament/<tournament_id>', methods=['GET', 'POST'])
+def edit_tournament(tournament_id):
+    if request.method == 'GET':
+        # Get tournament details
+        tournament = None
+        with open('tournaments.csv', 'r', newline='', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if row['Tournament Id'] == tournament_id:
+                    tournament = row
+                    break
+        
+        if not tournament:
+            return redirect(url_for('list_tournament'))
+        
+        # Get category details
+        categories = []
+        with open('tournament_categories.csv', 'r', newline='', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if row['Tournament Id'] == tournament_id:
+                    categories.append(row)
+        
+        return render_template('edit_tournament.html', tournament=tournament, categories=categories)
+    
+    elif request.method == 'POST':
+        try:
+            # Generate new tournament ID
+            new_tournament_id = str(uuid.uuid4())
+            
+            # Get form data
+            tournament_name = request.form.get('tournament_name')
+            venue = request.form.get('venue')
+            start_date = request.form.get('start_date')
+            end_date = request.form.get('end_date')
+            last_registration_date = request.form.get('last_registration_date')
+            total_prize = request.form.get('total_prize')
+            general_info = request.form.get('general_info')
+            
+            # Handle file uploads
+            tournament_logo = request.files.get('tournament_logo')
+            sponsor_logos = request.files.getlist('sponsor_logos')
+            
+            # Create logo directory if it doesn't exist
+            if not os.path.exists('logo'):
+                os.makedirs('logo')
+            
+            # Get the old tournament data for existing logo links
+            old_tournament = None
+            with open('tournaments.csv', 'r', newline='', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    if row['Tournament Id'] == tournament_id:
+                        old_tournament = row
+                        break
+            
+            # Handle tournament logo
+            tournament_logo_link = old_tournament.get('Tournament Logo Link', '')
+            if tournament_logo and tournament_logo.filename:
+                filename = f"{new_tournament_id}_tournament{os.path.splitext(tournament_logo.filename)[1]}"
+                tournament_logo.save(os.path.join('logo', filename))
+                tournament_logo_link = f"logo/{filename}"
+            
+            # Handle sponsor logos
+            sponsor_logo_links = old_tournament.get('Sponsor Logo Links', '').split(',') if old_tournament.get('Sponsor Logo Links') else []
+            if any(logo.filename for logo in sponsor_logos):
+                sponsor_logo_links = []
+                for i, logo in enumerate(sponsor_logos):
+                    if logo and logo.filename:
+                        filename = f"{new_tournament_id}_sponsor_{i}{os.path.splitext(logo.filename)[1]}"
+                        logo.save(os.path.join('logo', filename))
+                        sponsor_logo_links.append(f"logo/{filename}")
+            
+            # Get category information
+            categories = request.form.getlist('categories[]')
+            fees = request.form.getlist('fees[]')
+            first_prizes = request.form.getlist('first_prizes[]')
+            second_prizes = request.form.getlist('second_prizes[]')
+            third_prizes = request.form.getlist('third_prizes[]')
+            formats = request.form.getlist('formats[]')
+            
+            # Update tournaments.csv - Mark old record as inactive and add new record
+            tournaments = []
+            with open('tournaments.csv', 'r', newline='', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                fieldnames = reader.fieldnames
+                for row in reader:
+                    if row['Tournament Id'] == tournament_id:
+                        row['Status'] = 'inactive'
+                    tournaments.append(row)
+            
+            # Add new tournament record
+            new_tournament = {
+                'Tournament Id': new_tournament_id,
                 'Tournament Name': tournament_name,
-                'Categories': ', '.join(categories),
-                'Fees': ', '.join(fees),
+                'Categories': ','.join(categories),
                 'Venue': venue,
-                'Date': date,
-                'Last Registration Date': last_registration_date
-            })
+                'Start Date': start_date,
+                'End Date': end_date,
+                'Last Registration Date': last_registration_date,
+                'Total Prize': total_prize,
+                'General Information': general_info,
+                'Tournament Logo Link': tournament_logo_link,
+                'Sponsor Logo Links': ','.join(sponsor_logo_links),
+                'Status': 'active'
+            }
+            tournaments.append(new_tournament)
+            
+            # Write back to tournaments.csv
+            with open('tournaments.csv', 'w', newline='', encoding='utf-8') as file:
+                writer = csv.DictWriter(file, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerows(tournaments)
+            
+            # Update tournament_categories.csv
+            categories_data = []
+            with open('tournament_categories.csv', 'r', newline='', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                fieldnames = reader.fieldnames
+                for row in reader:
+                    if row['Tournament Id'] != tournament_id:
+                        categories_data.append(row)
+            
+            # Add new categories
+            for i in range(len(categories)):
+                category_data = {
+                    'Tournament Id': new_tournament_id,
+                    'Tournament Name': tournament_name,
+                    'Category': categories[i],
+                    'Fee': fees[i],
+                    'First Prize': first_prizes[i],
+                    'Second Prize': second_prizes[i],
+                    'Third Prize': third_prizes[i],
+                    'Format': formats[i]
+                }
+                categories_data.append(category_data)
+            
+            # Write back to tournament_categories.csv
+            with open('tournament_categories.csv', 'w', newline='', encoding='utf-8') as file:
+                writer = csv.DictWriter(file, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerows(categories_data)
+            
+            return redirect(url_for('list_tournament'))
+            
+        except Exception as e:
+            print(f"Error updating tournament: {str(e)}")
+            return redirect(url_for('list_tournament'))
 
-        return render_template(
-            'tournament_success.html',
-            logo_filename=logo_filename,
-            tournament_name=tournament_name,
-            categories=categories,
-            fees=fees,
-            venue=venue,
-            date=date,
-            last_registration_date=last_registration_date,
-            sponsor_logo_filenames=sponsor_logo_filenames
-        )
+@app.route('/list-tournament-last2')
+def list_tournament_last2():
+    tournaments = []
+    with open('tournaments.csv', newline='', encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        # Only active tournaments
+        active_tournaments = [row for row in reader if row.get('Status', '').lower() == 'active']
+        # Sort by Start Date descending (latest first)
+        active_tournaments.sort(key=lambda x: x.get('Start Date', ''), reverse=True)
+        # Get last 2
+        tournaments = active_tournaments[:2]
 
-    # Calculate default dates
-    today = datetime.today().date()
-    tournament_date = today + timedelta(days=10)
-    last_reg_date = tournament_date - timedelta(days=2)
-    return render_template(
-        'tournament_creation.html',
-        default_tournament_date=tournament_date.strftime('%Y-%m-%d'),
-        default_last_reg_date=last_reg_date.strftime('%Y-%m-%d')
-    )
+    # Load all category rows for all tournaments
+    categories_by_tid = {}
+    if os.path.exists('tournament_categories.csv'):
+        with open('tournament_categories.csv', newline='', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                tid = row['Tournament Id']
+                if tid not in categories_by_tid:
+                    categories_by_tid[tid] = []
+                categories_by_tid[tid].append(row)
+
+    return render_template('list_tournament.html', tournaments=tournaments, categories_by_tid=categories_by_tid)
+
+@app.route('/tournament-details/<tournament_id>', methods=['GET'])
+def tournament_details(tournament_id):
+    try:
+        # Get tournament details
+        tournament = None
+        with open('tournaments.csv', 'r', newline='', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if row['Tournament Id'] == tournament_id:
+                    tournament = row
+                    break
+        
+        if not tournament:
+            return redirect(url_for('list_tournament'))
+        
+        # Get category details
+        categories = []
+        with open('tournament_categories.csv', 'r', newline='', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if row['Tournament Id'] == tournament_id:
+                    categories.append(row)
+        
+        return render_template('tournament_details.html', 
+                             tournament=tournament,
+                             categories=categories)
+    except Exception as e:
+        print(f"Error in tournament_details: {str(e)}")  # For debugging
+        return redirect(url_for('list_tournament'))
+
+@app.route('/tournament/<tournament_id>/info')
+def tournament_info(tournament_id):
+    try:
+        # Get tournament details
+        tournament = None
+        with open('tournaments.csv', 'r', newline='', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if row['Tournament Id'] == tournament_id:
+                    tournament = row
+                    break
+        
+        if not tournament:
+            return redirect(url_for('list_tournament'))
+        
+        # Get category details
+        categories = []
+        with open('tournament_categories.csv', 'r', newline='', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if row['Tournament Id'] == tournament_id:
+                    categories.append(row)
+        
+        return render_template('tournament_details.html', 
+                             tournament=tournament,
+                             categories=categories,
+                             active_subpage='info')
+    except Exception as e:
+        print(f"Error in tournament_info: {str(e)}")
+        return redirect(url_for('list_tournament'))
+
+@app.route('/tournament/<tournament_id>/register', methods=['GET', 'POST'])
+def tournament_register(tournament_id):
+    try:
+        # Get tournament details
+        tournament = get_tournament(tournament_id)
+        if not tournament:
+            print(f"Tournament not found: {tournament_id}")
+            return redirect(url_for('list_tournament'))
+
+        # Get tournament categories
+        tournament_categories = []
+        try:
+            with open('tournament_categories.csv', 'r', newline='') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    if row['Tournament Id'] == tournament_id:
+                        tournament_categories.append(row['Category'])
+        except Exception as e:
+            print(f"Error reading tournament categories: {str(e)}")
+            tournament_categories = []
+
+        if request.method == 'POST':
+            print("Processing POST request for tournament registration")
+            
+            # Get form data - required fields
+            player_id = request.form.get('player_id', '').strip()
+            player_name = request.form.get('player_name')
+            dob = request.form.get('dob')
+            gender = request.form.get('gender')
+            phone = request.form.get('phone')
+            category = request.form.get('category')
+
+            # Get form data - optional fields
+            email = request.form.get('email', '').strip()
+            address = request.form.get('address', '').strip()
+            state = request.form.get('state', '').strip()
+            ttfi_id = request.form.get('ttfi_id', '').strip()
+            dstta_id = request.form.get('dstta_id', '').strip() if state == 'Delhi' else ''
+            institution = request.form.get('institution', '').strip()
+            academy = request.form.get('academy', '').strip()
+            upi_id = request.form.get('upi_id', '').strip()
+
+            print(f"Form data received: Name={player_name}, Player ID={player_id}")
+
+            try:
+                # Initialize tournament_registrations.csv if needed
+                initialize_tournament_registrations_csv()
+
+                # Check if this is a new player or selected from search
+                if player_id and player_id.strip():
+                    print(f"Using existing player with ID: {player_id}")
+                    # Verify player exists
+                    player_exists = False
+                    with open('players_data.csv', 'r', newline='', encoding='utf-8') as file:
+                        reader = csv.DictReader(file)
+                        for row in reader:
+                            if row['Player ID'] == player_id:
+                                player_exists = True
+                                break
+                    
+                    if not player_exists:
+                        print(f"Error: Selected player ID {player_id} not found in database")
+                        flash('Selected player not found in database', 'error')
+                        return render_template('tournament_register.html',
+                                            tournament=tournament,
+                                            tournament_categories=tournament_categories,
+                                            active_subpage='register')
+                else:
+                    print("Creating new player...")
+                    # Generate new player ID
+                    current_year = str(datetime.now().year)[-2:]
+                    birth_year = str(datetime.strptime(dob, '%Y-%m-%d').year)[-2:]
+                    
+                    # Get the next sequence number
+                    sequence = 1
+                    id_prefix = f"{current_year}-{birth_year}-"
+                    
+                    if os.path.exists('players_data.csv'):
+                        with open('players_data.csv', 'r', newline='', encoding='utf-8') as file:
+                            reader = csv.DictReader(file)
+                            for row in reader:
+                                if row['Player ID'].startswith(id_prefix):
+                                    try:
+                                        current_sequence = int(row['Player ID'].split('-')[2])
+                                        sequence = max(sequence, current_sequence + 1)
+                                    except (IndexError, ValueError):
+                                        continue
+                    
+                    player_id = f"{current_year}-{birth_year}-{sequence:04d}"
+                    print(f"Generated new player ID: {player_id}")
+
+                    # Define fieldnames for players_data.csv
+                    player_fieldnames = [
+                        'Player ID',
+                        'Name',
+                        'Date of Birth',
+                        'Gender',
+                        'Phone Number',
+                        'Email ID',
+                        'Address',
+                        'State',
+                        'TTFI ID',
+                        'DSTTA ID',
+                        'School/Institution',
+                        'Academy',
+                        'UPI ID'
+                    ]
+
+                    # Create players_data.csv if it doesn't exist
+                    if not os.path.exists('players_data.csv'):
+                        with open('players_data.csv', 'w', newline='', encoding='utf-8') as file:
+                            writer = csv.DictWriter(file, fieldnames=player_fieldnames)
+                            writer.writeheader()
+
+                    # Add new player to players_data.csv
+                    new_player_data = {
+                        'Player ID': player_id,
+                        'Name': player_name,
+                        'Date of Birth': dob,
+                        'Gender': gender,
+                        'Phone Number': phone,
+                        'Email ID': email,
+                        'Address': address,
+                        'State': state,
+                        'TTFI ID': ttfi_id,
+                        'DSTTA ID': dstta_id,
+                        'School/Institution': institution,
+                        'Academy': academy,
+                        'UPI ID': upi_id
+                    }
+
+                    with open('players_data.csv', 'a', newline='', encoding='utf-8') as file:
+                        writer = csv.DictWriter(file, fieldnames=player_fieldnames)
+                        writer.writerow(new_player_data)
+                        print(f"Added new player to players_data.csv: {new_player_data}")
+
+                # Check for existing tournament registration
+                registration_exists = False
+                try:
+                    with open(TOURNAMENT_REGISTRATIONS_CSV, 'r', newline='', encoding='utf-8') as file:
+                        reader = csv.DictReader(file)
+                        for row in reader:
+                            if (row['Tournament ID'] == tournament_id and 
+                                row['Player ID'] == player_id and 
+                                row['Category'] == category and 
+                                row['Status'].lower() == 'active'):
+                                registration_exists = True
+                                break
+                except Exception as e:
+                    print(f"Error checking existing registration: {str(e)}")
+
+                if registration_exists:
+                    flash('Player already registered for this category', 'error')
+                    return render_template('tournament_register.html',
+                                        tournament=tournament,
+                                        tournament_categories=tournament_categories,
+                                        active_subpage='register')
+
+                # Add tournament registration
+                registration_data = {
+                    'Tournament ID': tournament_id,
+                    'Player ID': player_id,
+                    'Registration Date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    'Category': category,
+                    'Status': 'Active',
+                    'Seeding': ''
+                }
+                
+                with open(TOURNAMENT_REGISTRATIONS_CSV, 'a', newline='', encoding='utf-8') as file:
+                    writer = csv.DictWriter(file, fieldnames=initialize_tournament_registrations_csv())
+                    writer.writerow(registration_data)
+                    print(f"Added tournament registration: {registration_data}")
+
+                flash('Registration successful!', 'success')
+                print("Registration process completed successfully")
+                return render_template('tournament_register.html',
+                                    tournament=tournament,
+                                    tournament_categories=tournament_categories,
+                                    active_subpage='register',
+                                    success='Registration successful!')
+
+            except Exception as e:
+                print(f"Error in registration process: {str(e)}")
+                flash(f'Error during registration: {str(e)}', 'error')
+                return render_template('tournament_register.html',
+                                    tournament=tournament,
+                                    tournament_categories=tournament_categories,
+                                    active_subpage='register')
+
+        # GET request
+        return render_template('tournament_register.html',
+                            tournament=tournament,
+                            tournament_categories=tournament_categories,
+                            active_subpage='register')
+
+    except Exception as e:
+        print(f"Error in tournament_register: {str(e)}")
+        return redirect(url_for('list_tournament'))
+
+def get_tournament_categories(tournament_id):
+    categories = [
+        "Women Singles",
+        "Men Singles",
+        "Women Singles 40+",
+        "Men Singles 40+",
+        "Women Doubles",
+        "Women Doubles 40+",
+        "Men Doubles",
+        "Men Doubles 40+",
+        "Girls Under 11",
+        "Boys Under 11",
+        "Girls Under 13",
+        "Boys Under 13",
+        "Girls Under 15",
+        "Boys Under 15",
+        "Girls Under 17",
+        "Boys Under 17"
+    ]
+    return categories
+
+@app.route('/tournament/<tournament_id>/schedule')
+def tournament_schedule(tournament_id):
+    try:
+        # Get tournament details
+        tournament = get_tournament(tournament_id)
+        if not tournament:
+            return redirect(url_for('list_tournament'))
+
+        return render_template('tournament_schedule.html',
+                             tournament=tournament,
+                             active_subpage='schedule')
+    except Exception as e:
+        print(f"Error in tournament_schedule: {str(e)}")
+        return redirect(url_for('list_tournament'))
+
+@app.route('/tournament/<tournament_id>/entries')
+def tournament_entries(tournament_id):
+    try:
+        # Get tournament details
+        tournament = get_tournament(tournament_id)
+        if not tournament:
+            return redirect(url_for('list_tournament'))
+
+        # Get tournament categories
+        girls_categories = []
+        boys_categories = []
+        try:
+            with open('tournament_categories.csv', 'r', newline='', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    if row['Tournament Id'] == tournament_id:
+                        if 'Girls' in row['Category']:
+                            girls_categories.append(row['Category'])
+                        elif 'Boys' in row['Category']:
+                            boys_categories.append(row['Category'])
+        except Exception as e:
+            print(f"Error reading tournament categories: {str(e)}")
+
+        # Initialize entries dictionaries
+        girls_entries = {category: [] for category in girls_categories}
+        boys_entries = {category: [] for category in boys_categories}
+        
+        try:
+            # Get all registrations for this tournament
+            registrations = []
+            with open(TOURNAMENT_REGISTRATIONS_CSV, 'r', newline='', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    if (row['Tournament ID'] == tournament_id and 
+                        row['Status'].lower() == 'active'):
+                        registrations.append(row)
+
+            # Get player details
+            players = {}
+            if os.path.exists(PLAYERS_CSV):
+                with open(PLAYERS_CSV, 'r', newline='', encoding='utf-8') as file:
+                    reader = csv.DictReader(file)
+                    for row in reader:
+                        players[row['Player ID']] = row
+
+            # Organize entries by category
+            for reg in registrations:
+                player = players.get(reg['Player ID'])
+                if player:
+                    entry = {
+                        'Name': player['Name'],
+                        'Category': reg['Category']
+                    }
+                    
+                    # Add to appropriate category
+                    if reg['Category'] in girls_categories:
+                        girls_entries[reg['Category']].append(entry)
+                    elif reg['Category'] in boys_categories:
+                        boys_entries[reg['Category']].append(entry)
+
+            # Sort entries in each category by name
+            for category in girls_entries:
+                girls_entries[category].sort(key=lambda x: x['Name'])
+
+            for category in boys_entries:
+                boys_entries[category].sort(key=lambda x: x['Name'])
+
+        except Exception as e:
+            print(f"Error processing entries: {str(e)}")
+
+        return render_template('tournament_entries.html',
+                             tournament=tournament,
+                             girls_entries=girls_entries,
+                             boys_entries=boys_entries,
+                             active_subpage='entries')
+
+    except Exception as e:
+        print(f"Error in tournament_entries: {str(e)}")
+        return redirect(url_for('list_tournament'))
+
+@app.route('/tournament/<tournament_id>/results')
+def tournament_results(tournament_id):
+    try:
+        # Get tournament details
+        tournament = get_tournament(tournament_id)
+        if not tournament:
+            return redirect(url_for('list_tournament'))
+
+        return render_template('tournament_results.html',
+                             tournament=tournament,
+                             active_subpage='results')
+    except Exception as e:
+        print(f"Error in tournament_results: {str(e)}")
+        return redirect(url_for('list_tournament'))
+
+@app.route('/tournament/<tournament_id>/update-seeding')
+def tournament_update_seeding(tournament_id):
+    try:
+        # Get tournament details
+        tournament = get_tournament(tournament_id)
+        if not tournament:
+            return redirect(url_for('list_tournament'))
+
+        return render_template('tournament_update_seeding.html',
+                             tournament=tournament,
+                             active_subpage='update_seeding')
+    except Exception as e:
+        print(f"Error in tournament_update_seeding: {str(e)}")
+        return redirect(url_for('list_tournament'))
+
+# Helper function to get tournament details
+def get_tournament(tournament_id):
+    try:
+        with open('tournaments.csv', 'r', newline='') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if row['Tournament Id'] == tournament_id:
+                    return {
+                        'Tournament Id': row['Tournament Id'],
+                        'Tournament Name': row['Tournament Name'],
+                        'Categories': row.get('Categories', ''),
+                        'Venue': row.get('Venue', ''),
+                        'Start Date': row.get('Start Date', ''),
+                        'End Date': row.get('End Date', ''),
+                        'Last Registration Date': row.get('Last Registration Date', ''),
+                        'Total Prize': row.get('Total Prize', ''),
+                        'General Information': row.get('General Information', ''),
+                        'Tournament Logo Link': row.get('Tournament Logo Link', ''),
+                        'Sponsor Logo Links': row.get('Sponsor Logo Links', ''),
+                        'Status': row.get('Status', '')
+                    }
+    except Exception as e:
+        print(f"Error reading tournaments.csv: {str(e)}")
+        return None
+
+@app.route('/get-players')
+def get_players():
+    try:
+        search_name = request.args.get('name', '').lower().strip()
+        print(f"Searching for name: '{search_name}'")
+        
+        players = []
+        
+        with open('players_data.csv', 'r', newline='', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if search_name in row.get('Name', '').lower():
+                    player = {
+                        'Player_Id': row.get('Player ID', ''),
+                        'Player_Name': row.get('Name', ''),
+                        'Date_of_Birth': row.get('Date of Birth', ''),
+                        'Gender': row.get('Gender', ''),
+                        'Phone_Number': row.get('Phone Number', ''),
+                        'Email': row.get('Email ID', ''),
+                        'Address': row.get('Address', ''),
+                        'State': row.get('State', ''),
+                        'TTFI_ID': row.get('TTFI ID', ''),
+                        'DSTTA_ID': row.get('DSTTA ID', ''),
+                        'School_Institution': row.get('School/Institution', ''),
+                        'Academy': row.get('Academy', ''),
+                        'UPI_ID': row.get('UPI ID', '')
+                    }
+                    players.append(player)
+                    if len(players) >= 10:  # Limit to 10 results
+                        break
+        
+        return jsonify(players)
+    
+    except Exception as e:
+        print(f"Error in get_players: {str(e)}")
+        return jsonify([])
+
+def generate_player_id(date_of_birth):
+    try:
+        # Get current year's last 2 digits (AA)
+        current_year = str(datetime.now().year)[-2:]
+        
+        # Get birth year's last 2 digits (YY)
+        dob = datetime.strptime(date_of_birth, '%Y-%m-%d')
+        birth_year = str(dob.year)[-2:]
+        
+        # Create the prefix for the ID
+        id_prefix = f"{current_year}-{birth_year}-"
+        
+        # Get the highest sequence number for this combination
+        max_sequence = 0
+        
+        if os.path.exists(PLAYERS_CSV):
+            with open(PLAYERS_CSV, 'r', newline='', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    if 'Player ID' in row and row['Player ID'].startswith(id_prefix):
+                        try:
+                            sequence = int(row['Player ID'].split('-')[2])
+                            max_sequence = max(max_sequence, sequence)
+                        except (IndexError, ValueError):
+                            continue
+        
+        # Generate new ID with next sequence number
+        new_sequence = max_sequence + 1
+        return f"{current_year}-{birth_year}-{new_sequence:04d}"  # Format with 4 leading zeros
+        
+    except Exception as e:
+        print(f"Error generating player ID: {str(e)}")
+        return None
+
+def migrate_tournament_registrations_csv():
+    try:
+        if not os.path.exists(TOURNAMENT_REGISTRATIONS_CSV):
+            initialize_tournament_registrations_csv()
+            return
+
+        # Read existing data
+        rows = []
+        with open(TOURNAMENT_REGISTRATIONS_CSV, 'r', newline='') as file:
+            reader = csv.reader(file)
+            headers = next(reader)
+            rows.append(headers)
+            for row in reader:
+                rows.append(row)
+
+        # Check if Seeding column exists
+        if 'Seeding' not in headers:
+            # Add Seeding column header
+            headers.append('Seeding')
+            rows[0] = headers
+            
+            # Add empty seeding value to all existing rows
+            for i in range(1, len(rows)):
+                rows[i].append('')
+
+            # Write back to file
+            with open(TOURNAMENT_REGISTRATIONS_CSV, 'w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerows(rows)
+
+    except Exception as e:
+        print(f"Error migrating tournament registrations CSV: {str(e)}")
 
 if __name__ == '__main__':
+    # Initialize CSV files if they don't exist
+    initialize_tournament_registrations_csv()
+    # Migrate existing CSV files if needed
+    migrate_tournament_registrations_csv()
     app.run(debug=True)

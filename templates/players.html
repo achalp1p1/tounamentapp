@@ -49,25 +49,6 @@
             overflow-y: auto;
         }
 
-        /* Back button styling from Search Players page */
-        .back-button {
-            background: #f8f9fa;
-            color: #1e3c72;
-            border: 2px solid #1e3c72;
-            padding: 1vh 2vh;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 500;
-            display: inline-block;
-            margin-bottom: 2vh;
-            align-self: flex-start;
-        }
-
-        .back-button:hover {
-            background: #1e3c72;
-            color: white;
-        }
-
         h1, h2 {
             margin-bottom: 2vh;
             color: #1e3c72;
@@ -83,7 +64,7 @@
         }
 
         .form-group {
-            margin-bottom: 2vh;
+            margin-bottom: 1rem;
         }
 
         label {
@@ -94,12 +75,40 @@
             font-size: min(15px, 2vh);
         }
 
-        input, select {
+        .required::after {
+            content: " *";
+            color: #dc3545;
+        }
+
+        input {
             width: 100%;
             padding: 1.5vh;
             border: 2px solid #e1e1e1;
             border-radius: 8px;
             font-size: min(15px, 2vh);
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #1e3c72;
+            box-shadow: 0 0 0 2px rgba(30, 60, 114, 0.1);
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            margin-top: 8px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .radio-option input[type="radio"] {
+            width: auto;
+            margin: 0;
         }
 
         button {
@@ -113,6 +122,11 @@
             font-weight: 500;
             width: 100%;
             margin-top: 2vh;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #1e3c72;
         }
 
         .error-message {
@@ -133,11 +147,6 @@
             
             body {
                 padding: 1vh;
-            }
-
-            .back-button {
-                padding: 0.8vh 1.6vh;
-                font-size: 14px;
             }
         }
 
@@ -167,16 +176,125 @@
                 right: 15px;
             }
         }
+
+        .section-header {
+            color: #1e3c72;
+            font-weight: 500;
+            font-size: 1.1em;
+            margin: 24px 0 16px 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 1.5vh;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: min(15px, 2vh);
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #1e3c72;
+            box-shadow: 0 0 0 2px rgba(30, 60, 114, 0.1);
+        }
+
+        select {
+            width: 100%;
+            padding: 1.5vh;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: min(15px, 2vh);
+            background-color: white;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #1e3c72;
+            box-shadow: 0 0 0 2px rgba(30, 60, 114, 0.1);
+        }
+
+        .registration-form {
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .registration-form {
+                padding: 16px;
+            }
+        }
+
+        .form-container {
+            display: flex;
+            gap: 24px;
+            margin-top: 20px;
+        }
+
+        .mandatory-fields,
+        .additional-fields {
+            flex: 1;
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            color: #1e3c72;
+            font-size: 1.2em;
+            font-weight: 500;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        @media (max-width: 768px) {
+            .form-container {
+                flex-direction: column;
+            }
+
+            .mandatory-fields,
+            .additional-fields {
+                width: 100%;
+            }
+        }
+
+        .registration-form {
+            width: 90%;
+            max-width: 1200px;
+            padding: 0;
+            background: transparent;
+            box-shadow: none;
+        }
+
+        #dstta_id_container {
+            margin-bottom: 1rem;
+        }
+        
+        #dstta_id_container input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        
+        #dstta_id_container label {
+            display: block;
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
+    {% include 'menu.html' %}
     <div class="container">
         <div class="header">
             <h1>Player Registration</h1>
             <a href="{{ url_for('login') }}" class="log-off">Log Off</a>
         </div>
-
-        <a href="{{ url_for('dashboard') }}" class="back-button">← Back to Dashboard</a>
 
         {% if error %}
         <div class="error-message">
@@ -185,60 +303,164 @@
         {% endif %}
         
         <div class="registration-form">
-            <h2>New Player Registration</h2>
-            <form method="POST">
-                <div class="form-group">
-                    <label for="player_name">Player Name</label>
-                    <input type="text" id="player_name" name="player_name" required>
+            <form method="POST" class="registration-form">
+                <div class="form-container">
+                    <!-- Left Column - Required Fields -->
+                    <div class="mandatory-fields">
+                        <div class="section-title">Required Fields</div>
+                        
+                        <div class="form-group">
+                            <label for="player_name" class="required">Name</label>
+                            <input type="text" id="player_name" name="player_name" required 
+                                   placeholder="Enter player's full name"
+                                   pattern="[A-Za-z\s]+" 
+                                   title="Please enter a valid name (letters and spaces only)">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="date_of_birth" class="required">Date of Birth</label>
+                            <input type="date" id="date_of_birth" name="date_of_birth" required
+                                   max="{{ today_date }}"
+                                   title="Please select a valid date of birth">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="required">Gender</label>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="gender" value="Male" required>
+                                    Male
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="gender" value="Female" required>
+                                    Female
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phone" class="required">Phone Number</label>
+                            <input type="tel" id="phone" name="phone" required
+                                   pattern="[0-9]{10}"
+                                   placeholder="Enter 10-digit phone number"
+                                   title="Please enter a valid 10-digit phone number">
+                        </div>
+                    </div>
+
+                    <!-- Right Column - Additional Fields -->
+                    <div class="additional-fields">
+                        <div class="section-title">Additional Information</div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email ID</label>
+                            <input type="email" id="email" name="email" 
+                                   placeholder="Enter email address">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="address">Address</label>
+                            <textarea id="address" name="address" 
+                                      placeholder="Enter complete address"
+                                      rows="3"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="state">State</label>
+                            <select id="state" name="state" onchange="toggleDSTTAField()">
+                                <option value="">Select State</option>
+                                <option value="Delhi">Delhi</option>
+                                <option value="Maharashtra">Maharashtra</option>
+                                <option value="Karnataka">Karnataka</option>
+                                <!-- Add more states as needed -->
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="ttfi_id">TTFI ID</label>
+                            <input type="text" id="ttfi_id" name="ttfi_id" 
+                                   placeholder="Enter TTFI ID if available">
+                        </div>
+
+                        <div class="form-group" id="dstta_id_container" style="display: none;">
+                            <label for="dstta_id">DSTTA ID</label>
+                            <input type="text" id="dstta_id" name="dstta_id" 
+                                   placeholder="Enter DSTTA ID if available">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="institution">School/Institution</label>
+                            <input type="text" id="institution" name="institution" 
+                                   placeholder="Enter school or institution name">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="academy">Academy</label>
+                            <input type="text" id="academy" name="academy" 
+                                   placeholder="Enter academy name">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="upi_id">UPI ID</label>
+                            <input type="text" id="upi_id" name="upi_id" 
+                                   placeholder="Enter UPI ID">
+                        </div>
+                    </div>
                 </div>
-                
-                <div class="form-group">
-                    <label for="date_of_birth">Date of Birth</label>
-                    <input type="date" id="date_of_birth" name="date_of_birth" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="category">Category</label>
-                    <select id="category" name="category" required>
-                        <option value="">Select Category</option>
-                        <!-- Singles Categories -->
-                        <option value="Women Singles">Women Singles</option>
-                        <option value="Men Singles">Men Singles</option>
-                        <option value="Women Singles 40+">Women Singles 40+</option>
-                        <option value="Men Singles 40+">Men Singles 40+</option>
-                        
-                        <!-- Doubles Categories -->
-                        <option value="Women Doubles">Women Doubles</option>
-                        <option value="Women Doubles 40+">Women Doubles 40+</option>
-                        <option value="Men Doubles">Men Doubles</option>
-                        <option value="Men Doubles 40+">Men Doubles 40+</option>
-                        
-                        <!-- Under 11 Categories -->
-                        <option value="Girls Under 11">Girls Under 11</option>
-                        <option value="Boys Under 11">Boys Under 11</option>
-                        
-                        <!-- Under 13 Categories -->
-                        <option value="Girls Under 13">Girls Under 13</option>
-                        <option value="Boys Under 13">Boys Under 13</option>
-                        
-                        <!-- Under 15 Categories -->
-                        <option value="Girls Under 15">Girls Under 15</option>
-                        <option value="Boys Under 15">Boys Under 15</option>
-                        
-                        <!-- Under 17 Categories -->
-                        <option value="Girls Under 17">Girls Under 17</option>
-                        <option value="Boys Under 17">Boys Under 17</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="academy">Academy</label>
-                    <input type="text" id="academy" name="academy" required>
-                </div>
-                
-                <button type="submit">Register Player</button>
+
+                <button type="submit" style="margin-top: 24px;">Register Player</button>
             </form>
         </div>
     </div>
+
+    <script>
+        const today = new Date();
+        const dd = String(today.getDate()).padStart(2, '0');
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const yyyy = today.getFullYear();
+        const maxDate = yyyy + '-' + mm + '-' + dd;
+        document.getElementById('date_of_birth').setAttribute('max', maxDate);
+
+        document.getElementById('phone').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
+        });
+
+        document.getElementById('email').addEventListener('input', function() {
+            if (this.value && !this.value.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+                this.setCustomValidity('Please enter a valid email address');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+
+        document.getElementById('upi_id').addEventListener('input', function() {
+            if (this.value && !this.value.includes('@')) {
+                this.setCustomValidity('Please enter a valid UPI ID');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+
+        function toggleDSTTAField() {
+            console.log("toggleDSTTAField called"); // Debug log
+            const state = document.getElementById('state').value;
+            const dsttaContainer = document.getElementById('dstta_id_container');
+            console.log("Selected state:", state); // Debug log
+            
+            if (state === 'Delhi') {
+                dsttaContainer.style.display = 'block';
+                console.log("Showing DSTTA field"); // Debug log
+            } else {
+                dsttaContainer.style.display = 'none';
+                document.getElementById('dstta_id').value = '';
+                console.log("Hiding DSTTA field"); // Debug log
+            }
+        }
+
+        // Call the function when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Page loaded, initializing DSTTA field"); // Debug log
+            toggleDSTTAField();
+        });
+    </script>
 </body>
 </html>

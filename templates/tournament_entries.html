@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="tournament-header">
+    <div class="tournament-title">
+        <h1>{{ tournament['Tournament Name'] }}</h1>
+    </div>
+    {% include 'tournament_submenu.html' %}
+</div>
+
+<div class="container">
+    <div class="content">
+        <!-- Girls Section -->
+        <div class="section girls-section">
+            <h2 class="section-header">Girls Categories</h2>
+            <div class="categories-row">
+                {% for category, entries in girls_entries.items() %}
+                <div class="category-card">
+                    <h3 class="category-header">{{ category }}</h3>
+                    {% if entries %}
+                    <div class="entries-list">
+                        {% for entry in entries %}
+                        <div class="entry-item">
+                            <span class="entry-number">{{ loop.index }}.</span>
+                            <span class="entry-name">{{ entry['Name'] }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="no-entries">
+                        No entries yet
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Boys Section -->
+        <div class="section boys-section">
+            <h2 class="section-header">Boys Categories</h2>
+            <div class="categories-row">
+                {% for category, entries in boys_entries.items() %}
+                <div class="category-card">
+                    <h3 class="category-header">{{ category }}</h3>
+                    {% if entries %}
+                    <div class="entries-list">
+                        {% for entry in entries %}
+                        <div class="entry-item">
+                            <span class="entry-number">{{ loop.index }}.</span>
+                            <span class="entry-name">{{ entry['Name'] }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="no-entries">
+                        No entries yet
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .tournament-header {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: white;
+        padding: 20px 0;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .tournament-title {
+        text-align: center;
+        padding: 0 20px;
+    }
+
+    .tournament-title h1 {
+        margin: 0;
+        font-size: 2em;
+        color: white;
+    }
+
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 15px;
+    }
+
+    .section {
+        margin-bottom: 30px;
+    }
+
+    .section-header {
+        color: #1e3c72;
+        padding: 8px;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #1e3c72;
+        font-size: 1.4em;
+        text-align: left;
+    }
+
+    .categories-row {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 10px;
+        overflow-x: auto;
+        padding: 5px 0;
+    }
+
+    .category-card {
+        flex: 0 0 180px;
+        background: white;
+        padding: 10px;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .category-header {
+        font-size: 0.95em;
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #eee;
+        text-align: left;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .entries-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .entry-item {
+        padding: 6px;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 0.9em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: flex;
+        align-items: center;
+    }
+
+    .entry-number {
+        min-width: 25px;
+        color: #666;
+    }
+
+    .entry-name {
+        flex-grow: 1;
+        text-align: left;
+    }
+
+    .entry-item:last-child {
+        border-bottom: none;
+    }
+
+    .no-entries {
+        padding: 15px;
+        text-align: center;
+        color: #666;
+        font-style: italic;
+        font-size: 0.9em;
+    }
+
+    .girls-section .category-header {
+        color: #d81b60;
+    }
+
+    .boys-section .category-header {
+        color: #1976d2;
+    }
+
+    /* Scrollbar styling */
+    .categories-row::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .categories-row::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+
+    .categories-row::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 3px;
+    }
+
+    .categories-row::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    .entries-list::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .entries-list::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 2px;
+    }
+
+    .entries-list::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 2px;
+    }
+
+    .entries-list::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 1400px) {
+        .category-card {
+            flex: 0 0 170px;
+        }
+    }
+
+    /* Tournament submenu styles */
+    .tournament-submenu {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 10px 0;
+        margin-top: 15px;
+        text-align: center;
+    }
+
+    .tournament-submenu a {
+        color: white;
+        text-decoration: none;
+        padding: 8px 15px;
+        margin: 0 5px;
+        border-radius: 4px;
+        transition: background-color 0.3s;
+    }
+
+    .tournament-submenu a:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .tournament-submenu a.active {
+        background: rgba(255, 255, 255, 0.2);
+        font-weight: bold;
+    }
+</style>
+{% endblock %}

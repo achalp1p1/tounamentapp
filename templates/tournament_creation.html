@@ -3,6 +3,7 @@
 <head>
     <title>Tournament Creation</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
         body { min-height: 100vh; background: #f0f2f5; }
@@ -34,24 +35,6 @@
             background: white;
             color: #1e3c72;
         }
-        .dashboard-link {
-            background: #f8f9fa;
-            color: #1e3c72;
-            border: 2px solid #1e3c72;
-            padding: 1vh 2vh;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 500;
-            display: inline-block;
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            transition: background 0.2s, color 0.2s;
-        }
-        .dashboard-link:hover {
-            background: #1e3c72;
-            color: white;
-        }
         .content {
             flex: 1;
             display: flex;
@@ -61,13 +44,13 @@
             padding: 3vh 0;
         }
         .form-card {
-            background: white;
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
             padding: 32px 32px 24px 32px;
             border-radius: 15px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            width: 100%;
-            max-width: 900px;
-            margin-top: 2vh;
+            background: white;
         }
         label {
             display: block;
@@ -75,22 +58,15 @@
             color: #333;
             font-weight: 500;
         }
-        input[type="text"], input[type="date"], input[type="number"], select {
+        input, select, textarea, button {
             width: 100%;
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            font-size: 1em;
-            margin-bottom: 18px;
             box-sizing: border-box;
-            height: 44px;
-            background: #fff;
-            appearance: none;
-            display: block;
+            margin-bottom: 18px;
+            font-size: 1em;
         }
         .category-fee-header {
-            display: flex;
-            align-items: center;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
             gap: 18px;
             margin-bottom: 6px;
             font-size: 1em;
@@ -98,23 +74,29 @@
             font-weight: 500;
         }
         .category-fee-header > div {
-            flex: 1 1 0;
-            min-width: 120px;
-            text-align: left;
-        }
-        .category-fee-header .remove-header {
-            min-width: 90px;
+            text-align: center;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .category-fee-row {
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
+            grid-template-columns: repeat(7, 1fr);
             gap: 18px;
             margin-bottom: 12px;
         }
-        .category-select, .fee-input, .prize-input {
+        .category-select, .fee-input, .prize-input, .format-select {
             width: 100%;
             margin-bottom: 0;
             height: 44px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 1em;
+            box-sizing: border-box;
+            background: #fff;
+            appearance: none;
         }
         .fee-input::-webkit-inner-spin-button,
         .fee-input::-webkit-outer-spin-button {
@@ -171,9 +153,23 @@
         button[type="submit"]:hover {
             background: #1e3c72;
         }
-        @media (max-width: 1100px) {
-            .form-card { max-width: 98vw; }
-            .category-fee-row { grid-template-columns: 1fr; }
+        @media (max-width: 900px) {
+            .form-card { padding: 16px 8px 12px 8px; }
+            .category-fee-row, .category-fee-header { grid-template-columns: 1fr; }
+            .date-row {
+                flex-direction: column !important;
+                gap: 0 !important;
+            }
+            .date-row > div {
+                margin-bottom: 18px;
+            }
+            .venue-prize-row {
+                flex-direction: column !important;
+                gap: 0 !important;
+            }
+            .venue-prize-row > div {
+                margin-bottom: 18px;
+            }
         }
         @media (max-width: 600px) {
             .form-card { padding: 16px 8px 12px 8px; }
@@ -185,9 +181,9 @@
     </style>
 </head>
 <body>
+    {% include 'menu.html' %}
     <div class="container">
         <div class="header">
-            <a href="{{ url_for('dashboard') }}" class="dashboard-link">&#8592; Back to Dashboard</a>
             <h1>Tournament Creation</h1>
             <a href="{{ url_for('login') }}" class="log-off">Log Off</a>
         </div>
@@ -197,7 +193,45 @@
                     <label for="tournament_name">Tournament Name</label>
                     <input type="text" id="tournament_name" name="tournament_name" required>
 
+                    <!-- Date fields row -->
+                    <div class="date-row" style="display: flex; gap: 18px; margin-bottom: 18px;">
+                        <div style="flex:1;">
+                            <label for="start_date">Start Date</label>
+                            <input type="date" id="start_date" name="start_date" required>
+                        </div>
+                        <div style="flex:1;">
+                            <label for="end_date">End Date</label>
+                            <input type="date" id="end_date" name="end_date" required>
+                        </div>
+                        <div style="flex:1;">
+                            <label for="last_registration_date">Last Registration Date</label>
+                            <input type="date" id="last_registration_date" name="last_registration_date" required>
+                        </div>
+                    </div>
+
+                    <!-- Venue and Prize row -->
+                    <div class="venue-prize-row" style="display: flex; gap: 18px; margin-bottom: 18px;">
+                        <div style="flex:1;">
+                            <label for="venue">Venue</label>
+                            <input type="text" id="venue" name="venue" required>
+                        </div>
+                        <div style="flex:1;">
+                            <label for="total_prize">Prize</label>
+                            <input type="number" id="total_prize" name="total_prize" min="0" required placeholder="Enter total prize amount">
+                        </div>
+                    </div>
+
+                    <!-- Categories, Fees & Prizes section -->
                     <label>Categories, Fees & Prizes</label>
+                    <div class="category-fee-header">
+                        <div>Select Category</div>
+                        <div>Fee</div>
+                        <div>First Prize</div>
+                        <div>Second Prize</div>
+                        <div>Third Prize</div>
+                        <div>Format</div>
+                        <div></div>
+                    </div>
                     <div id="categories-container">
                         <div class="category-fee-row">
                             <select name="categories[]" class="category-select" required>
@@ -223,19 +257,14 @@
                             <input type="text" name="first_prizes[]" class="prize-input" placeholder="First Prize" required>
                             <input type="text" name="second_prizes[]" class="prize-input" placeholder="Second Prize" required>
                             <input type="text" name="third_prizes[]" class="prize-input" placeholder="Third Prize" required>
+                            <select name="formats[]" class="format-select" required>
+                                <option value="Knockout" selected>Knockout</option>
+                                <option value="Two Stage">Two Stage</option>
+                            </select>
                             <button type="button" class="remove-category-btn" style="display:none;">Remove</button>
                         </div>
                     </div>
                     <button type="button" id="add-category-btn">Add Category</button>
-
-                    <label for="venue">Venue</label>
-                    <input type="text" id="venue" name="venue" required>
-
-                    <label for="date">Tournament Date</label>
-                    <input type="date" id="date" name="date" required value="{{ default_tournament_date }}">
-
-                    <label for="last_registration_date">Last Registration Date</label>
-                    <input type="date" id="last_registration_date" name="last_registration_date" required value="{{ default_last_reg_date }}">
 
                     <label for="general_info">General Information</label>
                     <textarea id="general_info" name="general_info" rows="4" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid #ccc; font-size:1em; margin-bottom:18px; box-sizing:border-box; resize:vertical;" placeholder="Enter tournament details here..."></textarea>
@@ -263,6 +292,7 @@
         newRow.querySelector('input[name="first_prizes[]"]').value = '';
         newRow.querySelector('input[name="second_prizes[]"]').value = '';
         newRow.querySelector('input[name="third_prizes[]"]').value = '';
+        newRow.querySelector('select[name="formats[]"]').selectedIndex = 0;
         newRow.querySelector('.remove-category-btn').style.display = 'inline-block';
 
         // Add remove functionality
@@ -277,6 +307,76 @@
     document.querySelector('.remove-category-btn').onclick = function() {
         this.parentElement.remove();
     };
+
+    function formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function addDays(date, days) {
+        const result = new Date(date);
+        result.setDate(result.getDate() + days);
+        return result;
+    }
+
+    window.addEventListener('load', function() {
+        const today = new Date();
+
+        // Set Start Date (today + 10 days)
+        const startDate = addDays(today, 10);
+        document.getElementById('start_date').value = formatDate(startDate);
+
+        // Set End Date (today + 12 days)
+        const endDate = addDays(today, 12);
+        document.getElementById('end_date').value = formatDate(endDate);
+
+        // Set Last Registration Date (today + 8 days)
+        const lastRegDate = addDays(today, 8);
+        document.getElementById('last_registration_date').value = formatDate(lastRegDate);
+
+        // Add event listeners to ensure date logic
+        document.getElementById('start_date').addEventListener('change', validateDates);
+        document.getElementById('end_date').addEventListener('change', validateDates);
+        document.getElementById('last_registration_date').addEventListener('change', validateDates);
+    });
+
+    function validateDates() {
+        const startDate = new Date(document.getElementById('start_date').value);
+        const endDate = new Date(document.getElementById('end_date').value);
+        const lastRegDate = new Date(document.getElementById('last_registration_date').value);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (lastRegDate >= startDate) {
+            alert('Last Registration Date must be before Start Date');
+            return false;
+        }
+        if (startDate > endDate) {
+            alert('End Date must be after Start Date');
+            return false;
+        }
+        if (lastRegDate < today) {
+            alert('Last Registration Date cannot be in the past');
+            return false;
+        }
+        if (startDate < today) {
+            alert('Start Date cannot be in the past');
+            return false;
+        }
+        if (endDate < today) {
+            alert('End Date cannot be in the past');
+            return false;
+        }
+        return true;
+    }
+
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (!validateDates()) {
+            e.preventDefault();
+        }
+    });
     </script>
 </body>
 </html>

@@ -1,0 +1,124 @@
+<nav class="submenu">
+    <a href="{{ url_for('tournament_info', tournament_id=tournament['Tournament Id']) }}" 
+       class="submenu-link {% if active_subpage == 'info' %}active{% endif %}">Info</a>
+    
+    <!-- Register dropdown menu -->
+    <div class="dropdown">
+        <a href="#" class="submenu-link dropdown-toggle {% if active_subpage in ['register', 'update_seeding'] %}active{% endif %}">
+            Register
+            <span class="dropdown-arrow">▼</span>
+        </a>
+        <div class="dropdown-content">
+            <a href="{{ url_for('tournament_register', tournament_id=tournament['Tournament Id']) }}" 
+               class="dropdown-item {% if active_subpage == 'register' %}active{% endif %}">Register Player</a>
+            <a href="{{ url_for('tournament_update_seeding', tournament_id=tournament['Tournament Id']) }}" 
+               class="dropdown-item {% if active_subpage == 'update_seeding' %}active{% endif %}">Update Seeding</a>
+        </div>
+    </div>
+    
+    <a href="{{ url_for('tournament_schedule', tournament_id=tournament['Tournament Id']) }}" 
+       class="submenu-link {% if active_subpage == 'schedule' %}active{% endif %}">Schedule</a>
+    <a href="{{ url_for('tournament_entries', tournament_id=tournament['Tournament Id']) }}" 
+       class="submenu-link {% if active_subpage == 'entries' %}active{% endif %}">Entries</a>
+    <a href="{{ url_for('tournament_results', tournament_id=tournament['Tournament Id']) }}" 
+       class="submenu-link {% if active_subpage == 'results' %}active{% endif %}">Draws/Results</a>
+</nav>
+
+<style>
+    .submenu {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 10px 36px;
+        display: flex;
+        gap: 20px;
+        align-items: center;
+    }
+
+    .submenu-link {
+        color: white;
+        text-decoration: none;
+        font-size: 0.9em;
+        font-weight: 500;
+        padding: 4px 12px;
+        border-radius: 4px;
+        transition: background 0.2s;
+    }
+
+    .submenu-link:hover,
+    .submenu-link.active {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Dropdown styles */
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .dropdown-toggle {
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .dropdown-arrow {
+        font-size: 0.8em;
+        transition: transform 0.2s;
+    }
+
+    .dropdown:hover .dropdown-arrow {
+        transform: rotate(180deg);
+    }
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background: white;
+        min-width: 160px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        border-radius: 4px;
+        z-index: 1000;
+        top: 100%;
+        left: 0;
+        margin-top: 5px;
+    }
+
+    .dropdown:hover .dropdown-content {
+        display: block;
+    }
+
+    .dropdown-item {
+        color: #333;
+        text-decoration: none;
+        padding: 10px 15px;
+        display: block;
+        transition: background 0.2s;
+    }
+
+    .dropdown-item:hover,
+    .dropdown-item.active {
+        background: #f0f0f0;
+        color: #1e3c72;
+    }
+
+    .dropdown-item:first-child {
+        border-radius: 4px 4px 0 0;
+    }
+
+    .dropdown-item:last-child {
+        border-radius: 0 0 4px 4px;
+    }
+
+    @media (max-width: 768px) {
+        .submenu {
+            padding: 10px 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .dropdown-content {
+            position: absolute;
+            width: 200px;
+        }
+    }
+</style>
