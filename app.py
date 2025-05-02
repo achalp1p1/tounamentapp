@@ -1604,8 +1604,8 @@ def submit_bulk_registration(tournament_id):
                 with open('tournament_registrations.csv', 'r', newline='') as file:
                     reader = csv.DictReader(file)
                     for row in reader:
-                        if (row['Tournament Id'] == tournament_id and 
-                            row['Player Id'] == player_id and 
+                        if (row['Tournament ID'] == tournament_id and 
+                            row['Player ID'] == player_id and 
                             row['Category'] == category):
                             return jsonify({
                                 'success': False,
@@ -1615,16 +1615,26 @@ def submit_bulk_registration(tournament_id):
                 # If file doesn't exist, create it with headers
                 with open('tournament_registrations.csv', 'w', newline='') as file:
                     writer = csv.writer(file)
-                    writer.writerow(['Tournament Id', 'Player Id', 'Category', 'Registration Date'])
+                    writer.writerow([
+                        'Tournament ID', 
+                        'Player ID', 
+                        'Registration Date',
+                        'Category',
+                        'Status',
+                        'Seeding'
+                    ])
 
             # Add entry to tournament_registrations.csv
             with open('tournament_registrations.csv', 'a', newline='') as file:
                 writer = csv.writer(file)
+                registration_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 writer.writerow([
                     tournament_id,
                     player_id,
+                    registration_date,
                     category,
-                    datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    'Active',
+                    ''
                 ])
 
         return jsonify({
@@ -1680,21 +1690,29 @@ def generate_new_player_id(dob):
         max_sequence = 0
         pattern = f"{current_year}-{birth_year}-"
         
-        with open('players_data.csv', 'r', newline='') as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                player_id = row['Player Id']
-                if player_id.startswith(pattern):
-                    try:
-                        sequence = int(player_id.split('-')[-1])
-                        max_sequence = max(max_sequence, sequence)
-                    except ValueError:
-                        continue
+        try:
+            with open('players_data.csv', 'r', newline='') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    player_id = row['Player ID']  # Changed from 'Player Id'
+                    if player_id.startswith(pattern):
+                        try:
+                            sequence = int(player_id.split('-')[-1])
+                            max_sequence = max(max_sequence, sequence)
+                        except ValueError:
+                            continue
+        except FileNotFoundError:
+            # If file doesn't exist, start with sequence 0
+            pass
         
         # Generate new ID with incremented sequence
         new_sequence = str(max_sequence + 1).zfill(4)
-        return f"{current_year}-{birth_year}-{new_sequence}"
+        new_id = f"{current_year}-{birth_year}-{new_sequence}"
+        print(f"Generated new player ID: {new_id}")  # Debug log
+        return new_id
+
     except Exception as e:
+        print(f"Error generating player ID: {str(e)}")  # Debug log
         app.logger.error(f"Error generating player ID: {str(e)}")
         return None
 

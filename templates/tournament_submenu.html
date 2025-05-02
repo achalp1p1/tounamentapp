@@ -4,13 +4,15 @@
     
     <!-- Register dropdown menu -->
     <div class="dropdown">
-        <a href="#" class="submenu-link dropdown-toggle {% if active_subpage in ['register', 'update_seeding'] %}active{% endif %}">
+        <a href="#" class="submenu-link dropdown-toggle {% if active_subpage in ['register', 'update_seeding', 'bulk_register'] %}active{% endif %}">
             Register
             <span class="dropdown-arrow">▼</span>
         </a>
         <div class="dropdown-content">
             <a href="{{ url_for('tournament_register', tournament_id=tournament['Tournament Id']) }}" 
                class="dropdown-item {% if active_subpage == 'register' %}active{% endif %}">Register Player</a>
+            <a href="{{ url_for('tournament_bulk_register', tournament_id=tournament['Tournament Id']) }}" 
+               class="dropdown-item {% if active_subpage == 'bulk_register' %}active{% endif %}">Bulk Register</a>
             <a href="{{ url_for('tournament_update_seeding', tournament_id=tournament['Tournament Id']) }}" 
                class="dropdown-item {% if active_subpage == 'update_seeding' %}active{% endif %}">Update Seeding</a>
         </div>

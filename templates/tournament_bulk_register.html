@@ -1,0 +1,562 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="tournament-header">
+    <div class="tournament-title">
+        <h1>{{ tournament['Tournament Name'] }}</h1>
+    </div>
+    {% include 'tournament_submenu.html' %}
+</div>
+
+<div class="container">
+    <div class="upload-section">
+        <h2>Bulk Tournament Registration</h2>
+        <form id="uploadForm" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="csvFile">Upload CSV File:</label>
+                <div class="input-group">
+                    <div class="custom-file">
+                        <input type="file" class="custom-file-input" id="csvFile" name="csvFile" accept=".csv" required>
+                        <label class="custom-file-label" for="csvFile">Choose file</label>
+                    </div>
+                    <div class="input-group-append">
+                        <button type="submit" class="btn btn-secondary">Upload and Validate</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        {% if show_table %}
+        <div class="validation-results">
+            <h3>Validation Results</h3>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Row</th>
+                            {% for header in csv_data.headers %}
+                            <th>{{ header }}</th>
+                            {% endfor %}
+                            <th>Status</th>
+                            <th>Registration</th>
+                            <th>Player ID</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in csv_data.rows %}
+                        <tr class="{{ 'table-danger' if not row.is_valid else '' }}">
+                            <td>{{ row.index }}</td>
+                            {% for cell in row.data %}
+                            <td>
+                                <input type="text" 
+                                       class="form-control-plaintext editable-cell {% if not row.is_valid and loop.index0 < 5 and not cell.strip() %}invalid-value{% endif %}"
+                                       value="{{ cell }}" 
+                                       data-original="{{ cell }}"
+                                       data-column="{{ loop.index0 }}"
+                                       {% if loop.index0 < 5 %}required{% endif %}>
+                            </td>
+                            {% endfor %}
+                            <td>
+                                {% if row.is_valid %}
+                                <span class="badge bg-success">Valid</span>
+                                {% else %}
+                                <div class="invalid-entry">
+                                    <span class="badge bg-danger">Invalid</span>
+                                    <div class="error-details">
+                                        {% for error in row.errors %}
+                                        <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {% if row.registration_status == 'New' %}bg-info{% else %}bg-warning{% endif %}">
+                                    {{ row.registration_status }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if row.player_id %}
+                                <span class="player-id">{{ row.player_id }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="validation-summary">
+                <p>Valid Entries: {{ csv_data.rows | selectattr('is_valid') | list | length }}</p>
+                <p>Invalid Entries: {{ csv_data.rows | rejectattr('is_valid') | list | length }}</p>
+                <p>New Players: {{ csv_data.rows | selectattr('registration_status', 'equalto', 'New') | list | length }}</p>
+                <p>Registered Players: {{ csv_data.rows | selectattr('registration_status', 'equalto', 'Registered') | list | length }}</p>
+                {% if csv_data.rows | selectattr('is_valid') | list | length > 0 %}
+                <button class="btn btn-success mt-3" onclick="submitValidEntries()">Proceed with Valid Entries</button>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="format-section mt-4">
+            <div class="csv-format-info">
+                <h4>Required CSV Format:</h4>
+                <p>The CSV file should contain the following columns in order:</p>
+                <ol>
+                    <li><span class="mandatory">Name *</span></li>
+                    <li><span class="mandatory">Date of Birth * (YYYY-MM-DD format)</span></li>
+                    <li><span class="mandatory">Gender * (Male/Female)</span></li>
+                    <li><span class="mandatory">Phone Number *</span></li>
+                    <li><span class="mandatory">Category *</span></li>
+                    <li>Email ID</li>
+                    <li>Address</li>
+                    <li>State</li>
+                    <li>TTFI ID</li>
+                    <li>DSTTA ID</li>
+                    <li>School/Institution</li>
+                    <li>Academy</li>
+                    <li>UPI ID</li>
+                </ol>
+                <div class="notes">
+                    <p class="mandatory-note">* Mandatory fields</p>
+                    <p class="format-note">Note: Please ensure all dates are in YYYY-MM-DD format and the columns are in the exact order specified above.</p>
+                </div>
+            </div>
+
+            <div class="template-section">
+                <h3>Download Template</h3>
+                <p>Download our CSV template file to ensure correct format:</p>
+                <a href="{{ url_for('download_bulk_template', tournament_id=tournament['Tournament Id']) }}" class="btn btn-secondary">Download Template</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .tournament-header {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: white;
+        padding: 20px 0;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .tournament-title {
+        text-align: center;
+        padding: 0 20px;
+    }
+
+    .tournament-title h1 {
+        margin: 0;
+        font-size: 2em;
+        color: white;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 0 15px;
+    }
+
+    .nav-tabs {
+        border-bottom: none;
+        padding: 10px 20px 0;
+        margin-top: 10px;
+    }
+
+    .nav-tabs .nav-link {
+        color: rgba(255, 255, 255, 0.8);
+        border: none;
+        padding: 10px 15px;
+        margin-right: 5px;
+        border-radius: 4px 4px 0 0;
+    }
+
+    .nav-tabs .nav-link:hover {
+        color: white;
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-tabs .nav-link.active {
+        color: #1e3c72;
+        background-color: white;
+    }
+
+    .invalid-value {
+        color: #dc3545;
+        font-weight: bold;
+    }
+
+    .player-id {
+        font-family: monospace;
+        font-size: 0.9em;
+        color: #495057;
+        background-color: #f8f9fa;
+        padding: 2px 6px;
+        border-radius: 3px;
+        border: 1px solid #dee2e6;
+    }
+
+    .invalid-entry {
+        position: relative;
+    }
+
+    .error-details {
+        display: none;
+        position: absolute;
+        background: white;
+        border: 1px solid #ddd;
+        padding: 10px;
+        border-radius: 4px;
+        z-index: 1000;
+        right: 0;
+        min-width: 200px;
+    }
+
+    .invalid-entry:hover .error-details {
+        display: block;
+    }
+
+    .mandatory {
+        color: red;
+    }
+
+    .notes {
+        margin-top: 15px;
+        padding-top: 10px;
+        border-top: 1px solid #ddd;
+    }
+
+    .mandatory-note {
+        color: red;
+        font-size: 0.9em;
+    }
+
+    .format-note {
+        font-size: 0.9em;
+        font-style: italic;
+    }
+
+    .upload-section {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+
+    .csv-format-info {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 4px;
+        margin: 20px 0;
+    }
+
+    .template-section {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #dee2e6;
+    }
+
+    .validation-results {
+        background: white;
+        padding: 12px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-top: 15px;
+        font-size: 0.75rem;
+    }
+
+    .validation-results h3 {
+        font-size: 1rem;
+        margin-bottom: 10px;
+    }
+
+    .table {
+        margin-top: 10px;
+        font-size: 0.7rem;
+        width: auto;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+    .table th {
+        background-color: #f8f9fa;
+        padding: 3px 5px;
+        white-space: nowrap;
+        font-weight: 600;
+        border: 1px solid #dee2e6;
+    }
+
+    .table td {
+        padding: 2px 4px;
+        vertical-align: middle;
+        border: 1px solid #dee2e6;
+        height: 22px;
+    }
+
+    .table input.form-control-plaintext {
+        padding: 0 2px;
+        font-size: 0.7rem;
+        height: 20px;
+        border: none;
+        background: transparent;
+        width: 100%;
+    }
+
+    .table th:nth-child(1),
+    .table td:nth-child(1) {
+        width: 30px;
+    }
+
+    .table th:nth-child(2),
+    .table td:nth-child(2) {
+        width: 80px;
+    }
+
+    .table th:nth-child(3),
+    .table td:nth-child(3) {
+        width: 70px;
+    }
+
+    .table th:nth-child(4),
+    .table td:nth-child(4) {
+        width: 45px;
+    }
+
+    .table th:nth-child(5),
+    .table td:nth-child(5) {
+        width: 70px;
+    }
+
+    .table th:nth-child(6),
+    .table td:nth-child(6) {
+        width: 70px;
+    }
+
+    .table th:nth-child(7),
+    .table td:nth-child(7) {
+        width: 90px;
+    }
+
+    .table th:nth-child(8),
+    .table td:nth-child(8) {
+        width: 90px;
+    }
+
+    .table th:nth-child(9),
+    .table td:nth-child(9) {
+        width: 60px;
+    }
+
+    .table th:nth-child(10),
+    .table td:nth-child(10) {
+        width: 60px;
+    }
+
+    .table th:nth-child(11),
+    .table td:nth-child(11) {
+        width: 60px;
+    }
+
+    .table th:nth-child(12),
+    .table td:nth-child(12) {
+        width: 80px;
+    }
+
+    .table th:nth-child(13),
+    .table td:nth-child(13) {
+        width: 70px;
+    }
+
+    .table th:nth-child(14),
+    .table td:nth-child(14) {
+        width: 70px;
+    }
+
+    .table th:nth-child(15),
+    .table td:nth-child(15) {
+        width: 45px;
+    }
+
+    .table th:nth-child(16),
+    .table td:nth-child(16) {
+        width: 65px;
+    }
+
+    .table th:nth-child(17),
+    .table td:nth-child(17) {
+        width: 65px;
+    }
+
+    .table td input {
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+
+    .table td input:hover {
+        position: relative;
+    }
+
+    .btn-success {
+        padding: 4px 8px;
+        font-size: 0.85rem;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .input-group {
+        display: flex;
+        align-items: stretch;
+        width: fit-content;
+        gap: 10px;
+    }
+
+    .custom-file {
+        position: relative;
+        display: flex;
+        align-items: stretch;
+        width: 200px;  /* Width for the choose file section */
+    }
+
+    .custom-file-input {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        height: 38px;
+        margin: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .custom-file-label {
+        position: absolute;
+        top: 0;
+        right: 0;
+        left: 0;
+        z-index: 1;
+        height: 38px;
+        padding: 6px 12px;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #495057;
+        background-color: #fff;
+        border: 1px solid #ced4da;
+        border-radius: .25rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .custom-file-label::after {
+        content: "Browse";
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 3;
+        display: block;
+        height: 36px;
+        padding: 6px 12px;
+        line-height: 1.5;
+        color: #495057;
+        background-color: #e9ecef;
+        border-left: 1px solid #ced4da;
+        border-radius: 0 .25rem .25rem 0;
+    }
+
+    .btn-secondary {
+        height: 38px;
+        padding: 6px 12px;
+        background-color: #6c757d;
+        border: 1px solid #6c757d;
+        color: white;
+        border-radius: .25rem;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .btn-secondary:hover {
+        background-color: #5a6268;
+        border-color: #545b62;
+    }
+
+    /* Ensure proper alignment */
+    .input-group-append {
+        display: flex;
+        align-items: stretch;
+    }
+
+    /* Prevent text overflow */
+    .custom-file-label span {
+        display: inline-block;
+        max-width: calc(100% - 70px);  /* Account for "Browse" button width */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        vertical-align: middle;
+    }
+</style>
+
+<script>
+function submitValidEntries() {
+    const rows = document.querySelectorAll('tbody tr');
+    const entries = [];
+    
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('.editable-cell');
+        const data = Array.from(cells).map(cell => cell.value);
+        const isValid = row.querySelector('.badge.bg-success') !== null;
+        const registrationBadge = row.querySelector('td:nth-last-child(2) .badge');
+        const registrationStatus = registrationBadge ? registrationBadge.textContent.trim() : 'New';
+        const playerIdCell = row.querySelector('.player-id');
+        const playerId = playerIdCell ? playerIdCell.textContent.trim() : null;
+        
+        entries.push({
+            data: data,
+            is_valid: isValid,
+            registration_status: registrationStatus,
+            player_id: playerId
+        });
+    });
+
+    if (!entries.every(entry => entry.is_valid)) {
+        alert('Please correct all invalid entries before submitting.');
+        return;
+    }
+
+    fetch(`/tournament/{{ tournament['Tournament Id'] }}/bulk_register/submit`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ entries: entries })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Registration successful!');
+            window.location.href = `/tournament/{{ tournament['Tournament Id'] }}/entries`;
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred during registration');
+    });
+}
+
+document.querySelector('.custom-file-input').addEventListener('change', function(e) {
+    var fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file';
+    var label = this.nextElementSibling;
+    var span = document.createElement('span');
+    span.textContent = fileName;
+    label.innerHTML = '';
+    label.appendChild(span);
+    label.appendChild(document.createTextNode(''));  // Preserve space for the "Browse" pseudo-element
+});
+</script>
+{% endblock %} 
