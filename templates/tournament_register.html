@@ -300,6 +300,10 @@
             </div>
             {% endif %}
 
+            <a href="{{ url_for('tournament_bulk_register', tournament_id=tournament['Tournament Id']) }}" class="btn btn-primary" style="margin-bottom: 16px;">
+                Bulk Register
+            </a>
+
             <form method="POST" class="registration-form">
                 <h2 class="form-title">Tournament Registration</h2>
 

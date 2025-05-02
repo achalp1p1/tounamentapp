@@ -29,6 +29,7 @@
         {% if show_table %}
         <div class="validation-results">
             <h3>Validation Results</h3>
+            <button class="btn btn-primary" type="button" onclick="addNewRow()">Add Row</button>
             <div class="table-responsive">
                 <table class="table">
                     <thead>
@@ -538,22 +539,158 @@
         background-color: #fff8f8 !important;
         border: 1px solid #dc3545 !important;
     }
+
+    .btn-primary {
+        background-color: #1e3c72;
+        color: #fff;
+        border: none;
+        padding: 6px 14px;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        margin-top: 10px;
+    }
+    .btn-primary:hover {
+        background-color: #2a5298;
+    }
 </style>
 
 <script>
+function validateRow(row) {
+    const cells = row.querySelectorAll('.editable-cell');
+    let isValid = true;
+    let errors = [];
+
+    // Remove previous invalid styles
+    cells.forEach(cell => cell.classList.remove('invalid-field'));
+
+    // Name
+    if (!cells[0].value.trim()) {
+        isValid = false;
+        cells[0].classList.add('invalid-field');
+        errors.push('Name is required');
+    }
+    // Date of Birth
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(cells[1].value.trim())) {
+        isValid = false;
+        cells[1].classList.add('invalid-field');
+        errors.push('Date of Birth is required (YYYY-MM-DD)');
+    }
+    // Gender
+    if (!['male', 'female'].includes(cells[2].value.trim().toLowerCase())) {
+        isValid = false;
+        cells[2].classList.add('invalid-field');
+        errors.push('Gender must be Male or Female');
+    }
+    // Phone Number
+    if (!/^\d{10}$/.test(cells[3].value.trim())) {
+        isValid = false;
+        cells[3].classList.add('invalid-field');
+        errors.push('Phone number must be 10 digits');
+    }
+    // Category
+    if (!cells[4].value.trim()) {
+        isValid = false;
+        cells[4].classList.add('invalid-field');
+        errors.push('Category is required');
+    }
+
+    // Update status cell
+    const statusCell = row.querySelector('td:nth-child(' + (cells.length + 2) + ')');
+    if (isValid) {
+        statusCell.innerHTML = '<span class="badge bg-success">Valid</span>';
+        row.classList.remove('table-danger');
+    } else {
+        statusCell.innerHTML = `<div class="invalid-entry">
+            <span class="badge bg-danger">Invalid</span>
+            <div class="error-details">${errors.map(e => `<p>${e}</p>`).join('')}</div>
+        </div>`;
+        row.classList.add('table-danger');
+    }
+    return isValid;
+}
+
+// Validate on input change
+document.addEventListener('input', function(e) {
+    if (e.target.classList.contains('editable-cell')) {
+        const row = e.target.closest('tr');
+        validateRow(row);
+    }
+});
+
+// When adding a new row, validate it on every input
+function addNewRow() {
+    const tableBody = document.querySelector('.validation-results tbody');
+    const headers = [
+        "Name", "Date of Birth", "Gender", "Phone Number", "Category",
+        "Email ID", "Address", "State", "TTFI ID", "DSTTA ID",
+        "School/Institution", "Academy", "UPI ID"
+    ];
+    const rowCount = tableBody.querySelectorAll('tr').length + 1;
+
+    const tr = document.createElement('tr');
+    tr.className = 'table-danger';
+
+    const tdIndex = document.createElement('td');
+    tdIndex.textContent = rowCount;
+    tr.appendChild(tdIndex);
+
+    for (let i = 0; i < headers.length; i++) {
+        const td = document.createElement('td');
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'form-control-plaintext editable-cell invalid-field';
+        input.value = '';
+        input.setAttribute('data-original', '');
+        input.setAttribute('data-column', i);
+        if (i < 5) input.required = true;
+        td.appendChild(input);
+        tr.appendChild(td);
+    }
+
+    // Status
+    const tdStatus = document.createElement('td');
+    tdStatus.innerHTML = `<div class="invalid-entry">
+        <span class="badge bg-danger">Invalid</span>
+        <div class="error-details"><p>Fill all required fields</p></div>
+    </div>`;
+    tr.appendChild(tdStatus);
+
+    // Registration
+    const tdReg = document.createElement('td');
+    tdReg.innerHTML = `<span class="badge bg-info">New</span>`;
+    tr.appendChild(tdReg);
+
+    // Player ID
+    const tdPID = document.createElement('td');
+    tdPID.innerHTML = '';
+    tr.appendChild(tdPID);
+
+    tableBody.appendChild(tr);
+
+    // Validate on input
+    tr.querySelectorAll('.editable-cell').forEach(input => {
+        input.addEventListener('input', function() {
+            validateRow(tr);
+        });
+    });
+}
+
+// Update submitValidEntries to only allow submission if all rows are valid
 function submitValidEntries() {
     const rows = document.querySelectorAll('tbody tr');
     const entries = [];
-    
+    let allValid = true;
+
     rows.forEach(row => {
         const cells = row.querySelectorAll('.editable-cell');
         const data = Array.from(cells).map(cell => cell.value);
-        const isValid = row.querySelector('.badge.bg-success') !== null;
+        const isValid = validateRow(row);
+        if (!isValid) allValid = false;
         const registrationBadge = row.querySelector('td:nth-last-child(2) .badge');
         const registrationStatus = registrationBadge ? registrationBadge.textContent.trim() : 'New';
         const playerIdCell = row.querySelector('.player-id');
         const playerId = playerIdCell ? playerIdCell.textContent.trim() : null;
-        
+
         entries.push({
             data: data,
             is_valid: isValid,
@@ -562,7 +699,7 @@ function submitValidEntries() {
         });
     });
 
-    if (!entries.every(entry => entry.is_valid)) {
+    if (!allValid) {
         alert('Please correct all invalid entries before submitting.');
         return;
     }
@@ -577,9 +714,7 @@ function submitValidEntries() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Show the summary message from backend
             alert(data.message);
-            
             // Clear the form and validation results safely
             try {
                 const fileInput = document.querySelector('#csvFile');
@@ -613,4 +748,4 @@ document.querySelector('.custom-file-input').addEventListener('change', function
     label.appendChild(document.createTextNode(''));  // Preserve space for the "Browse" pseudo-element
 });
 </script>
-{% endblock %} 
+{% endblock %}

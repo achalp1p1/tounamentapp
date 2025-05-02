@@ -1725,6 +1725,16 @@ def generate_new_player_id(dob):
         app.logger.error(f"Error generating player ID: {str(e)}")
         return None
 
+@app.route('/tournament/<tournament_id>/update_format')
+def tournament_update_format(tournament_id):
+    # You can render a template or just return a placeholder for now
+    return f"Update Format page for tournament {tournament_id}"
+
+@app.route('/tournament/<tournament_id>/create_draws')
+def tournament_create_draws(tournament_id):
+    # You can render a template or just return a placeholder for now
+    return f"Create Draws page for tournament {tournament_id}"
+
 if __name__ == '__main__':
     # Initialize CSV files if they don't exist
     initialize_tournament_registrations_csv()
