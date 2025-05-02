@@ -49,7 +49,7 @@
                             {% for cell in row.data %}
                             <td>
                                 <input type="text" 
-                                       class="form-control-plaintext editable-cell {% if not row.is_valid and loop.index0 < 5 and not cell.strip() %}invalid-value{% endif %}"
+                                       class="form-control-plaintext editable-cell {{ 'invalid-field' if not row.is_valid and loop.index0 in row.invalid_fields else '' }}"
                                        value="{{ cell }}" 
                                        data-original="{{ cell }}"
                                        data-column="{{ loop.index0 }}"
@@ -205,12 +205,19 @@
         display: none;
         position: absolute;
         background: white;
-        border: 1px solid #ddd;
+        border: 1px solid #dc3545;
         padding: 10px;
         border-radius: 4px;
         z-index: 1000;
         right: 0;
         min-width: 200px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .error-details p {
+        color: #dc3545;
+        margin: 0;
+        padding: 2px 0;
     }
 
     .invalid-entry:hover .error-details {
@@ -498,6 +505,39 @@
         text-overflow: ellipsis;
         vertical-align: middle;
     }
+
+    .invalid-field {
+        color: #dc3545 !important;
+        background-color: #fff8f8 !important;
+        border: 1px solid #dc3545 !important;
+        border-radius: 3px;
+        padding: 2px 4px !important;
+    }
+
+    .form-control-plaintext.invalid-field {
+        border-color: #dc3545 !important;
+    }
+
+    .form-control-plaintext.invalid-field:focus {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
+
+    /* Make the invalid field styling more prominent */
+    .invalid-field::placeholder {
+        color: #dc3545;
+    }
+
+    .invalid-field:hover {
+        background-color: #fff0f0 !important;
+    }
+
+    /* Ensure the invalid field styling overrides other styles */
+    .table td input.invalid-field {
+        color: #dc3545 !important;
+        background-color: #fff8f8 !important;
+        border: 1px solid #dc3545 !important;
+    }
 </style>
 
 <script>
@@ -537,8 +577,22 @@ function submitValidEntries() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Registration successful!');
-            window.location.href = `/tournament/{{ tournament['Tournament Id'] }}/entries`;
+            // Show the summary message from backend
+            alert(data.message);
+            
+            // Clear the form and validation results safely
+            try {
+                const fileInput = document.querySelector('#csvFile');
+                if (fileInput) fileInput.value = '';
+
+                const validationResults = document.querySelector('.validation-results');
+                if (validationResults) validationResults.style.display = 'none';
+
+                const fileLabel = document.querySelector('.custom-file-label span');
+                if (fileLabel) fileLabel.textContent = 'Choose file';
+            } catch (error) {
+                console.log('Non-critical error while clearing form:', error);
+            }
         } else {
             alert(data.message);
         }

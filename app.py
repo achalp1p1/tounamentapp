@@ -1442,6 +1442,7 @@ def tournament_bulk_register(tournament_id):
                         'index': idx,
                         'data': row,
                         'errors': [],
+                        'invalid_fields': set(),  # Add this to track which fields are invalid
                         'is_valid': True,
                         'registration_status': 'New',
                         'player_id': None
@@ -1469,35 +1470,44 @@ def tournament_bulk_register(tournament_id):
                     # Validate mandatory fields
                     if not name:
                         row_data['errors'].append('Name is required')
+                        row_data['invalid_fields'].add(0)  # 0 is the index for Name
                         row_data['is_valid'] = False
 
                     # Validate Date of Birth
                     try:
                         if not dob:
                             row_data['errors'].append('Date of Birth is required')
+                            row_data['invalid_fields'].add(1)  # 1 is the index for DOB
                             row_data['is_valid'] = False
                         else:
                             datetime.strptime(dob, '%Y-%m-%d')
                     except ValueError:
                         row_data['errors'].append('Invalid date format (use YYYY-MM-DD)')
+                        row_data['invalid_fields'].add(1)
                         row_data['is_valid'] = False
 
                     # Validate Gender
                     if not row[2].strip() or row[2].lower() not in ['male', 'female']:
                         row_data['errors'].append('Gender must be Male or Female')
+                        row_data['invalid_fields'].add(2)  # 2 is the index for Gender
                         row_data['is_valid'] = False
 
                     # Validate Phone Number
                     if not phone or not phone.isdigit():
                         row_data['errors'].append('Phone number must be numeric')
+                        row_data['invalid_fields'].add(3)  # 3 is the index for Phone
                         row_data['is_valid'] = False
 
                     # Validate Category
                     if not row[4].strip():
                         row_data['errors'].append('Category is required')
+                        row_data['invalid_fields'].add(4)  # 4 is the index for Category
                         row_data['is_valid'] = False
 
                     validated_data.append(row_data)
+
+                for row_data in validated_data:
+                    row_data['invalid_fields'] = list(row_data['invalid_fields'])  # Convert set to list
 
                 return render_template('tournament_bulk_register.html',
                                     tournament=get_tournament(tournament_id),
@@ -1547,15 +1557,15 @@ def submit_bulk_registration(tournament_id):
             return jsonify({'success': False, 'message': 'No data provided'})
 
         entries = data['entries']
-        
-        # Check if all entries are valid
         if not all(entry.get('is_valid', False) for entry in entries):
             return jsonify({
                 'success': False,
                 'message': 'Please correct all invalid entries before submitting'
             })
 
-        # Process all entries
+        skipped = []
+        registered = []
+
         for entry in entries:
             player_data = entry['data']
             name = player_data[0].strip()
@@ -1563,8 +1573,6 @@ def submit_bulk_registration(tournament_id):
             gender = player_data[2].strip()
             phone = player_data[3].strip()
             category = player_data[4].strip()
-            
-            # Get other fields
             email = player_data[5].strip() if len(player_data) > 5 else ''
             address = player_data[6].strip() if len(player_data) > 6 else ''
             state = player_data[7].strip() if len(player_data) > 7 else ''
@@ -1574,22 +1582,12 @@ def submit_bulk_registration(tournament_id):
             academy = player_data[11].strip() if len(player_data) > 11 else ''
             upi_id = player_data[12].strip() if len(player_data) > 12 else ''
 
-            # First, try to get the player ID based on name and phone only
             player_id = get_player_id_from_players_data(name, dob, phone)
-
-            # If player ID exists, they are registered
-            if player_id:
-                app.logger.info(f"Found existing player ID {player_id} for {name}")
-            else:
-                # Only generate new ID if player truly doesn't exist
-                app.logger.info(f"Generating new player ID for {name}")
+            if not player_id:
                 player_id = generate_new_player_id(dob)
                 if not player_id:
-                    return jsonify({
-                        'success': False,
-                        'message': f'Failed to generate Player ID for new player: {name}'
-                    })
-
+                    skipped.append({'name': name, 'reason': 'Failed to generate Player ID'})
+                    continue
                 # Add to players_data.csv
                 with open('players_data.csv', 'a', newline='') as file:
                     writer = csv.writer(file)
@@ -1599,7 +1597,8 @@ def submit_bulk_registration(tournament_id):
                         academy, upi_id
                     ])
 
-            # Check if player is already registered for this tournament
+            # Check if player is already registered for this tournament/category
+            already_registered = False
             try:
                 with open('tournament_registrations.csv', 'r', newline='') as file:
                     reader = csv.DictReader(file)
@@ -1607,10 +1606,8 @@ def submit_bulk_registration(tournament_id):
                         if (row['Tournament ID'] == tournament_id and 
                             row['Player ID'] == player_id and 
                             row['Category'] == category):
-                            return jsonify({
-                                'success': False,
-                                'message': f'Player {name} is already registered for this tournament in category {category}'
-                            })
+                            already_registered = True
+                            break
             except FileNotFoundError:
                 # If file doesn't exist, create it with headers
                 with open('tournament_registrations.csv', 'w', newline='') as file:
@@ -1624,7 +1621,11 @@ def submit_bulk_registration(tournament_id):
                         'Seeding'
                     ])
 
-            # Add entry to tournament_registrations.csv
+            if already_registered:
+                skipped.append({'name': name, 'reason': 'Already registered for this category'})
+                continue
+
+            # Register the player for the tournament
             with open('tournament_registrations.csv', 'a', newline='') as file:
                 writer = csv.writer(file)
                 registration_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -1636,10 +1637,18 @@ def submit_bulk_registration(tournament_id):
                     'Active',
                     ''
                 ])
+            registered.append({'name': name, 'player_id': player_id})
+
+        summary = f"Registered: {len(registered)}. Skipped: {len(skipped)}."
+        details = ""
+        if skipped:
+            details = " Skipped records: " + ", ".join([f"{r['name']} ({r['reason']})" for r in skipped])
 
         return jsonify({
             'success': True,
-            'message': 'All entries have been successfully registered'
+            'message': summary + details,
+            'registered': registered,
+            'skipped': skipped
         })
 
     except Exception as e:
