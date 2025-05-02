@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash, Response, make_response, send_file
 import csv
 import os
 import base64
@@ -8,6 +8,8 @@ import uuid
 import shutil
 import glob
 import re
+import io
+from io import StringIO, BytesIO
 
 app = Flask(__name__)
 
@@ -1393,6 +1395,308 @@ def migrate_tournament_registrations_csv():
 
     except Exception as e:
         print(f"Error migrating tournament registrations CSV: {str(e)}")
+
+@app.route('/tournament/<tournament_id>/bulk_register', methods=['GET', 'POST'])
+def tournament_bulk_register(tournament_id):
+    if request.method == 'POST':
+        if 'csvFile' not in request.files:
+            flash('No file uploaded', 'error')
+            return redirect(request.url)
+        
+        file = request.files['csvFile']
+        if file.filename == '':
+            flash('No file selected', 'error')
+            return redirect(request.url)
+
+        if file and file.filename.endswith('.csv'):
+            try:
+                # Read the CSV file
+                stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+                csv_data = list(csv.reader(stream))
+                
+                if len(csv_data) < 2:
+                    flash('CSV file is empty or missing data', 'error')
+                    return redirect(request.url)
+
+                headers = csv_data[0]
+                expected_headers = [
+                    'Name', 'Date of Birth', 'Gender', 'Phone Number', 'Category',
+                    'Email ID', 'Address', 'State', 'TTFI ID', 'DSTTA ID', 
+                    'School/Institution', 'Academy', 'UPI ID'
+                ]
+
+                # Validate headers
+                if len(headers) != len(expected_headers):
+                    flash('Invalid CSV format: Incorrect number of columns', 'error')
+                    return redirect(request.url)
+
+                rows = csv_data[1:]
+                validated_data = []
+                
+                # Validate each row
+                for idx, row in enumerate(rows, start=1):
+                    # Pad row with empty strings if it's shorter than headers
+                    row = row + [''] * (len(headers) - len(row))
+                    
+                    row_data = {
+                        'index': idx,
+                        'data': row,
+                        'errors': [],
+                        'is_valid': True,
+                        'registration_status': 'New',
+                        'player_id': None
+                    }
+
+                    name = row[0].strip()
+                    dob = row[1].strip()
+                    phone = row[3].strip()
+
+                    # Check if player exists based on name, DOB, and phone
+                    if name and dob and phone:  # If all required fields are present
+                        print(f"\nChecking for existing player:")
+                        print(f"Name: '{name}'")
+                        print(f"DOB: '{dob}'")
+                        print(f"Phone: '{phone}'")
+                        
+                        player_id = get_player_id_from_players_data(name, dob, phone)
+                        if player_id:
+                            print(f"Found existing player with ID: {player_id}")
+                            row_data['registration_status'] = 'Registered'
+                            row_data['player_id'] = player_id
+                        else:
+                            print("No matching player found - will be registered as new")
+
+                    # Validate mandatory fields
+                    if not name:
+                        row_data['errors'].append('Name is required')
+                        row_data['is_valid'] = False
+
+                    # Validate Date of Birth
+                    try:
+                        if not dob:
+                            row_data['errors'].append('Date of Birth is required')
+                            row_data['is_valid'] = False
+                        else:
+                            datetime.strptime(dob, '%Y-%m-%d')
+                    except ValueError:
+                        row_data['errors'].append('Invalid date format (use YYYY-MM-DD)')
+                        row_data['is_valid'] = False
+
+                    # Validate Gender
+                    if not row[2].strip() or row[2].lower() not in ['male', 'female']:
+                        row_data['errors'].append('Gender must be Male or Female')
+                        row_data['is_valid'] = False
+
+                    # Validate Phone Number
+                    if not phone or not phone.isdigit():
+                        row_data['errors'].append('Phone number must be numeric')
+                        row_data['is_valid'] = False
+
+                    # Validate Category
+                    if not row[4].strip():
+                        row_data['errors'].append('Category is required')
+                        row_data['is_valid'] = False
+
+                    validated_data.append(row_data)
+
+                return render_template('tournament_bulk_register.html',
+                                    tournament=get_tournament(tournament_id),
+                                    csv_data={'headers': headers, 'rows': validated_data},
+                                    show_table=True)
+
+            except Exception as e:
+                print(f"Error processing CSV: {str(e)}")
+                app.logger.error(f"Error processing CSV: {str(e)}")
+                flash(f'Error processing CSV file: {str(e)}', 'error')
+                return redirect(request.url)
+        else:
+            flash('Invalid file type. Please upload a CSV file.', 'error')
+            return redirect(request.url)
+
+    # GET request
+    return render_template('tournament_bulk_register.html',
+                         tournament=get_tournament(tournament_id),
+                         show_table=False)
+
+@app.route('/tournament/<tournament_id>/bulk_register/download')
+def download_bulk_template(tournament_id):
+    try:
+        # Create CSV content
+        csv_content = (
+            "Name,Date of Birth,Gender,Phone Number,Category,Email ID,Address,State,TTFI ID,DSTTA ID,School/Institution,Academy,UPI ID\n"
+            "John Doe,2000-01-01,Male,9876543210,Under 11 Boys Singles,john.doe@email.com,123 Main Street,Delhi,TTFI123456,DSTTA789,ABC School,XYZ Academy,upi@bank"
+        )
+        
+        # Create response
+        response = make_response(csv_content)
+        response.headers['Content-Type'] = 'text/csv'
+        response.headers['Content-Disposition'] = 'attachment; filename=tournament_registration_template.csv'
+        
+        return response
+        
+    except Exception as e:
+        app.logger.error(f"Error generating template: {str(e)}")
+        flash('Error generating template file', 'error')
+        return redirect(url_for('tournament_bulk_register', tournament_id=tournament_id))
+
+@app.route('/tournament/<tournament_id>/bulk_register/submit', methods=['POST'])
+def submit_bulk_registration(tournament_id):
+    try:
+        data = request.get_json()
+        if not data or 'entries' not in data:
+            return jsonify({'success': False, 'message': 'No data provided'})
+
+        entries = data['entries']
+        
+        # Check if all entries are valid
+        if not all(entry.get('is_valid', False) for entry in entries):
+            return jsonify({
+                'success': False,
+                'message': 'Please correct all invalid entries before submitting'
+            })
+
+        # Process all entries
+        for entry in entries:
+            player_data = entry['data']
+            name = player_data[0].strip()
+            dob = player_data[1].strip()
+            gender = player_data[2].strip()
+            phone = player_data[3].strip()
+            category = player_data[4].strip()
+            
+            # Get other fields
+            email = player_data[5].strip() if len(player_data) > 5 else ''
+            address = player_data[6].strip() if len(player_data) > 6 else ''
+            state = player_data[7].strip() if len(player_data) > 7 else ''
+            ttfi_id = player_data[8].strip() if len(player_data) > 8 else ''
+            dstta_id = player_data[9].strip() if len(player_data) > 9 else ''
+            institution = player_data[10].strip() if len(player_data) > 10 else ''
+            academy = player_data[11].strip() if len(player_data) > 11 else ''
+            upi_id = player_data[12].strip() if len(player_data) > 12 else ''
+
+            # First, try to get the player ID based on name and phone only
+            player_id = get_player_id_from_players_data(name, dob, phone)
+
+            # If player ID exists, they are registered
+            if player_id:
+                app.logger.info(f"Found existing player ID {player_id} for {name}")
+            else:
+                # Only generate new ID if player truly doesn't exist
+                app.logger.info(f"Generating new player ID for {name}")
+                player_id = generate_new_player_id(dob)
+                if not player_id:
+                    return jsonify({
+                        'success': False,
+                        'message': f'Failed to generate Player ID for new player: {name}'
+                    })
+
+                # Add to players_data.csv
+                with open('players_data.csv', 'a', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerow([
+                        player_id, name, dob, gender, phone, email, 
+                        address, state, ttfi_id, dstta_id, institution, 
+                        academy, upi_id
+                    ])
+
+            # Check if player is already registered for this tournament
+            try:
+                with open('tournament_registrations.csv', 'r', newline='') as file:
+                    reader = csv.DictReader(file)
+                    for row in reader:
+                        if (row['Tournament Id'] == tournament_id and 
+                            row['Player Id'] == player_id and 
+                            row['Category'] == category):
+                            return jsonify({
+                                'success': False,
+                                'message': f'Player {name} is already registered for this tournament in category {category}'
+                            })
+            except FileNotFoundError:
+                # If file doesn't exist, create it with headers
+                with open('tournament_registrations.csv', 'w', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerow(['Tournament Id', 'Player Id', 'Category', 'Registration Date'])
+
+            # Add entry to tournament_registrations.csv
+            with open('tournament_registrations.csv', 'a', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow([
+                    tournament_id,
+                    player_id,
+                    category,
+                    datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                ])
+
+        return jsonify({
+            'success': True,
+            'message': 'All entries have been successfully registered'
+        })
+
+    except Exception as e:
+        app.logger.error(f"Error in bulk registration: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Error processing registrations: {str(e)}'
+        })
+
+def get_player_id_from_players_data(name, dob, phone):
+    try:
+        with open('players_data.csv', 'r', newline='', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                # Debug print to check the actual values being compared
+                print(f"\nComparing DB record:")
+                print(f"Name: '{row['Name'].lower().strip()}' vs Input: '{name.lower().strip()}'")
+                print(f"DOB: '{row['Date of Birth'].strip()}' vs Input: '{dob.strip()}'")
+                print(f"Phone: '{row['Phone Number'].strip()}' vs Input: '{phone.strip()}'")
+                
+                # Case-insensitive name comparison and exact match for DOB and phone number
+                if (row['Name'].lower().strip() == name.lower().strip() and 
+                    row['Date of Birth'].strip() == dob.strip() and
+                    row['Phone Number'].strip() == phone.strip()):
+                    print(f"Match found! Player ID: {row['Player ID']}")
+                    return row['Player ID']
+                else:
+                    # Print which fields didn't match
+                    if row['Name'].lower().strip() != name.lower().strip():
+                        print("Name did not match")
+                    if row['Date of Birth'].strip() != dob.strip():
+                        print("Date of Birth did not match")
+                    if row['Phone Number'].strip() != phone.strip():
+                        print("Phone number did not match")
+    except Exception as e:
+        print(f"Error reading players_data.csv: {str(e)}")
+        app.logger.error(f"Error reading players_data.csv: {str(e)}")
+    return None
+
+def generate_new_player_id(dob):
+    try:
+        # Get current year's last two digits
+        current_year = str(datetime.now().year)[-2:]
+        # Get birth year's last two digits from DOB
+        birth_year = str(datetime.strptime(dob, '%Y-%m-%d').year)[-2:]
+        
+        # Read existing player IDs to determine the next sequence number
+        max_sequence = 0
+        pattern = f"{current_year}-{birth_year}-"
+        
+        with open('players_data.csv', 'r', newline='') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                player_id = row['Player Id']
+                if player_id.startswith(pattern):
+                    try:
+                        sequence = int(player_id.split('-')[-1])
+                        max_sequence = max(max_sequence, sequence)
+                    except ValueError:
+                        continue
+        
+        # Generate new ID with incremented sequence
+        new_sequence = str(max_sequence + 1).zfill(4)
+        return f"{current_year}-{birth_year}-{new_sequence}"
+    except Exception as e:
+        app.logger.error(f"Error generating player ID: {str(e)}")
+        return None
 
 if __name__ == '__main__':
     # Initialize CSV files if they don't exist
