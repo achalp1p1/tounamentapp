@@ -1524,9 +1524,26 @@ def tournament_bulk_register(tournament_id):
             return redirect(request.url)
 
     # GET request
-    return render_template('tournament_bulk_register.html',
-                         tournament=get_tournament(tournament_id),
-                         show_table=False)
+    headers = [
+        'Name', 'Date of Birth', 'Gender', 'Phone Number', 'Category',
+        'Email ID', 'Address', 'State', 'TTFI ID', 'DSTTA ID',
+        'School/Institution', 'Academy', 'UPI ID'
+    ]
+    empty_row = {
+        'index': 1,
+        'data': [''] * len(headers),
+        'errors': [],
+        'invalid_fields': list(range(5)),  # Mark first 5 as required/invalid by default
+        'is_valid': False,
+        'registration_status': 'New',
+        'player_id': None
+    }
+    return render_template(
+        'tournament_bulk_register.html',
+        tournament=get_tournament(tournament_id),
+        csv_data={'headers': headers, 'rows': [empty_row]},
+        show_table=True
+    )
 
 @app.route('/tournament/<tournament_id>/bulk_register/download')
 def download_bulk_template(tournament_id):
