@@ -76,14 +76,13 @@
             text-align: left;
         }
         .players-table {
-            width: 30%;
+            width: 100%;
             min-width: 220px;
-            margin-left: 0;
-            margin-right: auto;
             border-collapse: collapse;
             background: #f9fbfd;
             border-radius: 8px;
             overflow: hidden;
+            margin: 0;
         }
         .players-table th, .players-table td {
             padding: 12px 10px;
@@ -101,11 +100,75 @@
         .players-table tr:hover {
             background: #d6e4fa;
         }
-        @media (max-width: 600px) {
-            .players-table {
-                width: 98%;
-                min-width: 0;
+        @media (max-width: 900px) {
+            #draw-tables-wrapper {
+                flex-direction: column;
+                gap: 24px;
             }
+            #players-table-container, #editable-table-container {
+                width: 100%;
+            }
+        }
+        #draw-tables-wrapper {
+            display: flex;
+            justify-content: space-between;
+            gap: 48px;
+            align-items: flex-start;
+            width: 100%;
+        }
+        #players-table-container, #editable-table-container {
+            width: 40%;
+        }
+        #editable-table-container {
+            text-align: left;
+            margin-left: auto;
+        }
+        .players-table.fixed-table {
+            width: 100%;
+            table-layout: fixed;
+            min-width: 220px;
+            border-collapse: collapse;
+            background: #f9fbfd;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 0;
+        }
+        .players-table.fixed-table th, .players-table.fixed-table td {
+            padding: 12px 10px;
+            text-align: left;
+            border: 1px solid #e0e6f0;
+        }
+        .players-table.fixed-table th:nth-child(1), .players-table.fixed-table td:nth-child(1) { width: 15%; }
+        .players-table.fixed-table th:nth-child(2), .players-table.fixed-table td:nth-child(2) { width: 25%; }
+        .players-table.fixed-table th:nth-child(3), .players-table.fixed-table td:nth-child(3) { width: 60%; }
+        .players-table.fixed-table th {
+            background: #1e3c72;
+            color: #fff;
+            font-weight: 600;
+            font-size: 1.05em;
+        }
+        .players-table.fixed-table tr:nth-child(even) {
+            background: #eaf0fa;
+        }
+        .players-table.fixed-table tr:hover {
+            background: #d6e4fa;
+        }
+        .editable-input {
+            border: 1px solid #b0b8c9;
+            border-radius: 4px;
+            padding: 6px 8px;
+            font-size: 1em;
+            background: #fff;
+            color: #1e3c72;
+            box-sizing: border-box;
+        }
+        @keyframes highlight {
+            0% { background-color: #f9fbfd; }
+            50% { background-color: #d4e5ff; }
+            100% { background-color: #f9fbfd; }
+        }
+        .highlight-animation {
+            animation: highlight 1.5s ease;
         }
     </style>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -123,59 +186,139 @@
                 <option value="{{ category }}">{{ category }}</option>
                 {% endfor %}
             </select>
-            <button id="create-draw-btn" style="
-                padding: 8px 18px;
-                background: #1e3c72;
-                color: #fff;
-                border: none;
-                border-radius: 6px;
-                font-size: 1em;
-                font-weight: 500;
-                cursor: pointer;
-                transition: background 0.2s;
-            " disabled>Create Draw</button>
+            <button id="create-draw-btn" class="btn btn-primary mt-4" style="display: none;">Create Draw</button>
         </div>
-        <div id="players-table-container" style="margin-top: 24px; text-align: left;">
-            <!-- Table will be populated here -->
+        <div id="draw-tables-wrapper" style="display: flex; justify-content: space-between; gap: 48px; align-items: flex-start; width: 100%;">
+            <div id="players-table-container" style="width: 40%;"></div>
+            <div id="editable-table-container" style="width: 40%;"></div>
         </div>
     </div>
     <script>
+    let currentPlayers = []; // Store the current players data
+
     $('#category-select').on('change', function() {
         var category = $(this).val();
         var tournamentId = "{{ tournament_id }}";
-        // Enable the button only if a category is selected
-        $('#create-draw-btn').prop('disabled', !category);
         if (category) {
             $('#players-table-container').html('<p style="color:#1e3c72;">Loading players...</p>');
+            $('#editable-table-container').empty();
+            $('#create-draw-btn').hide();
+            
             $.getJSON(`/tournament/${tournamentId}/get_category_players/${encodeURIComponent(category)}?fields=full`, function(data) {
                 if (data.success && data.players.length > 0) {
-                    var table = '<table class="players-table"><tr><th>Seeding</th><th>Name</th><th>School/Institution</th></tr>';
-                    data.players.forEach(function(player) {
-                        table += `<tr>
-                            <td>${player.seeding}</td>
+                    // Store players data
+                    currentPlayers = data.players;
+                    
+                    // Table header (identical for both)
+                    var tableHeader = '<tr><th style="width: 15%;">Seeding</th><th style="width: 25%;">Name</th><th style="width: 60%;">School/Institution</th></tr>';
+                    
+                    // Build the player table rows
+                    var playerRows = '';
+                    var editableRows = '';
+                    
+                    data.players.forEach(function(player, idx) {
+                        playerRows += `<tr>
+                            <td>${player.seeding || ''}</td>
                             <td>${player.name}</td>
                             <td>${player.school || ''}</td>
                         </tr>`;
+                        
+                        editableRows += `<tr>
+                            <td><input type="text" name="edit_seeding_${idx}" class="editable-input" style="width: 98%;" value="" autocomplete="off"></td>
+                            <td><input type="text" name="edit_name_${idx}" class="editable-input" style="width: 98%;" value="" autocomplete="off"></td>
+                            <td><input type="text" name="edit_school_${idx}" class="editable-input" style="width: 98%;" value="" autocomplete="off"></td>
+                        </tr>`;
                     });
-                    table += '</table>';
-                    $('#players-table-container').html(table);
+                    
+                    // Full tables
+                    var tableHTML = `<table class="players-table fixed-table">${tableHeader}${playerRows}</table>`;
+                    var editableTableHTML = `<table class="players-table fixed-table" id="editable-table">${tableHeader}${editableRows}</table>`;
+                    
+                    // Render
+                    $('#players-table-container').html(tableHTML);
+                    $('#editable-table-container').html(editableTableHTML);
+                    $('#create-draw-btn').show();
                 } else {
                     $('#players-table-container').html('<p style="color:#b00;">No players found for this category.</p>');
+                    $('#editable-table-container').empty();
+                    $('#create-draw-btn').hide();
                 }
             });
         } else {
             $('#players-table-container').empty();
+            $('#editable-table-container').empty();
+            $('#create-draw-btn').hide();
         }
     });
 
-    // Placeholder for Create Draw button click
     $('#create-draw-btn').on('click', function() {
-        var selectedCategory = $('#category-select').val();
-        if (selectedCategory) {
-            alert('Draw creation logic for "' + selectedCategory + '" goes here!');
-            // You can replace the alert with your actual draw creation logic or AJAX call
+        // Group players by seeding
+        const playersBySeeding = {};
+        
+        currentPlayers.forEach(player => {
+            const seeding = player.seeding || 'unseeded';
+            if (!playersBySeeding[seeding]) {
+                playersBySeeding[seeding] = [];
+            }
+            playersBySeeding[seeding].push(player);
+        });
+        
+        // Shuffle players with the same seeding
+        for (const seedingGroup in playersBySeeding) {
+            if (playersBySeeding[seedingGroup].length > 1) {
+                // Only shuffle if there are multiple players with the same seeding
+                shuffleArray(playersBySeeding[seedingGroup]);
+            }
         }
+        
+        // Flatten the grouped and shuffled players back to a single array
+        // First arrange by seeding (numerical order)
+        const orderedSeedings = Object.keys(playersBySeeding).sort((a, b) => {
+            // Make sure numeric seedings are sorted correctly
+            const numA = parseInt(a);
+            const numB = parseInt(b);
+            
+            if (!isNaN(numA) && !isNaN(numB)) {
+                return numA - numB;
+            }
+            
+            // If either isn't a number (e.g., 'unseeded'), put numbers first
+            if (!isNaN(numA)) return -1;
+            if (!isNaN(numB)) return 1;
+            
+            return a.localeCompare(b);
+        });
+        
+        const shuffledPlayers = [];
+        orderedSeedings.forEach(seeding => {
+            shuffledPlayers.push(...playersBySeeding[seeding]);
+        });
+        
+        // Now populate the right-hand table with the shuffled players
+        shuffledPlayers.forEach((player, idx) => {
+            const row = $(`#editable-table tr:eq(${idx + 1})`); // +1 to skip header row
+            if (row.length) {
+                row.find('input[name^="edit_seeding_"]').val(player.seeding || '');
+                row.find('input[name^="edit_name_"]').val(player.name);
+                row.find('input[name^="edit_school_"]').val(player.school || '');
+            }
+        });
+        
+        // Visual confirmation
+        $('#editable-table').addClass('highlight-animation');
+        setTimeout(() => {
+            $('#editable-table').removeClass('highlight-animation');
+        }, 1500);
     });
+
+    // Fisher-Yates shuffle algorithm
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
     </script>
 </body>
 </html>
