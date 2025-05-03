@@ -765,7 +765,7 @@ def tournament_info(tournament_id):
             reader = csv.DictReader(file)
             for row in reader:
                 if row['Tournament Id'] == tournament_id:
-                    categories.append(row)
+                    categories.append(row['Category'])
         
         return render_template('tournament_details.html', 
                              tournament=tournament,
@@ -1210,62 +1210,31 @@ def tournament_update_seeding(tournament_id):
 
 @app.route('/tournament/<tournament_id>/get_category_players/<category>')
 def get_category_players(tournament_id, category):
-    try:
-        print(f"\nFetching players for tournament {tournament_id}, category {category}")
-        players = []
-
-        # Read tournament registrations
-        with open(TOURNAMENT_REGISTRATIONS_CSV, 'r', newline='', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
-            registrations = [row for row in reader 
-                           if row['Tournament ID'] == tournament_id 
-                           and row['Category'] == category
-                           and row['Status'].lower() == 'active']
-            
-            print(f"Found {len(registrations)} matching registrations")
-            # Debug: Print sample registrations
-            for reg in registrations[:2]:
-                print(f"Sample registration: {reg}")
-
-        # Get player details
-        if os.path.exists(PLAYERS_CSV):
-            with open(PLAYERS_CSV, 'r', newline='', encoding='utf-8') as file:
-                reader = csv.DictReader(file)
-                player_details = {row['Player ID']: row for row in reader}
-
-            # Combine registration and player details
-            for reg in registrations:
-                player_id = reg.get('Player ID')
-                player = player_details.get(player_id)
-                if player:
-                    players.append({
-                        'name': player['Name'],
-                        'seeding': reg.get('Seeding', ''),
-                        'player_id': player_id  # Make sure we're including player_id
-                    })
-                    print(f"Added player: {player['Name']} with ID: {player_id}")
-
-            # Sort players by name
-            players.sort(key=lambda x: x['name'])
-            
-            return jsonify({
-                'success': True, 
-                'players': players,
-                'debug_info': {
-                    'tournament_id': tournament_id,
-                    'category': category,
-                    'registrations_found': len(registrations),
-                    'players_found': len(players)
-                }
-            })
-
-        else:
-            print("Players CSV file not found")
-            return jsonify({'success': False, 'message': 'Player data not found'})
-
-    except Exception as e:
-        print(f"Error in get_category_players: {str(e)}")
-        return jsonify({'success': False, 'message': str(e)})
+    # Get the requested fields
+    fields = request.args.get('fields', 'basic')  # default to 'basic'
+    players = []
+    with open(TOURNAMENT_REGISTRATIONS_CSV, 'r', newline='', encoding='utf-8') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            if (row['Tournament ID'] == tournament_id and
+                row['Category'] == category and
+                row['Status'].lower() == 'active'):
+                player_id = row['Player ID']
+                seeding = row.get('Seeding', '')
+                with open('players_data.csv', 'r', newline='', encoding='utf-8') as pf:
+                    preader = csv.DictReader(pf)
+                    for prow in preader:
+                        if prow['Player ID'] == player_id:
+                            player = {
+                                'name': prow['Name'],
+                                'player_id': player_id,
+                                'seeding': seeding
+                            }
+                            if fields == 'full':
+                                player['school'] = prow.get('School/Institution', '')
+                            players.append(player)
+                            break
+    return jsonify({'success': True, 'players': players})
 
 # Helper function to get tournament details
 def get_tournament(tournament_id):
@@ -1352,7 +1321,7 @@ def generate_player_id(date_of_birth):
                         try:
                             sequence = int(row['Player ID'].split('-')[2])
                             max_sequence = max(max_sequence, sequence)
-                        except (IndexError, ValueError):
+                        except ValueError:
                             continue
         
         # Generate new ID with next sequence number
@@ -1747,10 +1716,25 @@ def tournament_update_format(tournament_id):
     # You can render a template or just return a placeholder for now
     return f"Update Format page for tournament {tournament_id}"
 
-@app.route('/tournament/<tournament_id>/create_draws')
-def tournament_create_draws(tournament_id):
-    # You can render a template or just return a placeholder for now
-    return f"Create Draws page for tournament {tournament_id}"
+@app.route('/tournament/<tournament_id>/create_draw')
+def tournament_create_draw(tournament_id):
+    # Get tournament categories
+    categories = []
+    with open('tournament_categories.csv', 'r', newline='', encoding='utf-8') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            if row['Tournament Id'] == tournament_id:
+                categories.append(row['Category'])
+
+    return render_template('tournament_create_draw.html',
+                           tournament_id=tournament_id,
+                           categories=categories)
+
+@app.route('/tournament/<tournament_id>/create_bracket')
+def tournament_create_bracket(tournament_id):
+    # TODO: Implement your bracket creation logic here
+    # For now, just render a placeholder template or return a message
+    return render_template('tournament_create_bracket.html', tournament_id=tournament_id)
 
 if __name__ == '__main__':
     # Initialize CSV files if they don't exist

@@ -17,17 +17,17 @@
 
     <!-- Manage dropdown menu -->
     <div class="dropdown">
-        <a href="#" class="submenu-link dropdown-toggle {% if active_subpage in ['update_seeding', 'update_format', 'create_draws'] %}active{% endif %}">
+        <a href="#" class="submenu-link dropdown-toggle {% if active_subpage in ['update_seeding', 'create_draw', 'create_bracket'] %}active{% endif %}">
             Manage
             <span class="dropdown-arrow">▼</span>
         </a>
         <div class="dropdown-content">
             <a href="{{ url_for('tournament_update_seeding', tournament_id=tournament['Tournament Id']) }}" 
                class="dropdown-item {% if active_subpage == 'update_seeding' %}active{% endif %}">Update Seeding</a>
-            <a href="{{ url_for('tournament_update_format', tournament_id=tournament['Tournament Id']) }}" 
-               class="dropdown-item {% if active_subpage == 'update_format' %}active{% endif %}">Update Format</a>
-            <a href="{{ url_for('tournament_create_draws', tournament_id=tournament['Tournament Id']) }}" 
-               class="dropdown-item {% if active_subpage == 'create_draws' %}active{% endif %}">Create Draws</a>
+            <a href="{{ url_for('tournament_create_draw', tournament_id=tournament['Tournament Id']) }}" 
+               class="dropdown-item {% if active_subpage == 'create_draw' %}active{% endif %}">Create Draw</a>
+            <a href="{{ url_for('tournament_create_bracket', tournament_id=tournament['Tournament Id']) }}" 
+               class="dropdown-item {% if active_subpage == 'create_bracket' %}active{% endif %}">Create Bracket</a>
         </div>
     </div>
 </nav>

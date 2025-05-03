@@ -94,5 +94,24 @@
             </div>
         </div>
     </div>
+
+    <script>
+        $.getJSON(`/tournament/${tournamentId}/get_category_players/${encodeURIComponent(category)}`, function(data) {
+            if (data.success && data.players.length > 0) {
+                var table = '<table class="players-table"><tr><th>Seeding</th><th>Name</th><th>School/Institution</th></tr>';
+                data.players.forEach(function(player) {
+                    table += `<tr>
+                        <td>${player.Seeding}</td>
+                        <td>${player.Name}</td>
+                        <td>${player.School}</td>
+                    </tr>`;
+                });
+                table += '</table>';
+                $('#players-table-container').html(table);
+            } else {
+                $('#players-table-container').html('<p style="color:#b00;">No players found for this category.</p>');
+            }
+        });
+    </script>
 </body>
 </html> 

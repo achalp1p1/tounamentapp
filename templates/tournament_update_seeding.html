@@ -228,7 +228,7 @@
             });
 
             // Update the URL to use the correct tournament ID field
-            fetch(`/tournament/{{ tournament["Tournament Id"] }}/get_category_players/${category}`)
+            fetch(`/tournament/{{ tournament["Tournament Id"] }}/get_category_players/${category}?fields=basic`)
                 .then(response => response.json())
                 .then(data => {
                     console.log('Response:', data);  // Log the response
