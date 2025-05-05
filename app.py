@@ -975,24 +975,20 @@ def tournament_register(tournament_id):
         return redirect(url_for('list_tournament'))
 
 def get_tournament_categories(tournament_id):
-    categories = [
-        "Women Singles",
-        "Men Singles",
-        "Women Singles 40+",
-        "Men Singles 40+",
-        "Women Doubles",
-        "Women Doubles 40+",
-        "Men Doubles",
-        "Men Doubles 40+",
-        "Girls Under 11",
-        "Boys Under 11",
-        "Girls Under 13",
-        "Boys Under 13",
-        "Girls Under 15",
-        "Boys Under 15",
-        "Girls Under 17",
-        "Boys Under 17"
-    ]
+    """Get categories specific to a tournament from the tournament_categories.csv file"""
+    categories = []
+    try:
+        with open('tournament_categories.csv', 'r', newline='', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if row['Tournament Id'] == tournament_id:
+                    categories.append(row['Category'])
+    except Exception as e:
+        print(f"Error reading tournament categories: {str(e)}")
+        # Return empty list if there's an error
+        return []
+    
+    # If no categories found for this tournament, return an empty list
     return categories
 
 @app.route('/tournament/<tournament_id>/schedule')
@@ -1718,23 +1714,85 @@ def tournament_update_format(tournament_id):
 
 @app.route('/tournament/<tournament_id>/create_draw')
 def tournament_create_draw(tournament_id):
-    # Get tournament categories
-    categories = []
-    with open('tournament_categories.csv', 'r', newline='', encoding='utf-8') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            if row['Tournament Id'] == tournament_id:
-                categories.append(row['Category'])
-
-    return render_template('tournament_create_draw.html',
-                           tournament_id=tournament_id,
-                           categories=categories)
+    # Get tournament data
+    tournament = get_tournament(tournament_id)
+    if not tournament:
+        return redirect(url_for('list_tournament'))
+    
+    # Get tournament categories specific to this tournament
+    categories = get_tournament_categories(tournament_id)
+    
+    return render_template('tournament_create_draw.html', 
+                          tournament=tournament, 
+                          tournament_id=tournament_id, 
+                          categories=categories, 
+                          active_page='tournament',  # For main menu
+                          active_subpage='create_draw')  # For submenu
 
 @app.route('/tournament/<tournament_id>/create_bracket')
 def tournament_create_bracket(tournament_id):
     # TODO: Implement your bracket creation logic here
     # For now, just render a placeholder template or return a message
     return render_template('tournament_create_bracket.html', tournament_id=tournament_id)
+
+@app.route('/save_tournament_draw', methods=['POST'])
+def save_tournament_draw():
+    try:
+        # Get data from the request
+        data = request.json
+        draw_data = data['drawData']
+        tournament_id = data['tournamentId']
+        category = data['category']
+        
+        # Create the CSV file if it doesn't exist
+        file_exists = os.path.exists('Tournament_draw.csv')
+        
+        with open('Tournament_draw.csv', 'a', newline='', encoding='utf-8') as file:
+            fieldnames = ['Rank', 'Seeding', 'TournamentId', 'Player Name', 'School/Institution', 'Category']
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            
+            # Write header if file doesn't exist
+            if not file_exists:
+                writer.writeheader()
+            
+            # First, remove any existing data for this tournament and category
+            if file_exists:
+                temp_rows = []
+                with open('Tournament_draw.csv', 'r', newline='', encoding='utf-8') as read_file:
+                    reader = csv.DictReader(read_file)
+                    for row in reader:
+                        # Keep rows that are not for this tournament and category
+                        if not (row['TournamentId'] == tournament_id and row['Category'] == category):
+                            temp_rows.append(row)
+                
+                # Rewrite the file with filtered rows
+                with open('Tournament_draw.csv', 'w', newline='', encoding='utf-8') as write_file:
+                    temp_writer = csv.DictWriter(write_file, fieldnames=fieldnames)
+                    temp_writer.writeheader()
+                    temp_writer.writerows(temp_rows)
+                
+                # Reopen the file for appending new rows
+                file = open('Tournament_draw.csv', 'a', newline='', encoding='utf-8')
+                writer = csv.DictWriter(file, fieldnames=fieldnames)
+            
+            # Write the new draw data
+            for row in draw_data:
+                writer.writerow({
+                    'Rank': row['rank'],
+                    'Seeding': row['seeding'],
+                    'TournamentId': row['tournamentId'],
+                    'Player Name': row['name'],
+                    'School/Institution': row['school'],
+                    'Category': row['category']
+                })
+                
+            file.close()
+        
+        return jsonify({'success': True, 'message': 'Draw saved successfully!'})
+    
+    except Exception as e:
+        print(f"Error saving tournament draw: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)})
 
 if __name__ == '__main__':
     # Initialize CSV files if they don't exist
