@@ -1,33 +1,48 @@
 <nav class="submenu">
-    <a href="{{ url_for('tournament_info', tournament_id=tournament['Tournament Id']) }}" 
-       class="submenu-link {% if active_subpage == 'info' %}active{% endif %}">Info</a>
+    <a href="{{ url_for('tournament_info', tournament_id=tournament['Tournament Id']) }}?tab=info" 
+       class="submenu-link {% if active_subpage == 'info' %}active{% endif %}">
+        <i class="fas fa-info-circle"></i>Info
+    </a>
     
-    <!-- Register is now a direct link -->
-    <a href="{{ url_for('tournament_register', tournament_id=tournament['Tournament Id']) }}" 
-       class="submenu-link {% if active_subpage == 'register' %}active{% endif %}">Register</a>
+    <a href="{{ url_for('tournament_register', tournament_id=tournament['Tournament Id']) }}?tab=register" 
+       class="submenu-link {% if active_subpage == 'register' %}active{% endif %}">
+        <i class="fas fa-user-plus"></i>Register
+    </a>
     
-    <a href="{{ url_for('tournament_schedule', tournament_id=tournament['Tournament Id']) }}" 
-       class="submenu-link {% if active_subpage == 'schedule' %}active{% endif %}">Schedule</a>
-    <a href="{{ url_for('tournament_entries', tournament_id=tournament['Tournament Id']) }}" 
-       class="submenu-link {% if active_subpage == 'entries' %}active{% endif %}">Entries</a>
+    <a href="{{ url_for('tournament_entries', tournament_id=tournament['Tournament Id']) }}?tab=entries" 
+       class="submenu-link {% if active_subpage == 'entries' %}active{% endif %}">
+        <i class="fas fa-list"></i>Entries
+    </a>
     
-    <!-- Draws/Results is now a direct link -->
-    <a href="{{ url_for('tournament_results', tournament_id=tournament['Tournament Id']) }}" 
-       class="submenu-link {% if active_subpage == 'results' %}active{% endif %}">Draws/Results</a>
+    <a href="{{ url_for('tournament_schedule', tournament_id=tournament['Tournament Id']) }}?tab=schedule" 
+       class="submenu-link {% if active_subpage == 'schedule' %}active{% endif %}">
+        <i class="fas fa-calendar"></i>Schedule
+    </a>
+    
+    <a href="{{ url_for('tournament_results', tournament_id=tournament['Tournament Id']) }}?tab=draws" 
+       class="submenu-link {% if active_subpage == 'results' %}active{% endif %}">
+        <i class="fas fa-trophy"></i>Draws
+    </a>
 
     <!-- Manage dropdown menu -->
     <div class="dropdown">
         <a href="#" class="submenu-link dropdown-toggle {% if active_subpage in ['update_seeding', 'create_draw', 'create_bracket'] %}active{% endif %}">
-            Manage
+            <i class="fas fa-cog"></i>Manage
             <span class="dropdown-arrow">▼</span>
         </a>
         <div class="dropdown-content">
             <a href="{{ url_for('tournament_update_seeding', tournament_id=tournament['Tournament Id']) }}" 
-               class="dropdown-item {% if active_subpage == 'update_seeding' %}active{% endif %}">Update Seeding</a>
+               class="dropdown-item {% if active_subpage == 'update_seeding' %}active{% endif %}">
+                <i class="fas fa-sort-numeric-up"></i>Update Seeding
+            </a>
             <a href="{{ url_for('tournament_create_draw', tournament_id=tournament['Tournament Id']) }}" 
-               class="dropdown-item {% if active_subpage == 'create_draw' %}active{% endif %}">Create Draw</a>
+               class="dropdown-item {% if active_subpage == 'create_draw' %}active{% endif %}">
+                <i class="fas fa-random"></i>Create Draw
+            </a>
             <a href="{{ url_for('tournament_create_bracket', tournament_id=tournament['Tournament Id']) }}" 
-               class="dropdown-item {% if active_subpage == 'create_bracket' %}active{% endif %}">Create Bracket</a>
+               class="dropdown-item {% if active_subpage == 'create_bracket' %}active{% endif %}">
+                <i class="fas fa-sitemap"></i>Create Bracket
+            </a>
         </div>
     </div>
 </nav>
@@ -46,14 +61,21 @@
         text-decoration: none;
         font-size: 0.9em;
         font-weight: 500;
-        padding: 4px 12px;
-        border-radius: 4px;
-        transition: background 0.2s;
+        padding: 8px 16px;
+        border-radius: 6px;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
     .submenu-link:hover,
     .submenu-link.active {
         background: rgba(255, 255, 255, 0.2);
+    }
+
+    .submenu-link i {
+        font-size: 1.1em;
     }
 
     /* Dropdown styles */
@@ -82,9 +104,9 @@
         display: none;
         position: absolute;
         background: white;
-        min-width: 160px;
+        min-width: 200px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        border-radius: 4px;
+        border-radius: 6px;
         z-index: 1000;
         top: 100%;
         left: 0;
@@ -98,9 +120,11 @@
     .dropdown-item {
         color: #333;
         text-decoration: none;
-        padding: 10px 15px;
-        display: block;
-        transition: background 0.2s;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
     }
 
     .dropdown-item:hover,
@@ -110,11 +134,16 @@
     }
 
     .dropdown-item:first-child {
-        border-radius: 4px 4px 0 0;
+        border-radius: 6px 6px 0 0;
     }
 
     .dropdown-item:last-child {
-        border-radius: 0 0 4px 4px;
+        border-radius: 0 0 6px 6px;
+    }
+
+    .dropdown-item i {
+        width: 20px;
+        text-align: center;
     }
 
     @media (max-width: 768px) {
@@ -122,6 +151,11 @@
             padding: 10px 20px;
             flex-wrap: wrap;
             gap: 10px;
+        }
+
+        .submenu-link {
+            padding: 6px 12px;
+            font-size: 0.85em;
         }
 
         .dropdown-content {

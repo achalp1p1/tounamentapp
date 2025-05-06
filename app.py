@@ -1794,6 +1794,10 @@ def save_tournament_draw():
         print(f"Error saving tournament draw: {str(e)}")
         return jsonify({'success': False, 'message': str(e)})
 
+@app.context_processor
+def inject_current_year():
+    return {'current_year': datetime.now().year}
+
 if __name__ == '__main__':
     # Initialize CSV files if they don't exist
     initialize_tournament_registrations_csv()
