@@ -480,43 +480,33 @@
             const eligibleCategories = tournamentCategories.filter(category => {
                 if (gender === 'Male') {
                     // Men's categories
-                    if (category.includes('Men Singles')) {
-                        if (category.includes('40+')) {
-                            return age >= 40;
-                        }
-                        return true; // All males can play Men Singles
+                    if (category === 'Men') {
+                        return age >= 19 && age < 39;
                     }
-                    if (category.includes('Men Doubles')) {
-                        if (category.includes('40+')) {
-                            return age >= 40;
-                        }
-                        return true; // All males can play Men Doubles
+                    if (category === 'Veterans 39+ Men') {
+                        return age >= 39;
                     }
                     // Boys' categories
-                    if (category.includes('Boys Under 11')) return age <= 11;
-                    if (category.includes('Boys Under 13')) return age <= 13;
-                    if (category.includes('Boys Under 15')) return age <= 15;
-                    if (category.includes('Boys Under 17')) return age <= 17;
+                    if (category === 'u9') return age <= 9;
+                    if (category === 'u11 Boys') return age <= 11;
+                    if (category === 'u13 Boys') return age <= 13;
+                    if (category === 'u17 Boys') return age <= 17;
+                    if (category === 'u19 Boys') return age <= 19;
                 } 
                 else if (gender === 'Female') {
                     // Women's categories
-                    if (category.includes('Women Singles')) {
-                        if (category.includes('40+')) {
-                            return age >= 40;
-                        }
-                        return true; // All females can play Women Singles
+                    if (category === 'Women') {
+                        return age >= 19 && age < 39;
                     }
-                    if (category.includes('Women Doubles')) {
-                        if (category.includes('40+')) {
-                            return age >= 40;
-                        }
-                        return true; // All females can play Women Doubles
+                    if (category === 'Veterans 39+ Women') {
+                        return age >= 39;
                     }
                     // Girls' categories
-                    if (category.includes('Girls Under 11')) return age <= 11;
-                    if (category.includes('Girls Under 13')) return age <= 13;
-                    if (category.includes('Girls Under 15')) return age <= 15;
-                    if (category.includes('Girls Under 17')) return age <= 17;
+                    if (category === 'u9') return age <= 9;
+                    if (category === 'u11 Girls') return age <= 11;
+                    if (category === 'u13 Girls') return age <= 13;
+                    if (category === 'u15 Girls') return age <= 15;
+                    if (category === 'u19 Girls') return age <= 19;
                 }
                 return false;
             });

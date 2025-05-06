@@ -183,22 +183,19 @@
                         <div class="category-fee-row">
                             <select name="categories[]" class="category-select" required>
                                 <option value="">Select Category</option>
-                                <option value="Women Singles" {% if category['Category'] == 'Women Singles' %}selected{% endif %}>Women Singles</option>
-                                <option value="Men Singles" {% if category['Category'] == 'Men Singles' %}selected{% endif %}>Men Singles</option>
-                                <option value="Women Singles 40+" {% if category['Category'] == 'Women Singles 40+' %}selected{% endif %}>Women Singles 40+</option>
-                                <option value="Men Singles 40+" {% if category['Category'] == 'Men Singles 40+' %}selected{% endif %}>Men Singles 40+</option>
-                                <option value="Women Doubles" {% if category['Category'] == 'Women Doubles' %}selected{% endif %}>Women Doubles</option>
-                                <option value="Women Doubles 40+" {% if category['Category'] == 'Women Doubles 40+' %}selected{% endif %}>Women Doubles 40+</option>
-                                <option value="Men Doubles" {% if category['Category'] == 'Men Doubles' %}selected{% endif %}>Men Doubles</option>
-                                <option value="Men Doubles 40+" {% if category['Category'] == 'Men Doubles 40+' %}selected{% endif %}>Men Doubles 40+</option>
-                                <option value="Girls Under 11" {% if category['Category'] == 'Girls Under 11' %}selected{% endif %}>Girls Under 11</option>
-                                <option value="Boys Under 11" {% if category['Category'] == 'Boys Under 11' %}selected{% endif %}>Boys Under 11</option>
-                                <option value="Girls Under 13" {% if category['Category'] == 'Girls Under 13' %}selected{% endif %}>Girls Under 13</option>
-                                <option value="Boys Under 13" {% if category['Category'] == 'Boys Under 13' %}selected{% endif %}>Boys Under 13</option>
-                                <option value="Girls Under 15" {% if category['Category'] == 'Girls Under 15' %}selected{% endif %}>Girls Under 15</option>
-                                <option value="Boys Under 15" {% if category['Category'] == 'Boys Under 15' %}selected{% endif %}>Boys Under 15</option>
-                                <option value="Girls Under 17" {% if category['Category'] == 'Girls Under 17' %}selected{% endif %}>Girls Under 17</option>
-                                <option value="Boys Under 17" {% if category['Category'] == 'Boys Under 17' %}selected{% endif %}>Boys Under 17</option>
+                                <option value="u9" {% if category['Category'] == 'u9' %}selected{% endif %}>u9</option>
+                                <option value="u11 Girls" {% if category['Category'] == 'u11 Girls' %}selected{% endif %}>u11 Girls</option>
+                                <option value="u11 Boys" {% if category['Category'] == 'u11 Boys' %}selected{% endif %}>u11 Boys</option>
+                                <option value="u13 Girls" {% if category['Category'] == 'u13 Girls' %}selected{% endif %}>u13 Girls</option>
+                                <option value="u13 Boys" {% if category['Category'] == 'u13 Boys' %}selected{% endif %}>u13 Boys</option>
+                                <option value="u15 Girls" {% if category['Category'] == 'u15 Girls' %}selected{% endif %}>u15 Girls</option>
+                                <option value="u17 Boys" {% if category['Category'] == 'u17 Boys' %}selected{% endif %}>u17 Boys</option>
+                                <option value="u19 Girls" {% if category['Category'] == 'u19 Girls' %}selected{% endif %}>u19 Girls</option>
+                                <option value="u19 Boys" {% if category['Category'] == 'u19 Boys' %}selected{% endif %}>u19 Boys</option>
+                                <option value="Women" {% if category['Category'] == 'Women' %}selected{% endif %}>Women</option>
+                                <option value="Men" {% if category['Category'] == 'Men' %}selected{% endif %}>Men</option>
+                                <option value="Veterans 39+ Men" {% if category['Category'] == 'Veterans 39+ Men' %}selected{% endif %}>Veterans 39+ Men</option>
+                                <option value="Veterans 39+ Women" {% if category['Category'] == 'Veterans 39+ Women' %}selected{% endif %}>Veterans 39+ Women</option>
                             </select>
                             <input type="number" name="fees[]" class="fee-input" min="0" placeholder="Fee" required value="{{ category['Fee'] }}">
                             <input type="text" name="first_prizes[]" class="prize-input" placeholder="First Prize" required value="{{ category['First Prize'] }}">

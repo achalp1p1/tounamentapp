@@ -28,51 +28,42 @@ last_names = [
 
 # Categories and their target counts
 category_targets = {
-    # Singles Categories
-    "Women Singles": 25,
-    "Men Singles": 25,
-    "Women Singles 40+": 20,
-    "Men Singles 40+": 20,
+    # Age-based categories
+    "u9": 15,
+    "u11 Girls": 15,
+    "u11 Boys": 15,
+    "u13 Girls": 18,
+    "u13 Boys": 18,
+    "u15 Girls": 20,
+    "u17 Boys": 22,
+    "u19 Girls": 22,
+    "u19 Boys": 22,
     
-    # Doubles Categories
-    "Women Doubles": 20,
-    "Women Doubles 40+": 15,
-    "Men Doubles": 20,
-    "Men Doubles 40+": 15,
+    # Open categories
+    "Women": 25,
+    "Men": 25,
     
-    # Under 11 Categories
-    "Girls Under 11": 15,
-    "Boys Under 11": 15,
-    
-    # Under 13 Categories
-    "Girls Under 13": 18,
-    "Boys Under 13": 18,
-    
-    # Under 15 Categories
-    "Girls Under 15": 20,
-    "Boys Under 15": 20,
-    
-    # Under 17 Categories
-    "Girls Under 17": 22,
-    "Boys Under 17": 22
+    # Veterans categories
+    "Veterans 39+ Women": 20,
+    "Veterans 39+ Men": 20
 }
 
 def generate_dob(category):
     today = datetime.now()
     
-    if "40+" in category:
-        # Generate age between 40-55 years
-        days = random.randint(40*365, 55*365)
-    elif "Under" in category:
-        # Extract age from category (e.g., "Under 11" -> 11)
-        age = int(category.split("Under ")[1])
+    if "Veterans 39+" in category:
+        # Generate age between 39-55 years
+        days = random.randint(39*365, 55*365)
+    elif category.startswith('u'):
+        # Extract age from category (e.g., "u11" -> 11)
+        age = int(category[1:].split()[0])
         # Generate age appropriate for the category (1-2 years younger)
         min_age = age - 2
         max_age = age - 1
         days = random.randint(min_age*365, max_age*365)
     else:
-        # For regular singles/doubles, generate age between 18-39
-        days = random.randint(18*365, 39*365)
+        # For open categories (Women/Men), generate age between 19-38
+        days = random.randint(19*365, 38*365)
     
     dob = today - timedelta(days=days)
     return dob.strftime("%Y-%m-%d")
