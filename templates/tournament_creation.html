@@ -27,17 +27,19 @@
             background-color: #f5f5f5;
             color: var(--text-primary);
             line-height: 1.6;
+            min-height: 100vh;
         }
 
         .container {
             max-width: 1200px;
             margin: 2rem auto;
             padding: 0 1rem;
+            margin-top: 80px; /* Add space for the menu */
         }
 
         .page-header {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
             margin-bottom: 2rem;
             padding-bottom: 1rem;
@@ -48,6 +50,7 @@
             color: var(--primary-color);
             font-size: 1.8rem;
             font-weight: 500;
+            text-align: center;
         }
 
         .back-button {
@@ -519,13 +522,10 @@
     </style>
 </head>
 <body>
+    {% include 'menu.html' %}
     <div class="container">
         <div class="page-header">
             <h1>Create New Tournament</h1>
-            <a href="{{ url_for('list_tournament') }}" class="back-button">
-                <i class="material-icons">arrow_back</i>
-                Back to Tournaments
-            </a>
         </div>
 
         <form method="POST" enctype="multipart/form-data">

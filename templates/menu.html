@@ -1,101 +1,173 @@
 <!-- templates/menu.html -->
 <nav class="top-menu">
-    <a href="{{ url_for('dashboard') }}" class="menu-link {% if active_page == 'dashboard' %}active{% endif %}">Home</a>
+    {% if active_page != 'dashboard' %}
+    <a href="{{ url_for('dashboard') }}" class="menu-link {% if active_page == 'dashboard' %}active{% endif %}" title="Home">
+        Home
+    </a>
+    {% endif %}
     <div class="menu-dropdown">
-        <span class="menu-link {% if active_page == 'tournament' %}active{% endif %}" tabindex="0">Tournaments <span style="font-size:0.8em;">▼</span></span>
+        <span class="menu-link {% if active_page == 'tournament' %}active{% endif %}" tabindex="0">
+            Tournament
+            <span style="font-size:0.8em;">▼</span>
+        </span>
         <div class="dropdown-content">
-            <a href="{{ url_for('list_tournament') }}">List Tournament</a>
-            <a href="{{ url_for('tournament_creation') }}">Create New Tournament</a>
-            <a href="{{ url_for('list_tournament_last2') }}">Last 2 tournaments</a>
+            <a href="{{ url_for('list_tournament') }}">List Tournaments</a>
+            <a href="{{ url_for('create_tournament') }}">Create Tournament</a>
         </div>
     </div>
     <div class="menu-dropdown">
-        <span class="menu-link {% if active_page == 'players' %}active{% endif %}" tabindex="0">Players <span style="font-size:0.8em;">▼</span></span>
+        <span class="menu-link {% if active_page == 'players' %}active{% endif %}" tabindex="0">
+            Players
+            <span style="font-size:0.8em;">▼</span>
+        </span>
         <div class="dropdown-content">
-            <a href="{{ url_for('player_registration') }}">Add Players</a>
-            <a href="{{ url_for('search_players') }}">Search Players</a>
-            <a href="{{ url_for('search_players') }}">Player List</a>
+            <a href="{{ url_for('player_registration') }}">Add Player</a>
+            <a href="{{ url_for('search_players') }}">List Players</a>
+            <a href="{{ url_for('search_players') }}">Search</a>
+        </div>
+    </div>
+    <div class="menu-dropdown">
+        <span class="menu-link {% if active_page == 'profile' %}active{% endif %}" tabindex="0">
+            Profile
+            <span style="font-size:0.8em;">▼</span>
+        </span>
+        <div class="dropdown-content">
+            <a href="{{ url_for('logout') }}" class="logout-link">Log out</a>
         </div>
     </div>
 </nav>
 <style>
 .top-menu {
-    position: absolute;
+    position: fixed;
     top: 24px;
-    left: 36px;
+    right: 36px;
     z-index: 100;
     display: flex;
-    gap: 24px;
+    gap: 16px;
     align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px 16px;
+    border-radius: 30px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
+
 .menu-link {
-    color: white;
+    color: #1e3c72;
     text-decoration: none;
     font-weight: 500;
     font-size: 1.08em;
-    padding: 6px 14px;
-    border-radius: 6px;
-    transition: background 0.2s, color 0.2s;
-    position: relative;
-    background: #444444;
+    padding: 8px 16px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
     border: none;
     cursor: pointer;
-    display: inline-block;
+    gap: 8px;
 }
+
 .menu-link:hover, .menu-link.active {
-    background: #666666;
-    color: white;
+    background: #1e3c72;
+    color: #fff;
+    transform: translateY(-2px);
 }
+
 .menu-dropdown {
     position: relative;
     display: inline-block;
 }
+
 .dropdown-content {
     display: none;
     position: absolute;
-    left: 0;
-    background: #fff;
-    min-width: 180px;
+    right: 0;
+    background: white;
+    min-width: 200px;
     box-shadow: 0 4px 16px rgba(30,60,114,0.13);
-    border-radius: 8px;
+    border-radius: 12px;
     z-index: 200;
-    margin-top: 2px;
-    flex-direction: column;
-    padding: 6px 0;
+    margin-top: 8px;
+    padding: 8px 0;
+    transform-origin: top right;
+    animation: dropdownFade 0.2s ease;
 }
+
+@keyframes dropdownFade {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
 .dropdown-content a {
-    color: #444444;
-    padding: 10px 18px;
+    color: #1e3c72;
+    padding: 12px 20px;
     text-decoration: none;
     display: block;
-    font-size: 1em;
-    border-radius: 0;
-    background: none;
-    transition: background 0.2s, color 0.2s;
+    font-size: 0.95em;
+    transition: all 0.2s ease;
 }
+
 .dropdown-content a:hover {
-    background: #444444;
+    background: #1e3c72;
     color: white;
 }
+
 .menu-dropdown:hover .dropdown-content,
 .menu-dropdown:focus-within .dropdown-content {
     display: block;
 }
+
 .menu-dropdown .menu-link {
     display: flex;
     align-items: center;
     gap: 4px;
 }
+
+.material-icons {
+    font-size: 24px;
+}
+
+.logout-link {
+    color: #d32f2f;
+    border-top: 1px solid #eee;
+    margin-top: 4px;
+}
+
+.dropdown-content .logout-link:hover {
+    background: #d32f2f;
+    color: white;
+}
+
 @media (max-width: 700px) {
     .top-menu {
-        position: static;
-        justify-content: flex-start;
-        margin: 10px 0 0 10px;
-        gap: 10px;
+        position: fixed;
+        top: auto;
+        bottom: 20px;
+        right: 50%;
+        transform: translateX(50%);
+        padding: 8px 12px;
+        gap: 12px;
     }
+
     .dropdown-content {
-        left: 0;
-        min-width: 140px;
+        position: fixed;
+        bottom: 100%;
+        right: 50%;
+        transform: translateX(50%);
+        margin-bottom: 8px;
+        width: 200px;
+    }
+
+    .dropdown-content a {
+        padding: 10px 16px;
     }
 }
 </style>

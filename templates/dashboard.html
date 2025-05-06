@@ -16,26 +16,30 @@
             padding: 2vh;
             text-align: center;
             position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
+
         .header h1 {
             font-size: min(32px, 4vh);
             margin-bottom: 1vh;
         }
-        .log-off {
+
+        .logo {
             position: absolute;
-            top: 20px;
-            right: 20px;
-            color: white;
-            text-decoration: none;
-            padding: 8px 16px;
-            border: 2px solid white;
-            border-radius: 8px;
-            font-weight: 500;
-            transition: all 0.3s ease;
+            left: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 48px;
+            width: auto;
         }
-        .log-off:hover {
-            background: white;
-            color: #1e3c72;
+
+        @media (max-width: 768px) {
+            .logo {
+                height: 36px;
+                left: 16px;
+            }
         }
 
         /* Existing dashboard styles */
@@ -119,8 +123,8 @@
     {% include 'menu.html' %}
     <div class="container">
         <div class="header">
-            <h1>Tournament Management System</h1>
-            <a href="{{ url_for('login') }}" class="log-off">Log Off</a>
+            <img src="{{ url_for('static', filename='dilliLabsIcon.png') }}" alt="DilliLabs Logo" class="logo">
+            <h1>DilliLabs Tournify</h1>
         </div>
         <div class="dashboard-content">
             <div class="dashboard-grid">
@@ -144,7 +148,7 @@
                     <div class="card-icon">🏟️</div>
                     <h2 class="card-title">Create New Tournament</h2>
                     <p class="card-description">Create a new tournament and set its details.</p>
-                    <form action="{{ url_for('tournament_creation') }}" method="get">
+                    <form action="{{ url_for('create_tournament') }}" method="get">
                         <button type="submit" class="card-button">Create New Tournament</button>
                     </form>
                 </div>

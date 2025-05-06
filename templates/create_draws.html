@@ -58,31 +58,13 @@
             background: #1e3c72;
             color: white;
         }
-
-        .log-off {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            color: white;
-            text-decoration: none;
-            padding: 8px 16px;
-            border: 2px solid white;
-            border-radius: 8px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .log-off:hover {
-            background: white;
-            color: #1e3c72;
-        }
     </style>
 </head>
 <body>
+    {% include 'menu.html' %}
     <div class="container">
         <div class="header">
-            <h1>Create Tournament Draws</h1>
-            <a href="{{ url_for('login') }}" class="log-off">Log Off</a>
+            <h1>Create Draws</h1>
         </div>
         
         <div class="content">

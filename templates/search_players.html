@@ -25,19 +25,26 @@
         .header {
             background: linear-gradient(135deg, #1e3c72, #2a5298);
             color: white;
-            padding: 20px 36px;
+            padding: 2vh;
+            text-align: center;
             position: relative;
-        }
-
-        .header-content {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            width: 100%;
+            justify-content: center;
         }
 
         .header h1 {
             font-size: min(32px, 4vh);
+            margin-bottom: 1vh;
+        }
+
+        .logo {
+            position: absolute;
+            left: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 48px;
+            width: auto;
         }
 
         /* Menu Styles */
@@ -191,49 +198,10 @@
             color: #666;
         }
 
-        .log-off {
-            color: white;
-            text-decoration: none;
-            padding: 8px 16px;
-            border: 2px solid white;
-            border-radius: 8px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            margin-left: auto;
-        }
-
-        .log-off:hover {
-            background: white;
-            color: #1e3c72;
-        }
-
-        .header-title {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            text-align: center;
-        }
-
         @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                gap: 16px;
-            }
-
-            .header-title {
-                position: static;
-                transform: none;
-                margin-bottom: 16px;
-            }
-
-            .top-menu {
-                margin: 0;
-                width: 100%;
-                justify-content: center;
-            }
-
-            .log-off {
-                margin: 16px 0 0 0;
+            .logo {
+                height: 36px;
+                left: 16px;
             }
         }
     </style>
@@ -241,31 +209,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <div class="header-content">
-                <nav class="top-menu">
-                    <a href="{{ url_for('dashboard') }}" class="menu-link {% if active_page == 'dashboard' %}active{% endif %}">Home</a>
-                    <div class="menu-dropdown">
-                        <span class="menu-link {% if active_page == 'tournament' %}active{% endif %}" tabindex="0">Tournament <span style="font-size:0.8em;">▼</span></span>
-                        <div class="dropdown-content">
-                            <a href="{{ url_for('list_tournament') }}">List Tournament</a>
-                            <a href="{{ url_for('tournament_creation') }}">Create New Tournament</a>
-                            <a href="{{ url_for('list_tournament_last2') }}">Last 2 tournaments</a>
-                        </div>
-                    </div>
-                    <div class="menu-dropdown">
-                        <span class="menu-link {% if active_page == 'players' %}active{% endif %}" tabindex="0">Players <span style="font-size:0.8em;">▼</span></span>
-                        <div class="dropdown-content">
-                            <a href="{{ url_for('player_registration') }}">Add Players</a>
-                            <a href="{{ url_for('search_players') }}">Search Players</a>
-                            <a href="{{ url_for('search_players') }}">Player List</a>
-                        </div>
-                    </div>
-                </nav>
-                <div class="header-title">
-                    <h1>Search Players</h1>
-                </div>
-                <a href="{{ url_for('login') }}" class="log-off">Log Off</a>
-            </div>
+            <img src="{{ url_for('static', filename='dilliLabsIcon.png') }}" alt="DilliLabs Logo" class="logo">
+            <h1>Search Players</h1>
         </div>
         
         <div class="search-content">

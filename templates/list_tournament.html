@@ -7,21 +7,48 @@
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
-        body { min-height: 100vh; background: #f0f2f5; }
-        .container { min-height: 100vh; display: flex; flex-direction: column; }
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: 'Roboto', sans-serif; 
+        }
+        body { 
+            min-height: 100vh; 
+            background: #f8fafc; 
+        }
+        .container { 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+        }
 
-        /* Adding the blue gradient header */
+        /* Modern Header */
         .header {
             background: linear-gradient(135deg, #1e3c72, #2a5298);
             color: white;
             padding: 2vh;
             text-align: center;
             position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         .header h1 {
             font-size: min(32px, 4vh);
             margin-bottom: 1vh;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+        .logo {
+            position: absolute;
+            left: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 48px;
+            width: auto;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
         }
         .log-off {
             position: absolute;
@@ -40,81 +67,95 @@
             color: #1e3c72;
         }
 
-        /* Content styles */
+        /* Modern Content Area */
         .content {
-            flex: 1;
-            padding: 3vh 24px;
-            max-width: 1200px;
+            padding: 3vh;
+            flex-grow: 1;
+            overflow-y: auto;
+            max-width: 1400px;
             margin: 0 auto;
             width: 100%;
         }
+
+        /* Modern Table */
         table { 
             width: 100%; 
-            border-collapse: collapse; 
+            border-collapse: separate;
+            border-spacing: 0;
             margin-top: 24px;
             background: white;
-            border-radius: 12px;
+            border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
         th, td { 
-            padding: 12px 8px; 
-            border-bottom: 1px solid #e0e0e0; 
+            padding: 16px 20px; 
             text-align: left; 
+            border-bottom: 1px solid #edf2f7;
         }
         th { 
             background: #1e3c72; 
             color: #fff; 
+            font-weight: 500;
+            font-size: 0.95em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        tr:last-child td {
+            border-bottom: none;
         }
         tr:hover { 
-            background: #f0f6ff; 
+            background: #f8fafc; 
         }
+
+        /* Modern Links and Buttons */
         .category-link { 
             color: #1e3c72; 
-            text-decoration: underline; 
+            text-decoration: none;
             cursor: pointer; 
+            display: block;
+            line-height: 1.8;
+            transition: color 0.2s;
+        }
+        .category-link:hover {
+            color: #2a5298;
+        }
+        .category-list {
+            display: block;
+            line-height: 1.8;
+            padding: 4px 0;
         }
         .icon-btn {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             background: none;
             border: none;
             color: #1e3c72;
-            font-size: 1.3em;
-            margin-right: 10px;
+            font-size: 1.2em;
+            margin-right: 12px;
             cursor: pointer;
-            transition: color 0.2s;
-            padding: 4px;
+            transition: all 0.2s;
+            padding: 8px;
+            border-radius: 8px;
             text-decoration: none;
             vertical-align: middle;
         }
         .edit-icon:hover {
+            background: #e8f0fe;
             color: #2a5298;
+            transform: translateY(-1px);
         }
         .delete-icon {
-            color: #e74c3c;
+            color: #dc2626;
         }
         .delete-icon:hover {
-            color: #c0392b;
+            background: #fee2e2;
+            color: #b91c1c;
+            transform: translateY(-1px);
         }
-        .no-tournaments {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-            font-size: 1.1em;
-            background: white;
-            border-radius: 12px;
-            margin-top: 24px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
-        }
-        .error-message {
-            background-color: #fff3f3;
-            color: #dc3545;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border: 1px solid #dc3545;
-        }
-        /* Modal styles */
+
+        /* Modern Modal */
         .modal {
             display: none;
             position: fixed;
@@ -123,53 +164,88 @@
             top: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(0,0,0,0.4);
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
             align-items: center;
             justify-content: center;
         }
         .modal-content {
             background: #fff;
-            padding: 24px;
-            border-radius: 10px;
-            max-width: 700px;
-            width: 95vw;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
-            position: relative;
+            padding: 32px;
+            border-radius: 20px;
+            max-width: 900px;
+            width: 90%;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
         }
         .close-modal {
             position: absolute;
-            top: 10px;
-            right: 18px;
-            font-size: 1.5em;
-            color: #1e3c72;
+            right: 24px;
+            top: 24px;
+            font-size: 24px;
             cursor: pointer;
-            font-weight: bold;
+            color: #1e3c72;
+            transition: all 0.2s;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
         }
-        .modal-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 12px;
+        .close-modal:hover {
+            background: #f1f5f9;
+            color: #2a5298;
         }
-        .modal-table th,
-        .modal-table td {
-            padding: 8px 6px;
-            border-bottom: 1px solid #e0e0e0;
+
+        /* Modern Status Messages */
+        .no-tournaments {
             text-align: center;
+            padding: 48px;
+            color: #64748b;
+            font-size: 1.1em;
+            background: white;
+            border-radius: 16px;
+            margin-top: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
-        .modal-table th {
-            background: #1e3c72;
-            color: #fff;
+        .error-message {
+            background-color: #fee2e2;
+            color: #dc2626;
+            padding: 16px 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            border: 1px solid #fecaca;
+            font-weight: 500;
         }
-        @media (max-width: 600px) {
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
             .content {
                 padding: 2vh 16px;
             }
             .header h1 {
                 font-size: 22px;
             }
+            .logo {
+                height: 36px;
+                left: 16px;
+            }
             table {
                 display: block;
                 overflow-x: auto;
+                border-radius: 12px;
+            }
+            th, td {
+                padding: 12px 16px;
+                font-size: 0.95em;
+            }
+            .modal-content {
+                padding: 24px;
+                width: 95%;
             }
         }
         .status-badge {
@@ -228,14 +304,33 @@
         .close-modal:hover {
             color: #2a5298;
         }
+        .prize-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 8px 0;
+        }
+        .prize-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .prize-label {
+            font-weight: 500;
+            color: #64748b;
+            min-width: 100px;
+        }
+        .prize-value {
+            color: #1e3c72;
+        }
     </style>
 </head>
 <body>
     {% include 'menu.html' %}
     <div class="container">
         <div class="header">
-            <h1>Active Tournaments</h1>
-            <a href="{{ url_for('login') }}" class="log-off">Log Off</a>
+            <img src="{{ url_for('static', filename='dilliLabsIcon.png') }}" alt="DilliLabs Logo" class="logo">
+            <h1>Tournaments</h1>
         </div>
         <div class="content">
             {% if error %}
@@ -246,13 +341,11 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Name</th>
+                        <th>Tournament Name</th>
                         <th>Venue</th>
                         <th>Tournament Dates</th>
-                        <th>Registration End Date</th>
-                        <th>Prize</th>
+                        <th>Entry Last Date</th>
                         <th>Categories</th>
-                        <th>Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -266,16 +359,14 @@
                             </a>
                         </td>
                         <td>{{ tournament['Venue'] }}</td>
-                        <td>{{ tournament['Start Date'] }} - {{ tournament['End Date'] }}</td>
-                        <td>{{ tournament['Last Registration Date'] }}</td>
-                        <td>{{ tournament['Total Prize'] }}</td>
+                        <td>{{ tournament['Start Date'].split('-')[2] }}-{{ tournament['Start Date'].split('-')[1] }}-{{ tournament['Start Date'].split('-')[0][2:] }} - {{ tournament['End Date'].split('-')[2] }}-{{ tournament['End Date'].split('-')[1] }}-{{ tournament['End Date'].split('-')[0][2:] }}</td>
+                        <td>{{ tournament['Last Registration Date'].split('-')[2] }}-{{ tournament['Last Registration Date'].split('-')[1] }}-{{ tournament['Last Registration Date'].split('-')[0][2:] }}</td>
                         <td>
                             <span class="category-link" onclick="showCategories('{{ tournament['Tournament Id'] }}')">
-                                {{ tournament['Categories'] }}
+                                {% for category in tournament['Categories'].split(',') %}
+                                <span class="category-list">{{ category.strip() }}</span>
+                                {% endfor %}
                             </span>
-                        </td>
-                        <td>
-                            <span class="status-badge active">{{ tournament['Status'] }}</span>
                         </td>
                         <td>
                             <a href="{{ url_for('edit_tournament', tournament_id=tournament['Tournament Id']) }}" class="icon-btn edit-icon" title="Edit">
@@ -308,9 +399,7 @@
                         <tr>
                             <th>Category</th>
                             <th>Fee</th>
-                            <th>First Prize</th>
-                            <th>Second Prize</th>
-                            <th>Third Prize</th>
+                            <th>Prizes</th>
                             <th>Format</th>
                         </tr>
                     </thead>
@@ -332,31 +421,37 @@
         function showCategories(tournamentId) {
             const modal = document.getElementById('categoriesModal');
             const categoriesContent = document.getElementById('categoriesContent');
-            const modalTitle = document.getElementById('modalTitle');
+            const categories = tournamentCategories[tournamentId] || [];
             
-            if (tournamentCategories[tournamentId]) {
-                const categories = tournamentCategories[tournamentId];
-                modalTitle.textContent = `Categories - ${categories[0]['Tournament Name']}`;
-                
-                let html = '';
-                categories.forEach(category => {
-                    html += `
-                        <tr>
-                            <td>${category.Category}</td>
-                            <td>${category.Fee}</td>
-                            <td>${category['First Prize']}</td>
-                            <td>${category['Second Prize']}</td>
-                            <td>${category['Third Prize']}</td>
-                            <td>${category.Format}</td>
-                        </tr>
-                    `;
-                });
-                categoriesContent.innerHTML = html;
-            } else {
-                modalTitle.textContent = 'Tournament Categories';
-                categoriesContent.innerHTML = '<tr><td colspan="6" style="text-align: center;">No categories found for this tournament.</td></tr>';
-            }
+            let html = '';
             
+            categories.forEach(category => {
+                html += `
+                    <tr>
+                        <td>${category.Category}</td>
+                        <td>₹${category.Fee}</td>
+                        <td>
+                            <div class="prize-group">
+                                <div class="prize-item">
+                                    <span class="prize-label">First Prize:</span>
+                                    <span class="prize-value">₹${category['First Prize']}</span>
+                                </div>
+                                <div class="prize-item">
+                                    <span class="prize-label">Second Prize:</span>
+                                    <span class="prize-value">₹${category['Second Prize']}</span>
+                                </div>
+                                <div class="prize-item">
+                                    <span class="prize-label">Third Prize:</span>
+                                    <span class="prize-value">₹${category['Third Prize']}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>${category.Format}</td>
+                    </tr>
+                `;
+            });
+            
+            categoriesContent.innerHTML = html;
             modal.style.display = 'flex';
         }
 

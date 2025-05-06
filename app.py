@@ -343,8 +343,8 @@ def save_seeding():
 def create_draws():
     return render_template('create_draws.html')
 
-@app.route('/tournament-creation', methods=['GET', 'POST'])
-def tournament_creation():
+@app.route('/create-tournament', methods=['GET', 'POST'])
+def create_tournament():
     if request.method == 'POST':
         # Generate unique tournament ID
         tournament_id = str(uuid.uuid4())
@@ -1315,7 +1315,7 @@ def generate_player_id(date_of_birth):
                 for row in reader:
                     if 'Player ID' in row and row['Player ID'].startswith(id_prefix):
                         try:
-                            sequence = int(row['Player ID'].split('-')[2])
+                            sequence = int(row['Player ID'].split('-')[-1])
                             max_sequence = max(max_sequence, sequence)
                         except ValueError:
                             continue

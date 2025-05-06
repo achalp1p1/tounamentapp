@@ -13,13 +13,26 @@
         .header {
             background: linear-gradient(135deg, #1e3c72, #2a5298);
             color: white;
-            padding: 20px 36px 0 36px;
+            padding: 2vh;
+            text-align: center;
             position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .header h1 {
             font-size: min(32px, 4vh);
             margin-bottom: 1vh;
         }
+        .logo {
+            position: absolute;
+            left: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 48px;
+            width: auto;
+        }
+
         .back-button {
             position: absolute;
             left: 20px;
@@ -162,6 +175,10 @@
                 font-size: 0.85em;
                 padding: 4px 8px;
             }
+            .logo {
+                height: 36px;
+                left: 16px;
+            }
         }
     </style>
 </head>
@@ -169,10 +186,8 @@
     {% include 'menu.html' %}
     <div class="container">
         <div class="header">
-            <a href="{{ url_for('list_tournament') }}" class="back-button">
-                <i class="fas fa-arrow-left"></i> Back to List
-            </a>
-            <h1>{{ tournament['Tournament Name'] }}</h1>
+            <img src="{{ url_for('static', filename='dilliLabsIcon.png') }}" alt="DilliLabs Logo" class="logo">
+            <h1>Tournament Details</h1>
             {% include 'tournament_submenu.html' %}
         </div>
         <div class="content">
