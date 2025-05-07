@@ -16,14 +16,14 @@
         </div>
     </div>
     <div class="menu-dropdown">
-        <span class="menu-link {% if active_page == 'players' %}active{% endif %}" tabindex="0">
+        <span class="menu-link" tabindex="0">
             Players
             <span style="font-size:0.8em;">▼</span>
         </span>
         <div class="dropdown-content">
-            <a href="{{ url_for('player_registration') }}">Add Player</a>
-            <a href="{{ url_for('search_players') }}">List Players</a>
-            <a href="{{ url_for('search_players') }}">Search</a>
+            <a href="{{ url_for('player_registration') }}" class="{% if request.endpoint == 'player_registration' %}active{% endif %}">Register Player</a>
+            <a href="{{ url_for('list_players') }}" class="{% if request.endpoint == 'list_players' %}active{% endif %}">List Players</a>
+            <a href="{{ url_for('search_players') }}" class="{% if request.endpoint == 'search_players' %}active{% endif %}">Search Players</a>
         </div>
     </div>
     <div class="menu-dropdown">
@@ -69,7 +69,7 @@
     gap: 8px;
 }
 
-.menu-link:hover, .menu-link.active {
+.menu-link:hover {
     background: #1e3c72;
     color: #fff;
     transform: translateY(-2px);
@@ -115,7 +115,8 @@
     transition: all 0.2s ease;
 }
 
-.dropdown-content a:hover {
+.dropdown-content a:hover,
+.dropdown-content a.active {
     background: #1e3c72;
     color: white;
 }
@@ -125,10 +126,10 @@
     display: block;
 }
 
-.menu-dropdown .menu-link {
-    display: flex;
-    align-items: center;
-    gap: 4px;
+.menu-dropdown:hover .menu-link {
+    background: #1e3c72;
+    color: #fff;
+    transform: translateY(-2px);
 }
 
 .material-icons {

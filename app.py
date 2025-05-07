@@ -13,6 +13,17 @@ from io import StringIO, BytesIO
 
 app = Flask(__name__)
 
+# Add custom datetime filter
+@app.template_filter('datetime')
+def format_datetime(value, format='%Y-%m-%d'):
+    if value:
+        try:
+            dt = datetime.strptime(value, '%Y-%m-%d')
+            return dt.strftime('%d-%m-%y')
+        except:
+            return value
+    return value
+
 # Define the CSV file paths with absolute paths
 PLAYERS_CSV = os.path.join(os.getcwd(), 'players_data.csv')
 print(f"Players CSV file path: {PLAYERS_CSV}")  # Debug print
@@ -1797,6 +1808,20 @@ def save_tournament_draw():
 @app.context_processor
 def inject_current_year():
     return {'current_year': datetime.now().year}
+
+@app.route('/list-players')
+def list_players():
+    try:
+        players = []
+        if os.path.exists(PLAYERS_CSV):
+            with open(PLAYERS_CSV, 'r', newline='', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                players = list(reader)
+        
+        return render_template('list_players.html', players=players, active_page='players')
+    except Exception as e:
+        print(f"Error in list_players: {e}")
+        return render_template('list_players.html', players=[], error=str(e), active_page='players')
 
 if __name__ == '__main__':
     # Initialize CSV files if they don't exist
