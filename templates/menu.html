@@ -1,22 +1,22 @@
 <!-- templates/menu.html -->
 <nav class="top-menu">
-    {% if active_page != 'dashboard' %}
-    <a href="{{ url_for('dashboard') }}" class="menu-link {% if active_page == 'dashboard' %}active{% endif %}" title="Home">
+    {% if request.endpoint != 'dashboard' %}
+    <a href="{{ url_for('dashboard') }}" class="menu-link {% if request.endpoint == 'dashboard' %}active{% endif %}" title="Home">
         Home
     </a>
     {% endif %}
     <div class="menu-dropdown">
-        <span class="menu-link {% if active_page == 'tournament' %}active{% endif %}" tabindex="0">
+        <span class="menu-link {% if request.endpoint in ['list_tournament', 'create_tournament'] %}active{% endif %}" tabindex="0">
             Tournament
             <span style="font-size:0.8em;">▼</span>
         </span>
         <div class="dropdown-content">
-            <a href="{{ url_for('list_tournament') }}">List Tournaments</a>
-            <a href="{{ url_for('create_tournament') }}">Create Tournament</a>
+            <a href="{{ url_for('list_tournament') }}" class="{% if request.endpoint == 'list_tournament' %}active{% endif %}">List Tournaments</a>
+            <a href="{{ url_for('create_tournament') }}" class="{% if request.endpoint == 'create_tournament' %}active{% endif %}">Create Tournament</a>
         </div>
     </div>
     <div class="menu-dropdown">
-        <span class="menu-link" tabindex="0">
+        <span class="menu-link {% if request.endpoint in ['player_registration', 'list_players', 'search_players'] %}active{% endif %}" tabindex="0">
             Players
             <span style="font-size:0.8em;">▼</span>
         </span>
@@ -27,7 +27,7 @@
         </div>
     </div>
     <div class="menu-dropdown">
-        <span class="menu-link {% if active_page == 'profile' %}active{% endif %}" tabindex="0">
+        <span class="menu-link {% if request.endpoint == 'profile' %}active{% endif %}" tabindex="0">
             Profile
             <span style="font-size:0.8em;">▼</span>
         </span>
@@ -75,6 +75,11 @@
     transform: translateY(-2px);
 }
 
+.menu-link.active {
+    background: #1e3c72;
+    color: #fff;
+}
+
 .menu-dropdown {
     position: relative;
     display: inline-block;
@@ -92,18 +97,16 @@
     margin-top: 8px;
     padding: 8px 0;
     transform-origin: top right;
-    animation: dropdownFade 0.2s ease;
+    opacity: 0;
+    transform: scale(0.95);
+    transition: all 0.2s ease;
 }
 
-@keyframes dropdownFade {
-    from {
-        opacity: 0;
-        transform: scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
+.menu-dropdown:hover .dropdown-content,
+.menu-dropdown:focus-within .dropdown-content {
+    display: block;
+    opacity: 1;
+    transform: scale(1);
 }
 
 .dropdown-content a {
@@ -121,12 +124,7 @@
     color: white;
 }
 
-.menu-dropdown:hover .dropdown-content,
-.menu-dropdown:focus-within .dropdown-content {
-    display: block;
-}
-
-.menu-dropdown:hover .menu-link {
+.menu-dropdown:hover .menu-link:not(.active) {
     background: #1e3c72;
     color: #fff;
     transform: translateY(-2px);
@@ -162,9 +160,14 @@
         position: fixed;
         bottom: 100%;
         right: 50%;
-        transform: translateX(50%);
+        transform: translateX(50%) scale(0.95);
         margin-bottom: 8px;
         width: 200px;
+    }
+
+    .menu-dropdown:hover .dropdown-content,
+    .menu-dropdown:focus-within .dropdown-content {
+        transform: translateX(50%) scale(1);
     }
 
     .dropdown-content a {
