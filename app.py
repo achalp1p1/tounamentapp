@@ -10,6 +10,7 @@ import glob
 import re
 import io
 from io import StringIO, BytesIO
+import json
 
 app = Flask(__name__)
 
@@ -1822,6 +1823,18 @@ def list_players():
     except Exception as e:
         print(f"Error in list_players: {e}")
         return render_template('list_players.html', players=[], error=str(e), active_page='players')
+
+@app.route('/get_seeding_ranges')
+def get_seeding_ranges():
+    try:
+        config_path = os.path.join('config', 'seeding_ranges.json')
+        with open(config_path, 'r') as f:
+            data = json.load(f)
+            print(f"Loaded seeding ranges: {data}")
+            return jsonify(data)
+    except Exception as e:
+        print(f"Error loading seeding ranges: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     # Initialize CSV files if they don't exist
