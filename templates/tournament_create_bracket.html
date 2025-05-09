@@ -73,6 +73,24 @@
     </form>
 </div>
 
+<!-- Add this HTML for the player swap popup -->
+<div class="swap-popup" id="swapPopup">
+    <h3>Swap Player</h3>
+    <div id="swapDetails"></div>
+    
+    <div class="swap-content">
+        <p>Select a player to swap with:</p>
+        <div class="swap-options" id="swapOptions">
+            <!-- Player options will be generated here -->
+        </div>
+    </div>
+    
+    <div class="button-group">
+        <button type="button" class="cancel-btn" id="closeSwapPopup">Cancel</button>
+        <button type="button" class="save-btn" id="confirmSwap">Confirm Swap</button>
+    </div>
+</div>
+
 <style>
     .bracket-controls {
         margin-bottom: 20px;
@@ -141,13 +159,43 @@
         flex-direction: column;
         justify-content: center;
         margin-bottom: 15px;
-        cursor: pointer;
-        transition: transform 0.2s, box-shadow 0.2s;
+        transition: box-shadow 0.2s;
     }
 
+    /* Arrow icon styling */
+    .match-arrow {
+        position: absolute;
+        right: -12px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background-color: #1e3c72;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 10;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        transition: transform 0.2s, background-color 0.2s;
+    }
+    
+    .match-arrow:hover {
+        transform: translateY(-50%) scale(1.1);
+        background-color: #2a4f9e;
+    }
+    
+    .match-arrow::after {
+        content: '→';
+        color: white;
+        font-size: 14px;
+        font-weight: bold;
+    }
+    
+    /* Only add hover effect to the arrow, not the match box */
     .match:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
 
     /* Calculate vertical positioning for each round */
@@ -168,61 +216,13 @@
     }
 
     /* Connecting lines between matches */
-    .match::after {
-        content: '';
-        position: absolute;
-        left: -30px;
-        top: 50%;
-        width: 30px;
-        height: 2px;
-        background: #ff0000;
-        z-index: 1;
-    }
-
-    /* Arrow head for connecting lines */
-    .match::before {
-        content: '';
-        position: absolute;
-        left: -30px;
-        top: 50%;
-        width: 0;
-        height: 0;
-        border-top: 6px solid transparent;
-        border-bottom: 6px solid transparent;
-        border-left: 8px solid #ff0000;
-        transform: translateY(-50%);
-        z-index: 1;
-    }
-
-    /* Vertical connecting lines */
-    .round:not(:first-child) .match::before {
-        content: '';
-        position: absolute;
-        left: -30px;
-        width: 2px;
-        background: #ff0000;
-        border: none;
-        z-index: 1;
-    }
-
-    /* Vertical lines for adjacent matches */
-    .round:not(:first-child) .match:nth-child(odd)::before {
-        height: 50%;
-        top: 0;
-    }
-
+    .match::after,
+    .match::before,
+    .round:not(:first-child) .match::before,
+    .round:not(:first-child) .match:nth-child(odd)::before,
     .round:not(:first-child) .match:nth-child(even)::before {
-        height: 50%;
-        top: 50%;
-    }
-
-    /* Style for the first round (no connecting lines) */
-    .round:first-child .match::after {
-        display: none;
-    }
-
-    .round:first-child .match::before {
-        display: none;
+        display: none !important;
+        content: none !important;
     }
 
     .player {
@@ -480,6 +480,86 @@
         border-radius: 4px;
         color: #1e3c72;
     }
+
+    /* Make player names clickable */
+    .player span:first-child {
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+    
+    .player span:first-child:hover {
+        color: #1e3c72;
+        text-decoration: underline;
+    }
+    
+    /* Styles for the swap popup */
+    .swap-popup {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        padding: 25px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        text-align: center;
+        min-width: 350px;
+        max-width: 90%;
+    }
+    
+    .swap-popup h3 {
+        margin-top: 0;
+        color: #1e3c72;
+        margin-bottom: 15px;
+    }
+    
+    .swap-content {
+        margin-top: 15px;
+        text-align: left;
+    }
+    
+    .swap-options {
+        max-height: 300px;
+        overflow-y: auto;
+        margin-top: 10px;
+        border: 1px solid #eee;
+        border-radius: 4px;
+    }
+    
+    .swap-option {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .swap-option:last-child {
+        border-bottom: none;
+    }
+    
+    .swap-option:hover {
+        background-color: #f5f7fa;
+    }
+    
+    .swap-option.selected {
+        background-color: #e3f2fd;
+        border-left: 3px solid #1e3c72;
+    }
+    
+    .swap-seed {
+        color: #666;
+        font-size: 0.8em;
+        margin-left: 5px;
+    }
+    
+    #swapDetails {
+        background-color: #f5f7fa;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 10px;
+    }
 </style>
 
 <script>
@@ -512,7 +592,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Store bracket data globally for use in swapping
+    let bracketData = {
+        currentRounds: [],
+        allPlayers: [],
+        selectedRound: -1,
+        selectedMatch: -1,
+        selectedPlayerIndex: -1,
+        selectedPlayer: null,
+        targetPlayer: null
+    };
+    
     function generateBracket(players) {
+        // Store all players for reference
+        bracketData.allPlayers = players;
+        
         // Sort players by seeding
         players.sort((a, b) => {
             const seedA = parseInt(a.seeding) || 999999;
@@ -589,26 +683,52 @@ document.addEventListener('DOMContentLoaded', function() {
                 matchDiv.className = 'match';
                 matchDiv.id = `round-${roundIndex + 1}-match-${matchIndex + 1}`;
                 
-                // Make the match clickable
-                matchDiv.addEventListener('click', function() {
-                    showScorePopup(roundIndex, matchIndex, match);
-                });
-                
-                match.forEach(player => {
+                match.forEach((player, playerIndex) => {
                     const playerDiv = document.createElement('div');
                     playerDiv.className = `player ${player.name === 'BYE' ? 'bye' : ''}`;
-                    playerDiv.innerHTML = `
-                        <span>${player.name}</span>
-                        ${player.seeding && player.seeding !== 'BYE' ? `<span class="seed">(${player.seeding})</span>` : ''}
-                    `;
+                    
+                    // Create name span as clickable element
+                    const nameSpan = document.createElement('span');
+                    nameSpan.textContent = player.name;
+                    
+                    // Don't make "Winner of Match X" or BYE players clickable
+                    if (player.name !== 'BYE' && !player.name.startsWith('Winner of Match')) {
+                        nameSpan.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            showSwapPopup(roundIndex, matchIndex, playerIndex, player);
+                        });
+                    }
+                    
+                    playerDiv.appendChild(nameSpan);
+                    
+                    // Add seed if available
+                    if (player.seeding && player.seeding !== 'BYE') {
+                        const seedSpan = document.createElement('span');
+                        seedSpan.className = 'seed';
+                        seedSpan.textContent = `(${player.seeding})`;
+                        playerDiv.appendChild(seedSpan);
+                    }
+                    
                     matchDiv.appendChild(playerDiv);
                 });
+
+                // Add the arrow icon that triggers the popup
+                const arrowDiv = document.createElement('div');
+                arrowDiv.className = 'match-arrow';
+                arrowDiv.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    showScorePopup(roundIndex, matchIndex, match);
+                });
+                matchDiv.appendChild(arrowDiv);
 
                 roundDiv.appendChild(matchDiv);
             });
 
             bracketContainer.appendChild(roundDiv);
         });
+        
+        // Store the rounds data for reference
+        bracketData.currentRounds = rounds;
     }
 
     // Returns an array of indices for bracket seeding
@@ -639,6 +759,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Modify your renderBracket function to show match results
     function renderBracket(rounds) {
+        bracketData.currentRounds = rounds;
+        
         const bracket = document.getElementById('bracket');
         bracket.innerHTML = '';
         
@@ -661,11 +783,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 matchDiv.className = 'match';
                 matchDiv.id = `round-${roundIndex + 1}-match-${matchIndex + 1}`;
                 
-                // Make the match clickable
-                matchDiv.addEventListener('click', function() {
-                    showScorePopup(roundIndex, matchIndex, match);
-                });
-                
                 // Get match results if available
                 const matchId = `${roundIndex}-${matchIndex}`;
                 const result = matchResults[matchId];
@@ -676,6 +793,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     const playerDiv = document.createElement('div');
                     playerDiv.className = "player";
                     
+                    // Store player data for future reference
+                    playerDiv.dataset.playerName = player.name;
+                    if (player.seeding) {
+                        playerDiv.dataset.playerSeeding = player.seeding;
+                    }
+                    
                     // Add winner class if this player won
                     if (result && result.winner && result.winner.name === player.name) {
                         playerDiv.classList.add("winner");
@@ -685,10 +808,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         playerDiv.classList.add("bye");
                     }
                     
+                    // Create clickable name span
                     const nameSpan = document.createElement('span');
                     nameSpan.textContent = player.name;
+                    
+                    // Don't make "Winner of Match X" or BYE players clickable
+                    if (player.name !== 'BYE' && !player.name.startsWith('Winner of Match')) {
+                        nameSpan.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            showSwapPopup(roundIndex, matchIndex, playerIndex, player);
+                        });
+                    }
+                    
                     playerDiv.appendChild(nameSpan);
                     
+                    // Display seeding if available and not BYE
                     if (player.seeding && player.seeding !== 'BYE') {
                         const seedSpan = document.createElement('span');
                         seedSpan.className = 'seed';
@@ -706,6 +840,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     matchDiv.appendChild(playerDiv);
                 });
+                
+                // Add the arrow icon that triggers the popup
+                const arrowDiv = document.createElement('div');
+                arrowDiv.className = 'match-arrow';
+                arrowDiv.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    showScorePopup(roundIndex, matchIndex, match);
+                });
+                matchDiv.appendChild(arrowDiv);
                 
                 roundDiv.appendChild(matchDiv);
             });
@@ -1071,90 +1214,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("Generated bracket with match results:", { rounds, matchResults });
     }
 
-    // Update your renderBracket function
-    function renderBracket(rounds) {
-        const bracket = document.getElementById('bracket');
-        bracket.innerHTML = '';
-        
-        if (!rounds || !Array.isArray(rounds) || rounds.length === 0) {
-            bracket.innerHTML = '<div class="error">No bracket data available</div>';
-            return;
-        }
-        
-        rounds.forEach((round, roundIndex) => {
-            const roundDiv = document.createElement('div');
-            roundDiv.className = 'round';
-            
-            const roundTitle = document.createElement('div');
-            roundTitle.className = 'round-title';
-            roundTitle.textContent = getRoundLabel(roundIndex, rounds.length);
-            roundDiv.appendChild(roundTitle);
-
-            round.forEach((match, matchIndex) => {
-                const matchDiv = document.createElement('div');
-                matchDiv.className = 'match';
-                matchDiv.id = `round-${roundIndex + 1}-match-${matchIndex + 1}`;
-                
-                // Make the match clickable
-                matchDiv.addEventListener('click', function() {
-                    showScorePopup(roundIndex, matchIndex, match);
-                });
-                
-                // Get match results if available
-                const matchId = `${roundIndex}-${matchIndex}`;
-                const result = matchResults[matchId];
-                
-                match.forEach((player, playerIndex) => {
-                    if (!player) player = { name: "Unknown", seeding: "" };
-                    
-                    const playerDiv = document.createElement('div');
-                    playerDiv.className = "player";
-                    
-                    // Store player data for future reference
-                    playerDiv.dataset.playerName = player.name;
-                    if (player.seeding) {
-                        playerDiv.dataset.playerSeeding = player.seeding;
-                    }
-                    
-                    // Determine if this player won the match
-                    if (result && result.winner && result.winner.name === player.name) {
-                        playerDiv.classList.add("winner");
-                    }
-                    
-                    if (player.name === "BYE") {
-                        playerDiv.classList.add("bye");
-                    }
-                    
-                    const nameSpan = document.createElement('span');
-                    nameSpan.textContent = player.name;
-                    playerDiv.appendChild(nameSpan);
-                    
-                    // Display seeding if available and not BYE
-                    if (player.seeding && player.seeding !== 'BYE') {
-                        const seedSpan = document.createElement('span');
-                        seedSpan.className = 'seed';
-                        seedSpan.textContent = `(${player.seeding})`;
-                        playerDiv.appendChild(seedSpan);
-                    }
-                    
-                    // Display scores if available
-                    if (result && result.scores && result.scores[playerIndex]) {
-                        const scoreSpan = document.createElement('span');
-                        scoreSpan.className = 'score-display';
-                        scoreSpan.textContent = result.scores[playerIndex].join('-');
-                        playerDiv.appendChild(scoreSpan);
-                    }
-                    
-                    matchDiv.appendChild(playerDiv);
-                });
-                
-                roundDiv.appendChild(matchDiv);
-            });
-            
-            bracket.appendChild(roundDiv);
-        });
-    }
-
     // Replace your existing closePopup event handler with this:
     document.getElementById('closePopup').addEventListener('click', function(e) {
         e.preventDefault(); // Prevent any default action
@@ -1181,6 +1240,146 @@ document.addEventListener('DOMContentLoaded', function() {
         // Hide popup and overlay
         document.getElementById('successPopup').style.display = 'none';
         document.getElementById('popupOverlay').style.display = 'none';
+    });
+
+    // Add function to show the swap popup
+    function showSwapPopup(roundIndex, matchIndex, playerIndex, player) {
+        const popup = document.getElementById('swapPopup');
+        const overlay = document.getElementById('popupOverlay');
+        const swapDetails = document.getElementById('swapDetails');
+        const swapOptions = document.getElementById('swapOptions');
+        
+        // Store selected player info
+        bracketData.selectedRound = roundIndex;
+        bracketData.selectedMatch = matchIndex;
+        bracketData.selectedPlayerIndex = playerIndex;
+        bracketData.selectedPlayer = player;
+        bracketData.targetPlayer = null;
+        
+        // Show player details
+        swapDetails.innerHTML = `Swapping: <strong>${player.name}</strong>${player.seeding ? ` (Seed: ${player.seeding})` : ''}`;
+        
+        // Get all players from the same round
+        const playersInRound = [];
+        bracketData.currentRounds[roundIndex].forEach((match, mIdx) => {
+            match.forEach((p, pIdx) => {
+                // Don't include BYE players, "Winner of Match X", or the selected player
+                if (p.name !== 'BYE' && 
+                    !p.name.startsWith('Winner of Match') && 
+                    !(mIdx === matchIndex && pIdx === playerIndex)) {
+                    playersInRound.push({
+                        player: p,
+                        matchIndex: mIdx,
+                        playerIndex: pIdx
+                    });
+                }
+            });
+        });
+        
+        // Generate swap options
+        swapOptions.innerHTML = '';
+        playersInRound.forEach(option => {
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'swap-option';
+            optionDiv.innerHTML = `
+                ${option.player.name}
+                ${option.player.seeding ? `<span class="swap-seed">(Seed: ${option.player.seeding})</span>` : ''}
+            `;
+            
+            // Add click handler to select this player
+            optionDiv.addEventListener('click', function() {
+                // Remove selected class from all options
+                document.querySelectorAll('.swap-option').forEach(el => {
+                    el.classList.remove('selected');
+                });
+                
+                // Add selected class to this option
+                this.classList.add('selected');
+                
+                // Store target player
+                bracketData.targetPlayer = {
+                    player: option.player,
+                    matchIndex: option.matchIndex,
+                    playerIndex: option.playerIndex
+                };
+            });
+            
+            swapOptions.appendChild(optionDiv);
+        });
+        
+        // Show popup and overlay
+        popup.style.display = 'block';
+        overlay.style.display = 'block';
+    }
+    
+    // Add event listeners for the swap popup
+    document.getElementById('closeSwapPopup').addEventListener('click', function() {
+        document.getElementById('swapPopup').style.display = 'none';
+        document.getElementById('popupOverlay').style.display = 'none';
+    });
+    
+    document.getElementById('confirmSwap').addEventListener('click', function() {
+        if (!bracketData.targetPlayer) {
+            alert('Please select a player to swap with.');
+            return;
+        }
+        
+        // Perform the swap
+        const { selectedRound, selectedMatch, selectedPlayerIndex, targetPlayer } = bracketData;
+        
+        // Get current match
+        const currentMatch = bracketData.currentRounds[selectedRound][selectedMatch];
+        
+        // Get target match
+        const targetMatch = bracketData.currentRounds[selectedRound][targetPlayer.matchIndex];
+        
+        // Store temporary references to the players
+        const playerA = {...currentMatch[selectedPlayerIndex]};
+        const playerB = {...targetMatch[targetPlayer.playerIndex]};
+        
+        // Swap the players
+        currentMatch[selectedPlayerIndex] = playerB;
+        targetMatch[targetPlayer.playerIndex] = playerA;
+        
+        // Close popup
+        document.getElementById('swapPopup').style.display = 'none';
+        document.getElementById('popupOverlay').style.display = 'none';
+        
+        // Clear any match results that involve these players
+        const currentMatchId = `${selectedRound}-${selectedMatch}`;
+        const targetMatchId = `${selectedRound}-${targetPlayer.matchIndex}`;
+        
+        // Delete results for these matches as they are no longer valid
+        if (matchResults[currentMatchId]) {
+            delete matchResults[currentMatchId];
+        }
+        
+        if (matchResults[targetMatchId]) {
+            delete matchResults[targetMatchId];
+        }
+        
+        // Re-render the bracket
+        renderBracket(bracketData.currentRounds);
+        
+        console.log(`Swapped ${playerA.name} with ${playerB.name}`);
+    });
+    
+    // Also let the overlay close the swap popup
+    document.getElementById('popupOverlay').addEventListener('click', function() {
+        if (document.getElementById('swapPopup').style.display === 'block') {
+            document.getElementById('swapPopup').style.display = 'none';
+            document.getElementById('popupOverlay').style.display = 'none';
+        } else if (document.getElementById('successPopup').style.display === 'block') {
+            // Remove any existing BYE message
+            const existingByeMessage = document.querySelector('.bye-message');
+            if (existingByeMessage) {
+                existingByeMessage.remove();
+            }
+            
+            // Hide popup and overlay
+            document.getElementById('successPopup').style.display = 'none';
+            document.getElementById('popupOverlay').style.display = 'none';
+        }
     });
 });
 </script>
