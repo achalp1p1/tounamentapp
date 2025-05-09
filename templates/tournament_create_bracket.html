@@ -28,6 +28,13 @@
     </div>
 </div>
 
+<div class="popup-overlay" id="popupOverlay"></div>
+<div class="success-popup" id="successPopup">
+    <h3>Match Selected</h3>
+    <p id="matchDetails">Match details will appear here</p>
+    <button id="closePopup">Close</button>
+</div>
+
 <style>
     .bracket-controls {
         margin-bottom: 20px;
@@ -96,6 +103,13 @@
         flex-direction: column;
         justify-content: center;
         margin-bottom: 15px;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .match:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
     /* Calculate vertical positioning for each round */
@@ -248,6 +262,56 @@
         background: #ff0000;
         z-index: 1;
     }
+
+    /* Style for the success popup */
+    .success-popup {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        text-align: center;
+        min-width: 300px;
+    }
+    
+    .success-popup h3 {
+        margin-top: 0;
+        color: #1e3c72;
+    }
+    
+    .success-popup p {
+        margin-bottom: 20px;
+    }
+    
+    .success-popup button {
+        background: #1e3c72;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    
+    .success-popup button:hover {
+        background: #2a4f9e;
+    }
+    
+    /* Overlay background */
+    .popup-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+    }
 </style>
 
 <script>
@@ -356,7 +420,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 const matchDiv = document.createElement('div');
                 matchDiv.className = 'match';
                 matchDiv.id = `round-${roundIndex + 1}-match-${matchIndex + 1}`;
-
+                
+                // Make the match clickable
+                matchDiv.addEventListener('click', function() {
+                    showSuccessPopup(roundIndex, matchIndex, match);
+                });
+                
                 match.forEach(player => {
                     const playerDiv = document.createElement('div');
                     playerDiv.className = `player ${player.name === 'BYE' ? 'bye' : ''}`;
@@ -396,6 +465,53 @@ document.addEventListener('DOMContentLoaded', function() {
         if (fromEnd === 6) return "Round of 64";
         return `Round ${roundIndex + 1}`;
     }
+
+    // Function to show success popup when a match is clicked
+    function showSuccessPopup(roundIndex, matchIndex, match) {
+        const popup = document.getElementById('successPopup');
+        const overlay = document.getElementById('popupOverlay');
+        const matchDetails = document.getElementById('matchDetails');
+        
+        // Get the round name
+        const roundName = getRoundLabel(roundIndex, document.querySelectorAll('.round').length);
+        
+        // Format match details
+        let detailsHTML = `
+            <strong>${roundName} - Match ${matchIndex + 1}</strong><br><br>
+            <div style="text-align: left; margin: 0 auto; max-width: 250px;">
+        `;
+        
+        // Add player details
+        match.forEach((player, idx) => {
+            if (!player) player = { name: "Unknown", seeding: "" };
+            
+            detailsHTML += `
+                <div style="margin-bottom: 10px;">
+                    <strong>Player ${idx + 1}:</strong> ${player.name}
+                    ${player.seeding && player.seeding !== 'BYE' ? ` (Seed: ${player.seeding})` : ''}
+                </div>
+            `;
+        });
+        
+        detailsHTML += '</div>';
+        matchDetails.innerHTML = detailsHTML;
+        
+        // Show popup and overlay
+        popup.style.display = 'block';
+        overlay.style.display = 'block';
+    }
+    
+    // Close popup when close button is clicked
+    document.getElementById('closePopup').addEventListener('click', function() {
+        document.getElementById('successPopup').style.display = 'none';
+        document.getElementById('popupOverlay').style.display = 'none';
+    });
+    
+    // Close popup when clicking outside of it
+    document.getElementById('popupOverlay').addEventListener('click', function() {
+        document.getElementById('successPopup').style.display = 'none';
+        document.getElementById('popupOverlay').style.display = 'none';
+    });
 });
 </script>
 {% endblock %}

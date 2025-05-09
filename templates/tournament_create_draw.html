@@ -340,12 +340,32 @@
             .then(function(data) {
                 if (data && data.seeding_ranges) {
                     seedingRanges = data.seeding_ranges;
-                    console.log('Seeding ranges loaded:', seedingRanges);
+                    console.log('Seeding ranges loaded successfully:', seedingRanges);
+                    return seedingRanges;
+                } else {
+                    console.warn('Seeding ranges data format unexpected:', data);
+                    // Fallback to default ranges if format is unexpected
+                    return setDefaultSeedingRanges();
                 }
             })
             .catch(function(error) {
                 console.error('Error loading seeding ranges:', error);
+                // Set default ranges if there's an error
+                return setDefaultSeedingRanges();
             });
+    }
+
+    // Set default seeding ranges as a fallback
+    function setDefaultSeedingRanges() {
+        console.warn('Using default seeding ranges');
+        seedingRanges = [
+            { min: 1, max: 2, description: "Top Seeds" },
+            { min: 3, max: 5, description: "Upper Seeds" },
+            { min: 6, max: 15, description: "Mid Seeds" },
+            { min: 16, max: 31, description: "Lower Seeds" },
+            { min: 32, max: 999, description: "Unseeded" }
+        ];
+        return seedingRanges;
     }
 
     // Function to get range for a seeding
@@ -372,6 +392,12 @@
         // Create a deep copy of current players
         let playersToShuffle = currentPlayers.map(player => ({...player}));
 
+        // Make sure seeding ranges are loaded
+        if (!seedingRanges || seedingRanges.length === 0) {
+            console.warn('Seeding ranges not loaded, initializing with defaults');
+            setDefaultSeedingRanges();
+        }
+
         // Initialize groups based on seeding ranges
         const playersByRange = {};
         seedingRanges.forEach(range => {
@@ -382,8 +408,19 @@
         // Sort players into their respective groups
         playersToShuffle.forEach(player => {
             const range = getRangeForSeeding(player.seeding);
-            playersByRange[range].push({...player});
+            if (!playersByRange[range]) {
+                console.warn(`Range ${range} not found in playersByRange, adding to unseeded`);
+                playersByRange['unseeded'].push({...player});
+            } else {
+                playersByRange[range].push({...player});
+            }
         });
+
+        // Log groups for debugging
+        console.log('Players grouped by ranges:', Object.keys(playersByRange).map(r => ({
+            range: r, 
+            count: playersByRange[r].length
+        })));
 
         // Shuffle players within each group
         for (const range in playersByRange) {
@@ -396,7 +433,9 @@
         const shuffledPlayers = [];
         seedingRanges.forEach(range => {
             const rangeKey = `${range.min}-${range.max}`;
-            shuffledPlayers.push(...playersByRange[rangeKey]);
+            if (playersByRange[rangeKey]) {
+                shuffledPlayers.push(...playersByRange[rangeKey]);
+            }
         });
         shuffledPlayers.push(...playersByRange['unseeded']);
 
@@ -437,7 +476,7 @@
         const tournamentId = "{{ tournament_id }}";
         
         if (category) {
-            // Load seeding ranges first
+            // Load seeding ranges first - make sure this completes before proceeding
             loadSeedingRanges().then(() => {
                 $('#players-table-container').html('<p style="color:#1e3c72;">Loading players...</p>');
                 $('#editable-table-container').empty();
@@ -448,7 +487,7 @@
                 
                 // Fetch players for the selected category
                 $.getJSON(`/tournament/${tournamentId}/get_category_players/${encodeURIComponent(category)}?fields=full`, function(data) {
-                    if (data.success && data.players.length > 0) {
+                    if (data.players && data.players.length > 0) {
                         // Store players data
                         currentPlayers = data.players.map(player => ({...player}));
                         
