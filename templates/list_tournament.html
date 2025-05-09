@@ -353,7 +353,7 @@
                     {% for tournament in tournaments %}
                     <tr>
                         <td>
-                            <a href="{{ url_for('tournament_details', tournament_id=tournament['Tournament Id']) }}" 
+                            <a href="{{ url_for('tournament_info', tournament_id=tournament['Tournament Id']) }}" 
                                style="color: #1e3c72; text-decoration: none; font-weight: 500;">
                                 {{ tournament['Tournament Name'] }}
                             </a>

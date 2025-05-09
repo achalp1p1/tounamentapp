@@ -726,36 +726,6 @@ def list_tournament_last2():
 
     return render_template('list_tournament.html', tournaments=tournaments, categories_by_tid=categories_by_tid)
 
-@app.route('/tournament-details/<tournament_id>', methods=['GET'])
-def tournament_details(tournament_id):
-    try:
-        # Get tournament details
-        tournament = None
-        with open('tournaments.csv', 'r', newline='', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                if row['Tournament Id'] == tournament_id:
-                    tournament = row
-                    break
-        
-        if not tournament:
-            return redirect(url_for('list_tournament'))
-        
-        # Get category details
-        categories = []
-        with open('tournament_categories.csv', 'r', newline='', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                if row['Tournament Id'] == tournament_id:
-                    categories.append(row)
-        
-        return render_template('tournament_details.html', 
-                             tournament=tournament,
-                             categories=categories)
-    except Exception as e:
-        print(f"Error in tournament_details: {str(e)}")  # For debugging
-        return redirect(url_for('list_tournament'))
-
 @app.route('/tournament/<tournament_id>/info')
 def tournament_info(tournament_id):
     try:
@@ -771,17 +741,72 @@ def tournament_info(tournament_id):
         if not tournament:
             return redirect(url_for('list_tournament'))
         
-        # Get category details
-        categories = []
+        # Get categories and initialize entries dictionaries
+        girls_categories = []
+        boys_categories = []
+        girls_entries = {}
+        boys_entries = {}
+        
+        # Get tournament categories
         with open('tournament_categories.csv', 'r', newline='', encoding='utf-8') as file:
             reader = csv.DictReader(file)
             for row in reader:
                 if row['Tournament Id'] == tournament_id:
-                    categories.append(row['Category'])
+                    if 'Girls' in row['Category']:
+                        girls_categories.append(row['Category'])
+                        girls_entries[row['Category']] = []
+                    elif 'Boys' in row['Category']:
+                        boys_categories.append(row['Category'])
+                        boys_entries[row['Category']] = []
+
+        # Get registrations
+        registrations = []
+        with open('tournament_registrations.csv', 'r', newline='', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if row['Tournament ID'] == tournament_id and row['Status'].lower() == 'active':
+                    registrations.append(row)
+
+        # Get player details
+        players = {}
+        with open('players_data.csv', 'r', newline='', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                players[row['Player ID']] = row
+
+        # Organize entries by category
+        for reg in registrations:
+            player = players.get(reg['Player ID'])
+            if player:
+                entry = {
+                    'Name': player['Name'],
+                    'Category': reg['Category'],
+                    'Seeding': reg.get('Seeding', '')
+                }
+                
+                if reg['Category'] in girls_entries:
+                    girls_entries[reg['Category']].append(entry)
+                elif reg['Category'] in boys_entries:
+                    boys_entries[reg['Category']].append(entry)
+
+        # Sort entries by seeding in each category
+        def sort_by_seeding(entry):
+            seeding = entry.get('Seeding', '')
+            try:
+                return (int(seeding) if seeding else 999999, entry['Name'])
+            except ValueError:
+                return (999999, entry['Name'])
+
+        for category in girls_entries:
+            girls_entries[category].sort(key=sort_by_seeding)
+        for category in boys_entries:
+            boys_entries[category].sort(key=sort_by_seeding)
         
         return render_template('tournament_details.html', 
                              tournament=tournament,
-                             categories=categories,
+                             girls_entries=girls_entries,
+                             boys_entries=boys_entries,
+                             categories=girls_categories + boys_categories,
                              active_subpage='info')
     except Exception as e:
         print(f"Error in tournament_info: {str(e)}")
@@ -1082,8 +1107,6 @@ def tournament_entries(tournament_id):
             # Sort entries in each category by seeding
             def sort_by_seeding(entry):
                 seeding = entry.get('Seeding', '')
-                # Convert seeding to integer if it exists, otherwise use a large number
-                # This will put players without seeding at the end
                 try:
                     return (int(seeding) if seeding else 999999, entry['Name'])
                 except ValueError:
