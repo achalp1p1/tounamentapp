@@ -1,0 +1,401 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="tournament-header">
+    <div class="tournament-title">
+        <h1>{{ tournament['Tournament Name'] }}</h1>
+    </div>
+    {% include 'tournament_submenu.html' %}
+</div>
+
+<div class="container">
+    <div class="content">
+        <div class="bracket-controls">
+            <select id="categorySelect" class="form-control">
+                <option value="">Select Category</option>
+                {% for category in categories %}
+                <option value="{{ category }}">{{ category }}</option>
+                {% endfor %}
+            </select>
+            <button id="generateBracket" class="btn btn-primary" disabled>Generate Bracket</button>
+        </div>
+
+        <div class="bracket-container">
+            <div id="bracket" class="bracket">
+                <!-- Bracket will be generated here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bracket-controls {
+        margin-bottom: 20px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .form-control {
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        min-width: 200px;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 500;
+    }
+
+    .btn-primary {
+        background: #1e3c72;
+        color: white;
+    }
+
+    .btn-primary:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+
+    .bracket-container {
+        overflow-x: auto;
+        padding: 20px 0;
+        background: #f8f9fa;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .bracket {
+        display: flex;
+        flex-direction: row;
+        gap: 30px;
+        min-width: max-content;
+        padding: 20px;
+    }
+
+    .round {
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+    /* Fixed height for matches - reduced size */
+    .match {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 8px;
+        min-width: 160px;
+        position: relative;
+        height: 60px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        margin-bottom: 15px;
+    }
+
+    /* Calculate vertical positioning for each round */
+    .round:nth-child(1) .match {
+        margin-bottom: 15px;
+    }
+
+    .round:nth-child(2) .match {
+        margin-top: 37.5px;
+    }
+
+    .round:nth-child(3) .match {
+        margin-top: 112.5px;
+    }
+
+    .round:nth-child(4) .match {
+        margin-top: 262.5px;
+    }
+
+    /* Connecting lines between matches */
+    .match::after {
+        content: '';
+        position: absolute;
+        left: -30px;
+        top: 50%;
+        width: 30px;
+        height: 2px;
+        background: #ff0000;
+        z-index: 1;
+    }
+
+    /* Arrow head for connecting lines */
+    .match::before {
+        content: '';
+        position: absolute;
+        left: -30px;
+        top: 50%;
+        width: 0;
+        height: 0;
+        border-top: 6px solid transparent;
+        border-bottom: 6px solid transparent;
+        border-left: 8px solid #ff0000;
+        transform: translateY(-50%);
+        z-index: 1;
+    }
+
+    /* Vertical connecting lines */
+    .round:not(:first-child) .match::before {
+        content: '';
+        position: absolute;
+        left: -30px;
+        width: 2px;
+        background: #ff0000;
+        border: none;
+        z-index: 1;
+    }
+
+    /* Vertical lines for adjacent matches */
+    .round:not(:first-child) .match:nth-child(odd)::before {
+        height: 50%;
+        top: 0;
+    }
+
+    .round:not(:first-child) .match:nth-child(even)::before {
+        height: 50%;
+        top: 50%;
+    }
+
+    /* Style for the first round (no connecting lines) */
+    .round:first-child .match::after {
+        display: none;
+    }
+
+    .round:first-child .match::before {
+        display: none;
+    }
+
+    .player {
+        padding: 6px;
+        border-radius: 4px;
+        margin-bottom: 3px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.9em;
+    }
+
+    .player:last-child {
+        margin-bottom: 0;
+    }
+
+    .player.winner {
+        background: #e8f0fe;
+        font-weight: 500;
+    }
+
+    .player.bye {
+        background: #f8f9fa;
+        color: #666;
+    }
+
+    .seed {
+        color: #666;
+        font-size: 0.8em;
+    }
+
+    .round-title {
+        text-align: center;
+        margin-bottom: 8px;
+        color: #1e3c72;
+        font-weight: 500;
+        font-size: 0.9em;
+    }
+
+    /* Add spacing between rounds */
+    .round:not(:first-child) {
+        margin-left: 30px;
+    }
+
+    /* Add connecting lines from the middle of the first and second matches of round 1 to the middle of the first match of round 2 */
+    .round:nth-child(1) .match:nth-child(1)::after {
+        content: '';
+        position: absolute;
+        left: -30px;
+        top: 50%;
+        width: 30px;
+        height: 2px;
+        background: #ff0000;
+        z-index: 1;
+    }
+
+    .round:nth-child(1) .match:nth-child(2)::after {
+        content: '';
+        position: absolute;
+        left: -30px;
+        top: 50%;
+        width: 30px;
+        height: 2px;
+        background: #ff0000;
+        z-index: 1;
+    }
+
+    .round:nth-child(2) .match:nth-child(1)::before {
+        content: '';
+        position: absolute;
+        left: -30px;
+        top: 50%;
+        width: 2px;
+        height: 50%;
+        background: #ff0000;
+        z-index: 1;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const categorySelect = document.getElementById('categorySelect');
+    const generateBracketBtn = document.getElementById('generateBracket');
+    const bracketContainer = document.getElementById('bracket');
+
+    categorySelect.addEventListener('change', function() {
+        generateBracketBtn.disabled = !this.value;
+    });
+
+    generateBracketBtn.addEventListener('click', async function() {
+        const category = categorySelect.value;
+        if (!category) return;
+
+        try {
+            const response = await fetch(`/tournament/{{ tournament['Tournament Id'] }}/get_category_players/${category}`);
+            const data = await response.json();
+            
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+
+            generateBracket(data.players);
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error loading players');
+        }
+    });
+
+    function generateBracket(players) {
+        // Sort players by seeding
+        players.sort((a, b) => {
+            const seedA = parseInt(a.seeding) || 999999;
+            const seedB = parseInt(b.seeding) || 999999;
+            return seedA - seedB;
+        });
+
+        // Pad with BYEs
+        const numPlayers = players.length;
+        const nextPowerOf2 = Math.pow(2, Math.ceil(Math.log2(numPlayers)));
+        const numByes = nextPowerOf2 - numPlayers;
+        const paddedPlayers = [...players];
+        for (let i = 0; i < numByes; i++) {
+            paddedPlayers.push({ name: 'BYE', seeding: 'BYE' });
+        }
+
+        // Get bracket order
+        const bracketOrder = getBracketOrder(nextPowerOf2); // 1-based indices
+
+        // Assign players to bracket positions
+        const orderedPlayers = bracketOrder.map(idx => paddedPlayers[idx - 1]);
+
+        // Generate first round matches
+        const firstRoundMatches = [];
+        for (let i = 0; i < orderedPlayers.length; i += 2) {
+            firstRoundMatches.push([orderedPlayers[i], orderedPlayers[i + 1]]);
+        }
+
+        // Calculate total number of rounds
+        const totalRounds = Math.log2(nextPowerOf2);
+
+        // Generate all rounds
+        const rounds = [firstRoundMatches];
+        let currentRound = firstRoundMatches;
+
+        // Generate subsequent rounds, handling BYEs
+        for (let round = 1; round < totalRounds; round++) {
+            const nextRound = [];
+            for (let i = 0; i < currentRound.length; i += 2) {
+                // For each pair of matches in the previous round
+                let player1, player2;
+
+                // Determine winner of match1
+                const match1 = currentRound[i];
+                if (match1[0].name === 'BYE') player1 = match1[1];
+                else if (match1[1].name === 'BYE') player1 = match1[0];
+                else player1 = { name: `Winner of Match ${i + 1}`, seeding: '' };
+
+                // Determine winner of match2
+                const match2 = currentRound[i + 1];
+                if (match2[0].name === 'BYE') player2 = match2[1];
+                else if (match2[1].name === 'BYE') player2 = match2[0];
+                else player2 = { name: `Winner of Match ${i + 2}`, seeding: '' };
+
+                nextRound.push([player1, player2]);
+            }
+            rounds.push(nextRound);
+            currentRound = nextRound;
+        }
+
+        // Render bracket
+        bracketContainer.innerHTML = '';
+        rounds.forEach((round, roundIndex) => {
+            const roundDiv = document.createElement('div');
+            roundDiv.className = 'round';
+            
+            const roundTitle = document.createElement('div');
+            roundTitle.className = 'round-title';
+            roundTitle.textContent = getRoundLabel(roundIndex, rounds.length);
+            roundDiv.appendChild(roundTitle);
+
+            round.forEach((match, matchIndex) => {
+                const matchDiv = document.createElement('div');
+                matchDiv.className = 'match';
+                matchDiv.id = `round-${roundIndex + 1}-match-${matchIndex + 1}`;
+
+                match.forEach(player => {
+                    const playerDiv = document.createElement('div');
+                    playerDiv.className = `player ${player.name === 'BYE' ? 'bye' : ''}`;
+                    playerDiv.innerHTML = `
+                        <span>${player.name}</span>
+                        ${player.seeding && player.seeding !== 'BYE' ? `<span class="seed">(${player.seeding})</span>` : ''}
+                    `;
+                    matchDiv.appendChild(playerDiv);
+                });
+
+                roundDiv.appendChild(matchDiv);
+            });
+
+            bracketContainer.appendChild(roundDiv);
+        });
+    }
+
+    // Returns an array of indices for bracket seeding
+    function getBracketOrder(n) {
+        if (n === 1) return [1];
+        const prev = getBracketOrder(n / 2);
+        const res = [];
+        for (let i = 0; i < prev.length; i++) {
+            res.push(prev[i]);
+            res.push(n + 1 - prev[i]);
+        }
+        return res;
+    }
+
+    function getRoundLabel(roundIndex, totalRounds) {
+        const fromEnd = totalRounds - roundIndex;
+        if (fromEnd === 1) return "Final";
+        if (fromEnd === 2) return "Semi-Final";
+        if (fromEnd === 3) return "Quarter-Final";
+        if (fromEnd === 4) return "Round of 16";
+        if (fromEnd === 5) return "Round of 32";
+        if (fromEnd === 6) return "Round of 64";
+        return `Round ${roundIndex + 1}`;
+    }
+});
+</script>
+{% endblock %}
