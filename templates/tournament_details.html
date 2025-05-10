@@ -594,17 +594,6 @@
                                 <img src="{{ tournament['Tournament Logo Link'] }}" alt="Tournament Logo">
                             </div>
                             {% endif %}
-                            
-                            {% if tournament.get('Sponsor Logo Links') %}
-                            {% for logo in tournament['Sponsor Logo Links'].split(',') %}
-                            {% if logo %}
-                            <div class="logo-container">
-                                <div class="detail-label">Sponsor Logo</div>
-                                <img src="{{ logo }}" alt="Sponsor Logo">
-                            </div>
-                            {% endif %}
-                            {% endfor %}
-                            {% endif %}
                         </div>
                     </div>
                 </div>

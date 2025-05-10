@@ -1,3 +1,3 @@
-Tournament Id,Tournament Name,Categories,Venue,Start Date,End Date,Last Registration Date,Total Prize,General Information,Tournament Logo Link,Sponsor Logo Links,Status
-8647d782-7fb6-4cf8-b166-61b2dd612b9a,T1,"u17 Boys,u9",Delhi,2025-05-13,2025-05-15,2025-05-11,888,,,,active
-23562a3d-bc09-4c42-8929-b87e7f2f7fa2,test1,"u9,u11 Girls,u11 Boys,u17 Boys,u19 Girls",,2025-05-13,2025-05-18,,,,,,active
+Tournament Id,Tournament Name,Categories,Venue,Start Date,End Date,Last Registration Date,Total Prize,General Information,Tournament Logo Link,Status
+282c3e9e-4e95-4218-8cce-176f822bcd07,T1,,,2025-05-17,2025-05-22,,,,,active
+a3a86167-0a1e-4df0-8e79-75681eaae475,TT Tounament,"u11 Boys,u11 Girls",,2025-05-17,2025-05-22,2025-05-13,,,,active
