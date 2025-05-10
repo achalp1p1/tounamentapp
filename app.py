@@ -265,47 +265,6 @@ def player_registration():
     # For GET request
     return render_template('players.html', today_date=datetime.now().strftime('%Y-%m-%d'))
 
-@app.route('/search-players')
-def search_players():
-    try:
-        # Get search parameter
-        player_name = request.args.get('player_name', '').strip().lower()
-        
-        # Check if search was performed
-        search_performed = bool(player_name)
-        
-        # Initialize empty list for players
-        players = []
-        
-        # Only proceed with search if the CSV file exists
-        if os.path.exists(PLAYERS_CSV):
-            with open(PLAYERS_CSV, 'r', newline='', encoding='utf-8') as file:
-                reader = csv.DictReader(file)
-                all_players = list(reader)
-                
-                # Filter players based on name
-                if player_name:
-                    filtered_players = [
-                        p for p in all_players 
-                        if player_name in p['Name'].lower()
-                    ]
-                    players = filtered_players
-        
-        return render_template(
-            'search_players.html',
-            players=players if search_performed else None,
-            search_performed=search_performed
-        )
-        
-    except Exception as e:
-        print(f"Error during search: {e}")
-        return render_template(
-            'search_players.html',
-            error=f"An error occurred while searching: {str(e)}",
-            players=None,
-            search_performed=False
-        )
-
 @app.route('/save-seeding', methods=['POST'])
 def save_seeding():
     try:
@@ -1848,6 +1807,8 @@ def list_players():
             with open(PLAYERS_CSV, 'r', newline='', encoding='utf-8') as file:
                 reader = csv.DictReader(file)
                 players = list(reader)
+                # Sort players by name
+                players.sort(key=lambda x: x['Name'].lower())
         
         return render_template('list_players.html', players=players, active_page='players')
     except Exception as e:
@@ -1889,6 +1850,47 @@ def get_seeding_ranges():
             ]
         }
         return jsonify(default_ranges)
+
+@app.route('/search-players')
+def search_players():
+    try:
+        # Get search parameter
+        player_name = request.args.get('player_name', '').strip().lower()
+        
+        # Check if search was performed
+        search_performed = bool(player_name)
+        
+        # Initialize empty list for players
+        players = []
+        
+        # Only proceed with search if the CSV file exists
+        if os.path.exists(PLAYERS_CSV):
+            with open(PLAYERS_CSV, 'r', newline='', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                all_players = list(reader)
+                
+                # Filter players based on name
+                if player_name:
+                    filtered_players = [
+                        p for p in all_players 
+                        if player_name in p['Name'].lower()
+                    ]
+                    players = filtered_players
+        
+        return render_template(
+            'search_players.html',
+            players=players if search_performed else None,
+            search_performed=search_performed
+        )
+        
+    except Exception as e:
+        print(f"Error during search: {e}")
+        return render_template(
+            'search_players.html',
+            error=f"An error occurred while searching: {str(e)}",
+            players=None,
+            search_performed=False
+        )
 
 if __name__ == '__main__':
     # Initialize CSV files if they don't exist

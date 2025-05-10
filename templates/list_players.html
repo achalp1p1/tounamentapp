@@ -74,6 +74,26 @@
         .search-link:hover {
             background: #2a5298;
         }
+        .search-console {
+            margin-top: 15px;
+        }
+        .search-input {
+            width: 100%;
+            max-width: 600px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #1e3c72;
+            box-shadow: 0 0 0 2px rgba(30,60,114,0.1);
+        }
+        .intro strong {
+            color: #1e3c72;
+            font-size: 1.1em;
+        }
     </style>
 </head>
 <body>
@@ -82,7 +102,10 @@
         <h1>All Players</h1>
         
         <div class="intro">
-            <p>View all registered players in the system. To find a specific player quickly, use the <a href="{{ url_for('search_players') }}">search feature</a>.</p>
+            <p>Total Number of Players: <strong>{{ players|length }}</strong></p>
+            <div class="search-console">
+                <input type="text" id="searchInput" placeholder="Search players by name..." class="search-input">
+            </div>
         </div>
         
         {% if error %}
@@ -90,7 +113,7 @@
         {% endif %}
         
         {% if players and players|length > 0 %}
-            <table>
+            <table id="playersTable">
                 <thead>
                     <tr>
                         <th>Name</th>
@@ -98,7 +121,6 @@
                         <th>Date of Birth</th>
                         <th>Gender</th>
                         <th>State</th>
-                        <th>Contact</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -106,10 +128,9 @@
                     <tr>
                         <td>{{ player['Name'] }}</td>
                         <td>{{ player['Player ID'] }}</td>
-                        <td>{{ player['Date of Birth'] }}</td>
+                        <td>{{ player['Date of Birth'].split('-')[2] }}-{{ player['Date of Birth'].split('-')[1] }}-{{ player['Date of Birth'].split('-')[0] }}</td>
                         <td>{{ player['Gender'] }}</td>
                         <td>{{ player['State'] }}</td>
-                        <td>{{ player['Phone Number'] }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -121,5 +142,36 @@
             </div>
         {% endif %}
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const table = document.getElementById('playersTable');
+            const tbody = table.querySelector('tbody');
+            const rows = tbody.getElementsByTagName('tr');
+            const totalPlayersElement = document.querySelector('.intro strong');
+
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                let visibleCount = 0;
+
+                // Loop through all rows
+                for (let row of rows) {
+                    const nameCell = row.getElementsByTagName('td')[0];
+                    const name = nameCell.textContent.toLowerCase();
+                    
+                    if (name.includes(searchTerm)) {
+                        row.style.display = '';
+                        visibleCount++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+
+                // Update total count
+                totalPlayersElement.textContent = visibleCount;
+            });
+        });
+    </script>
 </body>
 </html> 
