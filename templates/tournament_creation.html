@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Tournament</title>
+    <title>Create Tournament - DilliLabs Tournify</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
@@ -537,12 +537,81 @@
         .logo-row {
             margin-bottom: 15px;
         }
+
+        /* Add header styles */
+        .header {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 2vh;
+            text-align: center;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header h1 {
+            font-size: min(32px, 4vh);
+            margin-bottom: 1vh;
+        }
+
+        .logo {
+            position: absolute;
+            left: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 48px;
+            width: auto;
+        }
+
+        @media (max-width: 768px) {
+            .logo {
+                height: 36px;
+                left: 16px;
+            }
+        }
+
+        /* Add footer styles */
+        .footer {
+            background: #1e3c72;
+            color: white;
+            padding: 16px 0;
+            text-align: center;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .footer p {
+            margin: 0;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .footer {
+                padding: 12px 0;
+            }
+            
+            .footer-content {
+                padding: 0 16px;
+            }
+            
+            .footer p {
+                font-size: 0.85em;
+            }
+        }
     </style>
 </head>
 <body>
     {% include 'menu.html' %}
     <div class="container">
-        <div class="page-header">
+        <div class="header">
+            <img src="{{ url_for('static', filename='dilliLabsIcon.png') }}" alt="DilliLabs Logo" class="logo">
             <h1>Create New Tournament</h1>
         </div>
 
@@ -679,6 +748,12 @@
 
             <button type="submit" class="submit-btn">Create Tournament</button>
         </form>
+
+        <footer class="footer">
+            <div class="footer-content">
+                <p>Copyright © {{ current_year }} - DilliLabs Techsports Pvt Ltd</p>
+            </div>
+        </footer>
     </div>
 
     <script>
