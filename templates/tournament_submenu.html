@@ -24,30 +24,34 @@
         <i class="fas fa-trophy"></i>Draws
     </a>
 
-    <!-- Manage dropdown menu -->
-    <div class="dropdown">
-        <a href="#" class="submenu-link dropdown-toggle {% if active_subpage in ['update_seeding', 'create_draw', 'create_bracket'] %}active{% endif %}">
+    <!-- ONLY ONE DROPDOWN CONTROL -->
+    <div id="manageMenuContainer" class="manage-dropdown">
+        <button id="manageButton" class="submenu-link manage-button {% if active_subpage in ['update_seeding', 'create_draw', 'create_bracket'] %}active{% endif %}">
             <i class="fas fa-cog"></i>Manage
-            <span class="dropdown-arrow">▼</span>
-        </a>
-        <div class="dropdown-content">
+            <span id="manageArrow">▼</span>
+        </button>
+        
+        <div id="manageMenu" class="manage-menu">
             <a href="{{ url_for('tournament_update_seeding', tournament_id=tournament['Tournament Id']) }}" 
-               class="dropdown-item {% if active_subpage == 'update_seeding' %}active{% endif %}">
+               class="menu-item {% if active_subpage == 'update_seeding' %}active{% endif %}">
                 <i class="fas fa-sort-numeric-up"></i>Update Seeding
             </a>
             <a href="{{ url_for('tournament_create_draw', tournament_id=tournament['Tournament Id']) }}" 
-               class="dropdown-item {% if active_subpage == 'create_draw' %}active{% endif %}">
+               class="menu-item {% if active_subpage == 'create_draw' %}active{% endif %}">
                 <i class="fas fa-random"></i>Create Draw
             </a>
             <a href="{{ url_for('tournament_create_bracket', tournament_id=tournament['Tournament Id']) }}" 
-               class="dropdown-item {% if active_subpage == 'create_bracket' %}active{% endif %}">
+               class="menu-item {% if active_subpage == 'create_bracket' %}active{% endif %}">
                 <i class="fas fa-sitemap"></i>Create Bracket
             </a>
         </div>
     </div>
 </nav>
 
+<!-- NO OTHER CONTROLS OR PREVIOUS IMPLEMENTATION OUTSIDE THIS SECTION -->
+
 <style>
+    /* Clean, minimal styles to avoid conflicts */
     .submenu {
         background: rgba(255, 255, 255, 0.1);
         padding: 10px 36px;
@@ -78,29 +82,26 @@
         font-size: 1.1em;
     }
 
-    /* Dropdown styles */
-    .dropdown {
+    /* Manage dropdown specific styles */
+    .manage-dropdown {
         position: relative;
         display: inline-block;
     }
 
-    .dropdown-toggle {
+    .manage-button {
         cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 5px;
+        border: none;
+        background: none;
+        font-family: inherit;
     }
 
-    .dropdown-arrow {
+    #manageArrow {
         font-size: 0.8em;
         transition: transform 0.2s;
+        display: inline-block;
     }
 
-    .dropdown:hover .dropdown-arrow {
-        transform: rotate(180deg);
-    }
-
-    .dropdown-content {
+    .manage-menu {
         display: none;
         position: absolute;
         background: white;
@@ -113,11 +114,7 @@
         margin-top: 5px;
     }
 
-    .dropdown:hover .dropdown-content {
-        display: block;
-    }
-
-    .dropdown-item {
+    .menu-item {
         color: #333;
         text-decoration: none;
         padding: 12px 16px;
@@ -127,21 +124,21 @@
         transition: all 0.2s;
     }
 
-    .dropdown-item:hover,
-    .dropdown-item.active {
+    .menu-item:hover,
+    .menu-item.active {
         background: #f0f0f0;
         color: #1e3c72;
     }
 
-    .dropdown-item:first-child {
+    .menu-item:first-child {
         border-radius: 6px 6px 0 0;
     }
 
-    .dropdown-item:last-child {
+    .menu-item:last-child {
         border-radius: 0 0 6px 6px;
     }
 
-    .dropdown-item i {
+    .menu-item i {
         width: 20px;
         text-align: center;
     }
@@ -158,9 +155,47 @@
             font-size: 0.85em;
         }
 
-        .dropdown-content {
+        .manage-menu {
             position: absolute;
             width: 200px;
         }
     }
 </style>
+
+<script>
+// Clean, straightforward JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    var manageButton = document.getElementById('manageButton');
+    var manageMenu = document.getElementById('manageMenu');
+    var manageArrow = document.getElementById('manageArrow');
+    
+    if (manageButton && manageMenu && manageArrow) {
+        // Toggle menu when clicking the manage button
+        manageButton.addEventListener('click', function(event) {
+            event.stopPropagation(); // Prevent document click handler
+            
+            // Toggle display
+            if (manageMenu.style.display === 'block') {
+                manageMenu.style.display = 'none';
+                manageArrow.style.transform = 'rotate(0deg)';
+            } else {
+                manageMenu.style.display = 'block';
+                manageArrow.style.transform = 'rotate(180deg)';
+            }
+        });
+        
+        // Close menu when clicking elsewhere
+        document.addEventListener('click', function() {
+            manageMenu.style.display = 'none';
+            manageArrow.style.transform = 'rotate(0deg)';
+        });
+        
+        // Prevent menu from closing when clicked
+        manageMenu.addEventListener('click', function(event) {
+            event.stopPropagation();
+        });
+    } else {
+        console.error('One or more required elements not found for the manage dropdown');
+    }
+});
+</script>
