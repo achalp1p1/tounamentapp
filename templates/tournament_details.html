@@ -166,24 +166,31 @@
 
         .logo-section {
             display: flex;
+            flex-direction: row;
             flex-wrap: wrap;
             gap: 24px;
-            margin-top: 16px;
+            align-items: center;
+            justify-content: center;
         }
 
         .logo-container {
-            max-width: 200px;
-            background: #f8fafc;
-            padding: 16px;
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            max-width: 160px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 180px;
         }
 
         .logo-container img {
-            max-width: 100%;
-            height: auto;
+            max-width: 140px;
+            height: 140px;
+            width: auto;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
             border-radius: 8px;
-            margin-top: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
 
         .logo-container .detail-label {
@@ -596,17 +603,12 @@
 
                     <div class="detail-section">
                         <h2 class="section-title">Tournament Logos</h2>
-                        <div class="logo-section" style="display: flex; gap: 24px; flex-wrap: wrap;">
+                        <div class="logo-section" style="display: flex; flex-direction: row; flex-wrap: wrap; gap: 24px; align-items: center; justify-content: center;">
                             {% if tournament.get('Tournament Logo Link') %}
-                                {% set logo_links = tournament['Tournament Logo Link'].split('|') %}
-                                {% for logo_link in logo_links %}
+                                {% for logo_link in tournament['Tournament Logo Link'].split(',') %}
                                     {% if logo_link.strip() %}
-                                    <div class="logo-container" style="flex: 1 1 200px; max-width: 220px;">
-                                        <div class="detail-label">Tournament Logo</div>
+                                    <div class="logo-container">
                                         <img src="{{ url_for('static', filename=logo_link.strip()) }}" alt="Tournament Logo">
-                                        <div class="logo-path" style="font-size: 0.9em; color: #888; margin-top: 4px; word-break: break-all;">
-                                            {{ logo_link.strip() }}
-                                        </div>
                                     </div>
                                     {% endif %}
                                 {% endfor %}
