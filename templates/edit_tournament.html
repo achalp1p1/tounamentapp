@@ -503,24 +503,24 @@
                 <div class="logo-upload-container">
                     <div class="logo-upload-row">
                         <div class="file-input-group">
-                            <input type="file" id="tournament_logo" name="tournament_logo" accept="image/*" style="display: none;">
-                            <button type="button" class="choose-file-btn" onclick="document.getElementById('tournament_logo').click()">Choose File</button>
-                            <span class="no-file-text">No File Chosen</span>
+                            <input type="file" id="tournament_logo" name="tournament_logo" accept="image/*" multiple style="display: none;">
+                            <button type="button" class="choose-file-btn" onclick="document.getElementById('tournament_logo').click()">Choose Files</button>
+                            <span class="no-file-text">No Files Chosen</span>
                         </div>
                     </div>
                     <div id="logo-preview-container">
                         {% if tournament['Tournament Logo Link'] %}
-                            <div class="logo-preview-item">
-                                <img src="{{ tournament['Tournament Logo Link'] }}" alt="Tournament Logo" class="logo-preview">
-                                <button type="button" class="remove-logo-btn" onclick="removeLogo(this)">
-                                    <i class="material-icons">close</i>
-                                </button>
-                            </div>
+                            {% set logo_links = tournament['Tournament Logo Link'].split(',') %}
+                            {% for logo_link in logo_links %}
+                                <div class="logo-preview-item">
+                                    <img src="{{ url_for('static', filename=logo_link.replace('static/', '')) }}" alt="Tournament Logo" class="logo-preview">
+                                    <button type="button" class="remove-logo-btn" onclick="removeLogo(this)">
+                                        <i class="material-icons">close</i>
+                                    </button>
+                                </div>
+                            {% endfor %}
                         {% endif %}
                     </div>
-                    <button type="button" class="add-file-btn" onclick="addLogoField()">
-                        <i class="material-icons">add</i>
-                    </button>
                 </div>
             </div>
 
@@ -535,114 +535,92 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const categoriesContainer = document.getElementById('categories');
-            const addCategoryBtn = document.getElementById('add-category-btn');
-
-            // Add category
-            addCategoryBtn.addEventListener('click', function() {
-                const categoryRow = document.createElement('div');
-                categoryRow.className = 'category-row';
-                categoryRow.innerHTML = `
-                    <select name="categories[]" required multiple>
-                        <option value="u9">u9</option>
-                        <option value="u11 Girls">u11 Girls</option>
-                        <option value="u11 Boys">u11 Boys</option>
-                        <option value="u13 Girls">u13 Girls</option>
-                        <option value="u13 Boys">u13 Boys</option>
-                        <option value="u15 Girls">u15 Girls</option>
-                        <option value="u17 Boys">u17 Boys</option>
-                        <option value="u19 Girls">u19 Girls</option>
-                        <option value="u19 Boys">u19 Boys</option>
-                        <option value="Women">Women</option>
-                        <option value="Men">Men</option>
-                        <option value="Veterans 39+ Men">Veterans 39+ Men</option>
-                        <option value="Veterans 39+ Women">Veterans 39+ Women</option>
-                    </select>
-                    <div class="prize-section">
-                        <div class="prize-section-header">Fee</div>
-                        <input type="number" name="fees[]">
-                    </div>
-                    <div class="prize-section">
-                        <div class="prize-section-header">First Prize</div>
-                        <input type="text" name="first_prizes[]">
-                    </div>
-                    <div class="prize-section">
-                        <div class="prize-section-header">Second Prize</div>
-                        <input type="text" name="second_prizes[]">
-                    </div>
-                    <div class="prize-section">
-                        <div class="prize-section-header">Third Prize</div>
-                        <input type="text" name="third_prizes[]">
-                    </div>
-                    <div class="prize-section">
-                        <div class="prize-section-header">Format</div>
-                        <select name="formats[]" required>
-                            <option value="Knockout">Knockout</option>
-                            <option value="Two Stage">Two Stage</option>
-                        </select>
-                    </div>
-                    <button type="button" class="remove-category">
-                        <i class="material-icons">delete</i>
-                    </button>
-                `;
-                categoriesContainer.appendChild(categoryRow);
-            });
-
-            // Remove category
-            categoriesContainer.addEventListener('click', function(e) {
-                if (e.target.closest('.remove-category')) {
-                    const categoryRow = e.target.closest('.category-row');
-                    if (categoriesContainer.children.length > 1) {
-                        categoryRow.remove();
-                    }
-                }
-            });
-        });
-
-        function addLogoField() {
-            const container = document.querySelector('.logo-upload-container');
-            const newRow = document.createElement('div');
-            newRow.className = 'logo-upload-row';
-            newRow.innerHTML = `
-                <div class="file-input-group">
-                    <input type="file" name="tournament_logo" accept="image/*" style="display: none;">
-                    <button type="button" class="choose-file-btn" onclick="this.previousElementSibling.click()">Choose File</button>
-                    <span class="no-file-text">No File Chosen</span>
-                </div>
-            `;
-            container.insertBefore(newRow, document.querySelector('.add-file-btn'));
-        }
-
-        function removeLogo(button) {
-            const previewItem = button.closest('.logo-preview-item');
-            previewItem.remove();
-        }
-
-        // Handle file selection and preview
-        document.addEventListener('change', function(e) {
-            if (e.target.type === 'file') {
-                const file = e.target.files[0];
-                const noFileText = e.target.nextElementSibling.nextElementSibling;
-                
+        // Add JavaScript for handling multiple file uploads and previews
+        document.getElementById('tournament_logo').addEventListener('change', function(e) {
+            const files = e.target.files;
+            const previewContainer = document.getElementById('logo-preview-container');
+            
+            for (let file of files) {
                 if (file) {
-                    noFileText.textContent = file.name;
                     const reader = new FileReader();
                     reader.onload = function(e) {
-                        const previewContainer = document.getElementById('logo-preview-container');
                         const previewItem = document.createElement('div');
                         previewItem.className = 'logo-preview-item';
                         previewItem.innerHTML = `
-                            <img src="${e.target.result}" alt="Logo Preview" class="logo-preview">
+                            <img src="${e.target.result}" alt="Tournament Logo" class="logo-preview">
                             <button type="button" class="remove-logo-btn" onclick="removeLogo(this)">
                                 <i class="material-icons">close</i>
                             </button>
                         `;
                         previewContainer.appendChild(previewItem);
-                    };
+                    }
                     reader.readAsDataURL(file);
-                } else {
-                    noFileText.textContent = 'No File Chosen';
+                }
+            }
+        });
+
+        function removeLogo(button) {
+            const previewItem = button.parentElement;
+            previewItem.remove();
+        }
+
+        // Add category functionality
+        document.getElementById('add-category-btn').addEventListener('click', function() {
+            const categoriesDiv = document.getElementById('categories');
+            const newCategory = document.createElement('div');
+            newCategory.className = 'category-row';
+            newCategory.innerHTML = `
+                <select name="categories[]" required multiple>
+                    <option value="u9">u9</option>
+                    <option value="u11 Girls">u11 Girls</option>
+                    <option value="u11 Boys">u11 Boys</option>
+                    <option value="u13 Girls">u13 Girls</option>
+                    <option value="u13 Boys">u13 Boys</option>
+                    <option value="u15 Girls">u15 Girls</option>
+                    <option value="u17 Boys">u17 Boys</option>
+                    <option value="u19 Girls">u19 Girls</option>
+                    <option value="u19 Boys">u19 Boys</option>
+                    <option value="Women">Women</option>
+                    <option value="Men">Men</option>
+                    <option value="Veterans 39+ Men">Veterans 39+ Men</option>
+                    <option value="Veterans 39+ Women">Veterans 39+ Women</option>
+                </select>
+                <div class="prize-section">
+                    <div class="prize-section-header">Fee</div>
+                    <input type="number" name="fees[]">
+                </div>
+                <div class="prize-section">
+                    <div class="prize-section-header">First Prize</div>
+                    <input type="text" name="first_prizes[]">
+                </div>
+                <div class="prize-section">
+                    <div class="prize-section-header">Second Prize</div>
+                    <input type="text" name="second_prizes[]">
+                </div>
+                <div class="prize-section">
+                    <div class="prize-section-header">Third Prize</div>
+                    <input type="text" name="third_prizes[]">
+                </div>
+                <div class="prize-section">
+                    <div class="prize-section-header">Format</div>
+                    <select name="formats[]" required>
+                        <option value="Knockout">Knockout</option>
+                        <option value="Two Stage">Two Stage</option>
+                    </select>
+                </div>
+                <button type="button" class="remove-category">
+                    <i class="material-icons">delete</i>
+                </button>
+            `;
+            categoriesDiv.appendChild(newCategory);
+        });
+
+        // Remove category functionality
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-category')) {
+                const categoryRow = e.target.closest('.category-row');
+                if (document.querySelectorAll('.category-row').length > 1) {
+                    categoryRow.remove();
                 }
             }
         });

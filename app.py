@@ -580,7 +580,7 @@ def edit_tournament(tournament_id):
             total_prize = request.form.get('total_prize')
             general_info = request.form.get('general_info')
             
-            # Get the old tournament data for existing logo link
+            # Get the old tournament data for existing logo links
             old_tournament = None
             with open('tournaments.csv', 'r', newline='', encoding='utf-8') as file:
                 reader = csv.DictReader(file)
@@ -594,21 +594,33 @@ def edit_tournament(tournament_id):
             if not os.path.exists(tournament_folder):
                 os.makedirs(tournament_folder)
             
-            # Handle tournament logo
-            tournament_logo = request.files.get('tournament_logo')
-            tournament_logo_link = old_tournament.get('Tournament Logo Link', '')
-            if tournament_logo and tournament_logo.filename:
-                # Get the original filename and extension
-                original_filename = os.path.splitext(tournament_logo.filename)[0]
-                file_extension = os.path.splitext(tournament_logo.filename)[1]
-                # Create new filename with 'logo_' prefix
-                filename = f"logo_{original_filename}{file_extension}"
-                # Make the filename safe by removing any special characters
-                safe_filename = "".join(c for c in filename if c.isalnum() or c in (' ', '-', '_', '.')).rstrip()
-                logo_path = os.path.join(tournament_folder, safe_filename)
-                tournament_logo.save(logo_path)
-                # Store the relative path for the database
-                tournament_logo_link = f"static/tournaments/{tournament_id}/{safe_filename}"
+            # Handle multiple tournament logos
+            tournament_logos = request.files.getlist('tournament_logo')
+            tournament_logo_links = []
+            
+            # Keep existing logo links if no new logos are uploaded
+            if not any(logo.filename for logo in tournament_logos):
+                if old_tournament.get('Tournament Logo Link'):
+                    tournament_logo_links = old_tournament['Tournament Logo Link'].split(',')
+            else:
+                # Process new logo uploads
+                for logo in tournament_logos:
+                    if logo and logo.filename:
+                        # Get the original filename and extension
+                        original_filename = os.path.splitext(logo.filename)[0]
+                        file_extension = os.path.splitext(logo.filename)[1]
+                        # Create new filename with 'logo_' prefix
+                        filename = f"logo_{original_filename}{file_extension}"
+                        # Make the filename safe by removing any special characters
+                        safe_filename = "".join(c for c in filename if c.isalnum() or c in (' ', '-', '_', '.')).rstrip()
+                        logo_path = os.path.join(tournament_folder, safe_filename)
+                        logo.save(logo_path)
+                        # Store the relative path for the database
+                        logo_link = f"static/tournaments/{tournament_id}/{safe_filename}"
+                        tournament_logo_links.append(logo_link)
+            
+            # Join all logo links with a comma
+            tournament_logo_links_str = ','.join(tournament_logo_links)
             
             # Get category information
             categories = request.form.getlist('categories[]')
@@ -635,7 +647,7 @@ def edit_tournament(tournament_id):
                             'Last Registration Date': last_registration_date,
                             'Total Prize': total_prize,
                             'General Information': general_info,
-                            'Tournament Logo Link': tournament_logo_link,
+                            'Tournament Logo Link': tournament_logo_links_str,
                             'Status': 'active'
                         })
                     tournaments.append(row)
@@ -658,7 +670,7 @@ def edit_tournament(tournament_id):
             # Add updated categories
             for i in range(len(categories)):
                 category_data = {
-                    'Tournament Id': tournament_id,  # Use existing tournament ID
+                    'Tournament Id': tournament_id,
                     'Tournament Name': tournament_name,
                     'Category': categories[i],
                     'Fee': fees[i],
@@ -675,11 +687,12 @@ def edit_tournament(tournament_id):
                 writer.writeheader()
                 writer.writerows(categories_data)
             
-            return redirect(url_for('list_tournament'))
+            flash('Tournament updated successfully!', 'success')
+            return redirect(url_for('tournament_info', tournament_id=tournament_id))
             
         except Exception as e:
-            print(f"Error updating tournament: {str(e)}")
-            return redirect(url_for('list_tournament'))
+            flash(f'Error updating tournament: {str(e)}', 'error')
+            return redirect(url_for('edit_tournament', tournament_id=tournament_id))
 
 @app.route('/list-tournament-last2')
 def list_tournament_last2():
