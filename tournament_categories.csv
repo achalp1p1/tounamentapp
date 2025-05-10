@@ -1,7 +1,8 @@
 Tournament Id,Tournament Name,Category,Fee,First Prize,Second Prize,Third Prize,Format
-8647d782-7fb6-4cf8-b166-61b2dd612b9a,T1,Boys Under 15,12,1,1,1,Knockout
 23562a3d-bc09-4c42-8929-b87e7f2f7fa2,test1,u9,1000,,,,Knockout
 23562a3d-bc09-4c42-8929-b87e7f2f7fa2,test1,u11 Girls,1000,,,,Knockout
 23562a3d-bc09-4c42-8929-b87e7f2f7fa2,test1,u11 Boys,,,,,Knockout
 23562a3d-bc09-4c42-8929-b87e7f2f7fa2,test1,u17 Boys,,,,,Knockout
 23562a3d-bc09-4c42-8929-b87e7f2f7fa2,test1,u19 Girls,,,,,Knockout
+8647d782-7fb6-4cf8-b166-61b2dd612b9a,T1,u17 Boys,12,1,1,1,Knockout
+8647d782-7fb6-4cf8-b166-61b2dd612b9a,T1,u9,,,,,Knockout

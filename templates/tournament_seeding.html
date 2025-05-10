@@ -135,7 +135,7 @@
             return;
         }
 
-        fetch(`/tournament/{{ tournament['Tournament ID'] }}/get_players/${category}`)
+        fetch(`/tournament/{{ tournament['Tournament Id'] }}/get_players/${category}`)
             .then(response => response.json())
             .then(data => {
                 let html = '';
@@ -170,7 +170,7 @@
         const formData = new FormData(this);
         formData.append('category', document.getElementById('category').value);
 
-        fetch(`/tournament/{{ tournament['Tournament ID'] }}/update_seeding`, {
+        fetch(`/tournament/{{ tournament['Tournament Id'] }}/update_seeding`, {
             method: 'POST',
             body: formData
         })

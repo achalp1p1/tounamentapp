@@ -1,0 +1,14 @@
+{
+    "rounds": {
+      "final": 7,
+      "semiFinal": 5,
+      "quarterFinal": 5,
+      "other": 3
+    },
+    "scoreThreshold": {
+      "final": 11,
+      "semiFinal": 11,
+      "quarterFinal": 11,
+      "other": 11
+    }
+  }

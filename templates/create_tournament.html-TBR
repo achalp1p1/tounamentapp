@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Tournament</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: 'Roboto', sans-serif; 
+        }
+        body { 
+            min-height: 100vh; 
+            background: #f8fafc; 
+        }
+        .container { 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+        }
+
+        /* Modern Header */
+        .header {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 2vh;
+            text-align: center;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            font-size: min(32px, 4vh);
+            margin-bottom: 1vh;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+        .logo {
+            position: absolute;
+            left: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 48px;
+            width: auto;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+
+        /* Modern Content Area */
+        .content {
+            padding: 3vh;
+            flex-grow: 1;
+            overflow-y: auto;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Modern Form */
+        .form-container {
+            background: white;
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-top: 24px;
+        }
+        .form-group {
+            margin-bottom: 24px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #1e293b;
+            font-weight: 500;
+            font-size: 0.95em;
+        }
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.2s;
+            background: #f8fafc;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #1e3c72;
+            box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+            background: white;
+        }
+        .form-control::placeholder {
+            color: #94a3b8;
+        }
+        .btn {
+            background: #1e3c72;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn:hover {
+            background: #2a5298;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(30, 60, 114, 0.2);
+        }
+        .btn:active {
+            transform: translateY(0);
+        }
+        .btn i {
+            font-size: 1.1em;
+        }
+
+        /* Modern Error Messages */
+        .error-message {
+            background-color: #fee2e2;
+            color: #dc2626;
+            padding: 16px 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            border: 1px solid #fecaca;
+            font-weight: 500;
+        }
+
+        /* Modern Category Section */
+        .category-section {
+            background: #f8fafc;
+            padding: 24px;
+            border-radius: 12px;
+            margin-top: 32px;
+            border: 1px solid #e2e8f0;
+        }
+        .category-section h3 {
+            color: #1e3c72;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+        .category-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .category-row:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .content {
+                padding: 2vh 16px;
+            }
+            .header h1 {
+                font-size: 22px;
+            }
+            .logo {
+                height: 36px;
+                left: 16px;
+            }
+            .form-container {
+                padding: 24px;
+            }
+            .category-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% include 'menu.html' %}
+    <div class="container">
+        <div class="header">
+            <img src="{{ url_for('static', filename='dilliLabsIcon.png') }}" alt="DilliLabs Logo" class="logo">
+            <h1>Create Tournament</h1>
+        </div>
+        <div class="content">
+            {% if error %}
+            <div class="error-message">
+                Error: {{ error }}
+            </div>
+            {% endif %}
+            <form method="POST" class="form-container">
+                <div class="form-group">
+                    <label for="tournament_name">Tournament Name</label>
+                    <input type="text" id="tournament_name" name="tournament_name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="venue">Venue</label>
+                    <input type="text" id="venue" name="venue" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="start_date">Start Date</label>
+                    <input type="date" id="start_date" name="start_date" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="end_date">End Date</label>
+                    <input type="date" id="end_date" name="end_date" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="last_registration_date">Last Registration Date</label>
+                    <input type="date" id="last_registration_date" name="last_registration_date" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="prize">Prize</label>
+                    <input type="text" id="prize" name="prize" class="form-control" required>
+                </div>
+
+                <div class="category-section">
+                    <h3>Categories</h3>
+                    <div id="categories">
+                        <div class="category-row">
+                            <div class="form-group">
+                                <label for="category1">Category</label>
+                                <input type="text" id="category1" name="categories[]" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="fee1">Fee</label>
+                                <input type="number" id="fee1" name="fees[]" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="first_prize1">First Prize</label>
+                                <input type="number" id="first_prize1" name="first_prizes[]" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="second_prize1">Second Prize</label>
+                                <input type="number" id="second_prize1" name="second_prizes[]" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="third_prize1">Third Prize</label>
+                                <input type="number" id="third_prize1" name="third_prizes[]" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="format1">Format</label>
+                                <input type="text" id="format1" name="formats[]" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" onclick="addCategory()" class="btn" style="margin-top: 16px;">
+                        <i class="fas fa-plus"></i> Add Category
+                    </button>
+                </div>
+
+                <button type="submit" class="btn" style="margin-top: 32px;">
+                    <i class="fas fa-save"></i> Create Tournament
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let categoryCount = 1;
+
+        function addCategory() {
+            categoryCount++;
+            const categoriesDiv = document.getElementById('categories');
+            const newCategory = document.createElement('div');
+            newCategory.className = 'category-row';
+            newCategory.innerHTML = `
+                <div class="form-group">
+                    <label for="category${categoryCount}">Category</label>
+                    <input type="text" id="category${categoryCount}" name="categories[]" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="fee${categoryCount}">Fee</label>
+                    <input type="number" id="fee${categoryCount}" name="fees[]" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="first_prize${categoryCount}">First Prize</label>
+                    <input type="number" id="first_prize${categoryCount}" name="first_prizes[]" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="second_prize${categoryCount}">Second Prize</label>
+                    <input type="number" id="second_prize${categoryCount}" name="second_prizes[]" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="third_prize${categoryCount}">Third Prize</label>
+                    <input type="number" id="third_prize${categoryCount}" name="third_prizes[]" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="format${categoryCount}">Format</label>
+                    <input type="text" id="format${categoryCount}" name="formats[]" class="form-control" required>
+                </div>
+            `;
+            categoriesDiv.appendChild(newCategory);
+        }
+    </script>
+</body>
+</html> 

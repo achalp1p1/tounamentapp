@@ -579,9 +579,6 @@ def edit_tournament(tournament_id):
     
     elif request.method == 'POST':
         try:
-            # Generate new tournament ID
-            new_tournament_id = str(uuid.uuid4())
-            
             # Get form data
             tournament_name = request.form.get('tournament_name')
             venue = request.form.get('venue')
@@ -611,7 +608,7 @@ def edit_tournament(tournament_id):
             # Handle tournament logo
             tournament_logo_link = old_tournament.get('Tournament Logo Link', '')
             if tournament_logo and tournament_logo.filename:
-                filename = f"{new_tournament_id}_tournament{os.path.splitext(tournament_logo.filename)[1]}"
+                filename = f"{tournament_id}_tournament{os.path.splitext(tournament_logo.filename)[1]}"
                 tournament_logo.save(os.path.join('logo', filename))
                 tournament_logo_link = f"logo/{filename}"
             
@@ -621,7 +618,7 @@ def edit_tournament(tournament_id):
                 sponsor_logo_links = []
                 for i, logo in enumerate(sponsor_logos):
                     if logo and logo.filename:
-                        filename = f"{new_tournament_id}_sponsor_{i}{os.path.splitext(logo.filename)[1]}"
+                        filename = f"{tournament_id}_sponsor_{i}{os.path.splitext(logo.filename)[1]}"
                         logo.save(os.path.join('logo', filename))
                         sponsor_logo_links.append(f"logo/{filename}")
             
@@ -633,32 +630,28 @@ def edit_tournament(tournament_id):
             third_prizes = request.form.getlist('third_prizes[]')
             formats = request.form.getlist('formats[]')
             
-            # Update tournaments.csv - Mark old record as inactive and add new record
+            # Update tournaments.csv
             tournaments = []
             with open('tournaments.csv', 'r', newline='', encoding='utf-8') as file:
                 reader = csv.DictReader(file)
                 fieldnames = reader.fieldnames
                 for row in reader:
                     if row['Tournament Id'] == tournament_id:
-                        row['Status'] = 'inactive'
+                        # Update existing tournament record
+                        row.update({
+                            'Tournament Name': tournament_name,
+                            'Categories': ','.join(categories),
+                            'Venue': venue,
+                            'Start Date': start_date,
+                            'End Date': end_date,
+                            'Last Registration Date': last_registration_date,
+                            'Total Prize': total_prize,
+                            'General Information': general_info,
+                            'Tournament Logo Link': tournament_logo_link,
+                            'Sponsor Logo Links': ','.join(sponsor_logo_links),
+                            'Status': 'active'
+                        })
                     tournaments.append(row)
-            
-            # Add new tournament record
-            new_tournament = {
-                'Tournament Id': new_tournament_id,
-                'Tournament Name': tournament_name,
-                'Categories': ','.join(categories),
-                'Venue': venue,
-                'Start Date': start_date,
-                'End Date': end_date,
-                'Last Registration Date': last_registration_date,
-                'Total Prize': total_prize,
-                'General Information': general_info,
-                'Tournament Logo Link': tournament_logo_link,
-                'Sponsor Logo Links': ','.join(sponsor_logo_links),
-                'Status': 'active'
-            }
-            tournaments.append(new_tournament)
             
             # Write back to tournaments.csv
             with open('tournaments.csv', 'w', newline='', encoding='utf-8') as file:
@@ -675,10 +668,10 @@ def edit_tournament(tournament_id):
                     if row['Tournament Id'] != tournament_id:
                         categories_data.append(row)
             
-            # Add new categories
+            # Add updated categories
             for i in range(len(categories)):
                 category_data = {
-                    'Tournament Id': new_tournament_id,
+                    'Tournament Id': tournament_id,  # Use existing tournament ID
                     'Tournament Name': tournament_name,
                     'Category': categories[i],
                     'Fee': fees[i],
