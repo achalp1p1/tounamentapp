@@ -402,8 +402,8 @@ def create_tournament():
                     logo_link = f"static/tournaments/{tournament_id}/{safe_filename}"
                     tournament_logo_links.append(logo_link)
             
-            # Join all logo links with a separator
-            tournament_logo_links_str = '|'.join(tournament_logo_links)
+            # Join all logo links with a comma
+            tournament_logo_links_str = ','.join(tournament_logo_links)
             
             # Get category information
             categories = request.form.getlist('categories[]')
@@ -424,7 +424,7 @@ def create_tournament():
                 'Last Registration Date': last_registration_date,
                 'Total Prize': total_prize,
                 'General Information': general_info,
-                'Tournament Logo Link': tournament_logo_links_str,  # Store all logo links
+                'Tournament Logo Link': tournament_logo_links_str,  # Now using comma-separated format
                 'Status': 'active'
             }
             
