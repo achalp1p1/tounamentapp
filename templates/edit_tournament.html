@@ -2,301 +2,650 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Tournament</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
-        body { min-height: 100vh; background: #f0f2f5; }
-        .container { min-height: 100vh; display: flex; flex-direction: column; }
-        .header {
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            color: white;
-            padding: 2vh;
-            text-align: center;
-            position: relative;
+        :root {
+            --primary-color: #1976d2;
+            --primary-light: #e3f2fd;
+            --error-color: #d32f2f;
+            --text-primary: #212121;
+            --text-secondary: #757575;
+            --border-color: #e0e0e0;
         }
-        .header h1 { font-size: min(32px, 4vh); margin-bottom: 1vh; }
-        .content { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 3vh 0; }
-        .form-card {
-            max-width: 900px;
-            width: 100%;
-            margin: 0 auto;
-            padding: 32px 32px 24px 32px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            background: white;
-        }
-        label { display: block; margin-bottom: 8px; color: #333; font-weight: 500; }
-        input, select, textarea, button {
-            width: 100%;
+
+        * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
-            margin-bottom: 18px;
-            font-size: 1em;
+            font-family: 'Roboto', sans-serif;
         }
-        .date-row, .venue-prize-row {
+
+        body {
+            background-color: #f5f5f5;
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            margin-top: 80px; /* Add space for the menu */
+        }
+
+        .page-header {
             display: flex;
-            gap: 18px;
-            margin-bottom: 18px;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--primary-color);
         }
-        .date-row > div, .venue-prize-row > div { flex: 1; }
+
+        .page-header h1 {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .back-button:hover {
+            background-color: #bbdefb;
+        }
+
+        .back-button i {
+            margin-right: 0.5rem;
+        }
+
+        form {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .form-section label {
+            display: block;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary-light);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            border: none;
+        }
+
+        .required-field::after {
+            content: " *";
+            color: var(--error-color);
+        }
+
+        .required-note {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .required-note::before {
+            content: "* ";
+            color: var(--error-color);
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        input[type="date"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px var(--primary-light);
+            outline: none;
+        }
+
         .category-fee-header {
             display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 18px;
-            margin-bottom: 6px;
-            font-size: 1em;
-            color: #1e3c72;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+            gap: 1rem;
+            padding: 0.75rem;
+            background-color: var(--primary-light);
+            border-radius: 4px;
+            margin-bottom: 1rem;
             font-weight: 500;
+            color: var(--primary-color);
         }
-        .category-fee-header > div { text-align: center; min-width: 0; display: flex; align-items: center; justify-content: center; }
-        .category-fee-row {
+
+        .category-row {
             display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 18px;
-            margin-bottom: 12px;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+            gap: 1rem;
+            align-items: center;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 0.75rem;
+            background: white;
         }
-        .category-select, .fee-input, .prize-input, .format-select {
-            width: 100%;
-            margin-bottom: 0;
-            height: 44px;
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            font-size: 1em;
-            box-sizing: border-box;
-            background: #fff;
-            appearance: none;
+
+        .prize-section {
+            border-left: 2px solid var(--primary-light);
+            padding-left: 1rem;
         }
-        .remove-category-btn {
-            background: #e74c3c;
-            color: #fff;
+
+        .prize-section-header {
+            color: var(--primary-color);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .remove-category {
+            color: var(--error-color);
+            background: none;
             border: none;
-            border-radius: 6px;
-            padding: 0 18px;
-            font-size: 0.95em;
             cursor: pointer;
-            transition: background 0.2s;
-            min-width: 90px;
-            height: 44px;
+            padding: 0.25rem;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        .remove-category-btn:hover { background: #c0392b; }
+
+        .remove-category:hover {
+            color: #b71c1c;
+        }
+
         #add-category-btn {
-            background: #1e3c72;
-            color: #fff;
+            background-color: var(--primary-color);
+            color: white;
             border: none;
-            border-radius: 6px;
-            padding: 8px 18px;
-            font-size: 1em;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
             cursor: pointer;
             font-weight: 500;
-            margin-bottom: 18px;
-            margin-top: 6px;
-            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background-color 0.3s;
         }
-        #add-category-btn:hover { background: #2a5298; }
-        button[type="submit"] {
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            color: #fff;
+
+        #add-category-btn:hover {
+            background-color: #1565c0;
+        }
+
+        .submit-btn {
+            background-color: var(--primary-color);
+            color: white;
             border: none;
-            border-radius: 6px;
-            padding: 10px 24px;
-            font-size: 1em;
+            padding: 1rem 2rem;
+            border-radius: 4px;
             cursor: pointer;
+            font-size: 1.1rem;
             font-weight: 500;
+            display: block;
             width: 100%;
-            margin-top: 8px;
-            transition: background 0.2s;
+            margin-top: 2rem;
+            transition: background-color 0.3s;
         }
-        button[type="submit"]:hover { background: #1e3c72; }
-        @media (max-width: 900px) {
-            .form-card { padding: 16px 8px 12px 8px; }
-            .category-fee-row, .category-fee-header { grid-template-columns: 1fr; }
-            .date-row, .venue-prize-row { flex-direction: column !important; gap: 0 !important; }
-            .date-row > div, .venue-prize-row > div { margin-bottom: 18px; }
+
+        .submit-btn:hover {
+            background-color: #1565c0;
         }
-        @media (max-width: 600px) {
-            .form-card { padding: 16px 8px 12px 8px; }
-            .header h1 { font-size: 22px; }
-            .category-fee-row { flex-direction: column; gap: 6px; }
-            .category-select, .fee-input { width: 100%; min-width: 0; }
-            .remove-category-btn { width: 100%; min-width: 0; margin-left: 0; margin-top: 6px; }
+
+        .logo-upload-container {
+            margin-top: 1rem;
+        }
+
+        .logo-upload-row {
+            margin-bottom: 1rem;
+        }
+
+        .file-input-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .choose-file-btn {
+            padding: 0.5rem 1rem;
+            background-color: #f5f5f5;
+            color: #333;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+
+        .choose-file-btn:hover {
+            background-color: #e0e0e0;
+        }
+
+        .no-file-text {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .add-file-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+            margin-top: 1rem;
+        }
+
+        .add-file-btn:hover {
+            background-color: #1565c0;
+        }
+
+        .logo-preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .logo-preview-item {
+            position: relative;
+            display: inline-block;
+        }
+
+        .logo-preview {
+            max-width: 150px;
+            border-radius: 4px;
+        }
+
+        .remove-logo-btn {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: var(--error-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            font-size: 16px;
+        }
+
+        .remove-logo-btn:hover {
+            background-color: #b71c1c;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin-top: 60px;
+                padding: 0 0.5rem;
+            }
+
+            .form-section {
+                padding: 1rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .category-fee-header,
+            .category-row {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+
+            .prize-section {
+                border-left: none;
+                padding-left: 0;
+                margin-top: 0.5rem;
+            }
+        }
+
+        select[multiple] {
+            height: 120px;
+            padding: 0.5rem;
+        }
+
+        select[multiple] option {
+            padding: 0.5rem;
+            margin: 2px 0;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        select[multiple] option:hover {
+            background-color: var(--primary-light);
+        }
+
+        select[multiple] option:checked {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
         }
     </style>
 </head>
 <body>
     {% include 'menu.html' %}
     <div class="container">
-        <div class="header">
+        <div class="page-header">
             <h1>Edit Tournament</h1>
         </div>
-        <div class="content">
-            <div class="form-card">
-                <form method="post" enctype="multipart/form-data">
-                    <label for="tournament_name">Tournament Name</label>
-                    <input type="text" id="tournament_name" name="tournament_name" required value="{{ tournament['Tournament Name'] }}" readonly>
 
-                    <!-- Date fields row -->
-                    <div class="date-row">
-                        <div>
-                            <label for="start_date">Start Date</label>
-                            <input type="date" id="start_date" name="start_date" required value="{{ tournament['Start Date'] }}">
-                        </div>
-                        <div>
-                            <label for="end_date">End Date</label>
-                            <input type="date" id="end_date" name="end_date" required value="{{ tournament['End Date'] }}">
-                        </div>
-                        <div>
-                            <label for="last_registration_date">Last Registration Date</label>
-                            <input type="date" id="last_registration_date" name="last_registration_date" required value="{{ tournament['Last Registration Date'] }}">
-                        </div>
+        <form method="POST" enctype="multipart/form-data">
+            <!-- Basic Details section -->
+            <div class="form-section">
+                <label>Basic Details</label>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tournament_name" class="required-field">Tournament Name</label>
+                        <input type="text" id="tournament_name" name="tournament_name" required value="{{ tournament['Tournament Name'] }}" readonly>
                     </div>
+                    <div class="form-group">
+                        <label for="start_date" class="required-field">Start Date</label>
+                        <input type="date" id="start_date" name="start_date" required value="{{ tournament['Start Date'] }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="end_date" class="required-field">End Date</label>
+                        <input type="date" id="end_date" name="end_date" required value="{{ tournament['End Date'] }}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="last_registration_date" class="required-field">Last Entry Date</label>
+                        <input type="date" id="last_registration_date" name="last_registration_date" required value="{{ tournament['Last Registration Date'] }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="venue">Venue</label>
+                        <input type="text" id="venue" name="venue" value="{{ tournament['Venue'] }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="total_prize">Tournament Prizes</label>
+                        <input type="number" id="total_prize" name="total_prize" value="{{ tournament['Total Prize'] }}">
+                    </div>
+                </div>
+            </div>
 
-                    <!-- Venue and Prize row -->
-                    <div class="venue-prize-row">
-                        <div>
-                            <label for="venue">Venue</label>
-                            <input type="text" id="venue" name="venue" required value="{{ tournament['Venue'] }}">
+            <!-- Categories section -->
+            <div class="form-section">
+                <label>Tournament Categories</label>
+                <div class="category-fee-header">
+                    <div>Category</div>
+                    <div>Fee</div>
+                    <div>First Prize</div>
+                    <div>Second Prize</div>
+                    <div>Third Prize</div>
+                    <div>Format</div>
+                </div>
+                <div id="categories">
+                    {% for category in categories %}
+                    <div class="category-row">
+                        <select name="categories[]" required multiple>
+                            <option value="u9" {% if category['Category'] == 'u9' %}selected{% endif %}>u9</option>
+                            <option value="u11 Girls" {% if category['Category'] == 'u11 Girls' %}selected{% endif %}>u11 Girls</option>
+                            <option value="u11 Boys" {% if category['Category'] == 'u11 Boys' %}selected{% endif %}>u11 Boys</option>
+                            <option value="u13 Girls" {% if category['Category'] == 'u13 Girls' %}selected{% endif %}>u13 Girls</option>
+                            <option value="u13 Boys" {% if category['Category'] == 'u13 Boys' %}selected{% endif %}>u13 Boys</option>
+                            <option value="u15 Girls" {% if category['Category'] == 'u15 Girls' %}selected{% endif %}>u15 Girls</option>
+                            <option value="u17 Boys" {% if category['Category'] == 'u17 Boys' %}selected{% endif %}>u17 Boys</option>
+                            <option value="u19 Girls" {% if category['Category'] == 'u19 Girls' %}selected{% endif %}>u19 Girls</option>
+                            <option value="u19 Boys" {% if category['Category'] == 'u19 Boys' %}selected{% endif %}>u19 Boys</option>
+                            <option value="Women" {% if category['Category'] == 'Women' %}selected{% endif %}>Women</option>
+                            <option value="Men" {% if category['Category'] == 'Men' %}selected{% endif %}>Men</option>
+                            <option value="Veterans 39+ Men" {% if category['Category'] == 'Veterans 39+ Men' %}selected{% endif %}>Veterans 39+ Men</option>
+                            <option value="Veterans 39+ Women" {% if category['Category'] == 'Veterans 39+ Women' %}selected{% endif %}>Veterans 39+ Women</option>
+                        </select>
+                        <div class="prize-section">
+                            <div class="prize-section-header">Fee</div>
+                            <input type="number" name="fees[]" value="{{ category['Fee'] }}">
                         </div>
-                        <div>
-                            <label for="total_prize">Prize</label>
-                            <input type="number" id="total_prize" name="total_prize" min="0" required value="{{ tournament['Total Prize'] }}">
+                        <div class="prize-section">
+                            <div class="prize-section-header">First Prize</div>
+                            <input type="text" name="first_prizes[]" value="{{ category['First Prize'] }}">
                         </div>
-                    </div>
-
-                    <!-- Categories, Fees & Prizes section -->
-                    <label>Categories, Fees & Prizes</label>
-                    <div class="category-fee-header">
-                        <div>Select Category</div>
-                        <div>Fee</div>
-                        <div>First Prize</div>
-                        <div>Second Prize</div>
-                        <div>Third Prize</div>
-                        <div>Format</div>
-                        <div></div>
-                    </div>
-                    <div id="categories-container">
-                        {% for category in categories %}
-                        <div class="category-fee-row">
-                            <select name="categories[]" class="category-select" required>
-                                <option value="">Select Category</option>
-                                <option value="u9" {% if category['Category'] == 'u9' %}selected{% endif %}>u9</option>
-                                <option value="u11 Girls" {% if category['Category'] == 'u11 Girls' %}selected{% endif %}>u11 Girls</option>
-                                <option value="u11 Boys" {% if category['Category'] == 'u11 Boys' %}selected{% endif %}>u11 Boys</option>
-                                <option value="u13 Girls" {% if category['Category'] == 'u13 Girls' %}selected{% endif %}>u13 Girls</option>
-                                <option value="u13 Boys" {% if category['Category'] == 'u13 Boys' %}selected{% endif %}>u13 Boys</option>
-                                <option value="u15 Girls" {% if category['Category'] == 'u15 Girls' %}selected{% endif %}>u15 Girls</option>
-                                <option value="u17 Boys" {% if category['Category'] == 'u17 Boys' %}selected{% endif %}>u17 Boys</option>
-                                <option value="u19 Girls" {% if category['Category'] == 'u19 Girls' %}selected{% endif %}>u19 Girls</option>
-                                <option value="u19 Boys" {% if category['Category'] == 'u19 Boys' %}selected{% endif %}>u19 Boys</option>
-                                <option value="Women" {% if category['Category'] == 'Women' %}selected{% endif %}>Women</option>
-                                <option value="Men" {% if category['Category'] == 'Men' %}selected{% endif %}>Men</option>
-                                <option value="Veterans 39+ Men" {% if category['Category'] == 'Veterans 39+ Men' %}selected{% endif %}>Veterans 39+ Men</option>
-                                <option value="Veterans 39+ Women" {% if category['Category'] == 'Veterans 39+ Women' %}selected{% endif %}>Veterans 39+ Women</option>
-                            </select>
-                            <input type="number" name="fees[]" class="fee-input" min="0" placeholder="Fee" required value="{{ category['Fee'] }}">
-                            <input type="text" name="first_prizes[]" class="prize-input" placeholder="First Prize" required value="{{ category['First Prize'] }}">
-                            <input type="text" name="second_prizes[]" class="prize-input" placeholder="Second Prize" required value="{{ category['Second Prize'] }}">
-                            <input type="text" name="third_prizes[]" class="prize-input" placeholder="Third Prize" required value="{{ category['Third Prize'] }}">
-                            <select name="formats[]" class="format-select" required>
+                        <div class="prize-section">
+                            <div class="prize-section-header">Second Prize</div>
+                            <input type="text" name="second_prizes[]" value="{{ category['Second Prize'] }}">
+                        </div>
+                        <div class="prize-section">
+                            <div class="prize-section-header">Third Prize</div>
+                            <input type="text" name="third_prizes[]" value="{{ category['Third Prize'] }}">
+                        </div>
+                        <div class="prize-section">
+                            <div class="prize-section-header">Format</div>
+                            <select name="formats[]" required>
                                 <option value="Knockout" {% if category['Format'] == 'Knockout' %}selected{% endif %}>Knockout</option>
                                 <option value="Two Stage" {% if category['Format'] == 'Two Stage' %}selected{% endif %}>Two Stage</option>
                             </select>
-                            <button type="button" class="remove-category-btn" {% if loop.first %}style="display:none;"{% endif %}>Remove</button>
                         </div>
-                        {% endfor %}
+                        <button type="button" class="remove-category" {% if loop.first %}style="display:none;"{% endif %}>
+                            <i class="material-icons">delete</i>
+                        </button>
                     </div>
-                    <button type="button" id="add-category-btn">Add Category</button>
-
-                    <label for="general_info">General Information</label>
-                    <textarea id="general_info" name="general_info" rows="4" style="width:100%; padding:8px 12px; border-radius:6px; border:1px solid #ccc; font-size:1em; margin-bottom:18px; box-sizing:border-box; resize:vertical;" placeholder="Enter tournament details here...">{{ tournament['General Information'] }}</textarea>
-
-                    <label for="tournament_logo">Tournament Logo</label>
-                    <input type="file" id="tournament_logo" name="tournament_logo" accept="image/*" style="margin-bottom:18px;">
-                    {% if tournament['Tournament Logo Link'] %}
-                        <div>
-                            <img src="{{ tournament['Tournament Logo Link'] }}" alt="Tournament Logo" style="max-width:120px; margin-top:8px;">
-                        </div>
-                    {% endif %}
-
-                    <label for="sponsor_logos">Sponsor Logos</label>
-                    <input type="file" id="sponsor_logos" name="sponsor_logos" accept="image/*" multiple style="margin-bottom:18px;">
-                    {% if tournament['Sponsor Logo Links'] %}
-                        <div style="margin-top:8px;">
-                            {% for logo in tournament['Sponsor Logo Links'] %}
-                                <img src="{{ logo }}" alt="Sponsor Logo" style="max-width:80px; margin-right:6px;">
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-
-                    <div style="margin-top: 24px;">
-                        <button type="submit">Save Changes</button>
-                    </div>
-                </form>
+                    {% endfor %}
+                </div>
+                <button type="button" id="add-category-btn">
+                    <i class="material-icons">add</i>
+                    Add Category
+                </button>
             </div>
-        </div>
+
+            <!-- Logo Upload section -->
+            <div class="form-section">
+                <label>Tournament Logos</label>
+                <div class="logo-upload-container">
+                    <div class="logo-upload-row">
+                        <div class="file-input-group">
+                            <input type="file" id="tournament_logo" name="tournament_logo" accept="image/*" style="display: none;">
+                            <button type="button" class="choose-file-btn" onclick="document.getElementById('tournament_logo').click()">Choose File</button>
+                            <span class="no-file-text">No File Chosen</span>
+                        </div>
+                    </div>
+                    <div id="logo-preview-container">
+                        {% if tournament['Tournament Logo Link'] %}
+                            <div class="logo-preview-item">
+                                <img src="{{ tournament['Tournament Logo Link'] }}" alt="Tournament Logo" class="logo-preview">
+                                <button type="button" class="remove-logo-btn" onclick="removeLogo(this)">
+                                    <i class="material-icons">close</i>
+                                </button>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <button type="button" class="add-file-btn" onclick="addLogoField()">
+                        <i class="material-icons">add</i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- General Information section -->
+            <div class="form-section">
+                <label for="general_info">General Information</label>
+                <textarea id="general_info" name="general_info" rows="4">{{ tournament['General Information'] }}</textarea>
+            </div>
+
+            <button type="submit" class="submit-btn">Save Changes</button>
+        </form>
     </div>
+
     <script>
-    function addRow() {
-        const container = document.getElementById('categories-container');
-        const firstRow = container.querySelector('.category-fee-row');
-        const newRow = firstRow.cloneNode(true);
+        document.addEventListener('DOMContentLoaded', function() {
+            const categoriesContainer = document.getElementById('categories');
+            const addCategoryBtn = document.getElementById('add-category-btn');
 
-        // Reset values
-        newRow.querySelector('select[name="categories[]"]').selectedIndex = 0;
-        newRow.querySelector('input[name="fees[]"]').value = '';
-        newRow.querySelector('input[name="first_prizes[]"]').value = '';
-        newRow.querySelector('input[name="second_prizes[]"]').value = '';
-        newRow.querySelector('input[name="third_prizes[]"]').value = '';
-        newRow.querySelector('select[name="formats[]"]').selectedIndex = 0;
+            // Add category
+            addCategoryBtn.addEventListener('click', function() {
+                const categoryRow = document.createElement('div');
+                categoryRow.className = 'category-row';
+                categoryRow.innerHTML = `
+                    <select name="categories[]" required multiple>
+                        <option value="u9">u9</option>
+                        <option value="u11 Girls">u11 Girls</option>
+                        <option value="u11 Boys">u11 Boys</option>
+                        <option value="u13 Girls">u13 Girls</option>
+                        <option value="u13 Boys">u13 Boys</option>
+                        <option value="u15 Girls">u15 Girls</option>
+                        <option value="u17 Boys">u17 Boys</option>
+                        <option value="u19 Girls">u19 Girls</option>
+                        <option value="u19 Boys">u19 Boys</option>
+                        <option value="Women">Women</option>
+                        <option value="Men">Men</option>
+                        <option value="Veterans 39+ Men">Veterans 39+ Men</option>
+                        <option value="Veterans 39+ Women">Veterans 39+ Women</option>
+                    </select>
+                    <div class="prize-section">
+                        <div class="prize-section-header">Fee</div>
+                        <input type="number" name="fees[]">
+                    </div>
+                    <div class="prize-section">
+                        <div class="prize-section-header">First Prize</div>
+                        <input type="text" name="first_prizes[]">
+                    </div>
+                    <div class="prize-section">
+                        <div class="prize-section-header">Second Prize</div>
+                        <input type="text" name="second_prizes[]">
+                    </div>
+                    <div class="prize-section">
+                        <div class="prize-section-header">Third Prize</div>
+                        <input type="text" name="third_prizes[]">
+                    </div>
+                    <div class="prize-section">
+                        <div class="prize-section-header">Format</div>
+                        <select name="formats[]" required>
+                            <option value="Knockout">Knockout</option>
+                            <option value="Two Stage">Two Stage</option>
+                        </select>
+                    </div>
+                    <button type="button" class="remove-category">
+                        <i class="material-icons">delete</i>
+                    </button>
+                `;
+                categoriesContainer.appendChild(categoryRow);
+            });
 
-        // Show remove button
-        const removeBtn = newRow.querySelector('.remove-category-btn');
-        removeBtn.style.display = 'inline-block';
-        
-        // Add remove functionality
-        removeBtn.onclick = function() {
-            if (container.children.length > 1) {  // Only remove if there's more than one category
-                newRow.remove();
-            }
-        };
+            // Remove category
+            categoriesContainer.addEventListener('click', function(e) {
+                if (e.target.closest('.remove-category')) {
+                    const categoryRow = e.target.closest('.category-row');
+                    if (categoriesContainer.children.length > 1) {
+                        categoryRow.remove();
+                    }
+                }
+            });
+        });
 
-        container.appendChild(newRow);
-    }
+        function addLogoField() {
+            const container = document.querySelector('.logo-upload-container');
+            const newRow = document.createElement('div');
+            newRow.className = 'logo-upload-row';
+            newRow.innerHTML = `
+                <div class="file-input-group">
+                    <input type="file" name="tournament_logo" accept="image/*" style="display: none;">
+                    <button type="button" class="choose-file-btn" onclick="this.previousElementSibling.click()">Choose File</button>
+                    <span class="no-file-text">No File Chosen</span>
+                </div>
+            `;
+            container.insertBefore(newRow, document.querySelector('.add-file-btn'));
+        }
 
-    // Initialize remove buttons for existing rows
-    document.addEventListener('DOMContentLoaded', function() {
-        const container = document.getElementById('categories-container');
-        const rows = container.getElementsByClassName('category-fee-row');
-        
-        // Add click handlers to all remove buttons
-        Array.from(rows).forEach((row, index) => {
-            const removeBtn = row.querySelector('.remove-category-btn');
-            if (removeBtn) {
-                if (index === 0) {
-                    // Hide remove button for first row
-                    removeBtn.style.display = 'none';
-                } else {
-                    // Show remove button and add click handler
-                    removeBtn.style.display = 'inline-block';
-                    removeBtn.onclick = function() {
-                        if (container.children.length > 1) {  // Only remove if there's more than one category
-                            row.remove();
-                        }
+        function removeLogo(button) {
+            const previewItem = button.closest('.logo-preview-item');
+            previewItem.remove();
+        }
+
+        // Handle file selection and preview
+        document.addEventListener('change', function(e) {
+            if (e.target.type === 'file') {
+                const file = e.target.files[0];
+                const noFileText = e.target.nextElementSibling.nextElementSibling;
+                
+                if (file) {
+                    noFileText.textContent = file.name;
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const previewContainer = document.getElementById('logo-preview-container');
+                        const previewItem = document.createElement('div');
+                        previewItem.className = 'logo-preview-item';
+                        previewItem.innerHTML = `
+                            <img src="${e.target.result}" alt="Logo Preview" class="logo-preview">
+                            <button type="button" class="remove-logo-btn" onclick="removeLogo(this)">
+                                <i class="material-icons">close</i>
+                            </button>
+                        `;
+                        previewContainer.appendChild(previewItem);
                     };
+                    reader.readAsDataURL(file);
+                } else {
+                    noFileText.textContent = 'No File Chosen';
                 }
             }
         });
-
-        // Add click handler for add category button
-        const addButton = document.getElementById('add-category-btn');
-        if (addButton) {
-            addButton.onclick = addRow;
-        }
-    });
     </script>
 </body>
 </html>

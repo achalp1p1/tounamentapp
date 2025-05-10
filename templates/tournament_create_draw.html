@@ -210,7 +210,7 @@
             100% { background-color: #f9fbfd; }
         }
         .highlight-animation {
-            animation: highlight 1.5s ease;
+            animation: highlight 0.05s ease;
         }
         .rank-cell {
             text-align: center;
@@ -236,6 +236,63 @@
         .button-group {
             display: flex;
             gap: 10px;
+            align-items: center;
+        }
+        .draw-table {
+            position: relative;
+        }
+        .draw-table tbody {
+            position: relative;
+        }
+        .draw-table tr {
+            position: relative;
+            transition: all 0.05s ease-in-out;
+        }
+        .draw-table td {
+            position: relative;
+            transition: all 0.05s ease-in-out;
+        }
+        .moving {
+            z-index: 1000;
+            background-color: #f8f9fa;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .draw-table thead {
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            z-index: 1001;
+        }
+        .shuffle-counter {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 18px;
+            z-index: 1000;
+            display: none;
+        }
+        .stop-shuffle-btn {
+            background-color: #dc3545;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            display: none;
+        }
+        .stop-shuffle-btn:hover {
+            background-color: #c82333;
+            transform: translateY(-1px);
+        }
+        .stop-shuffle-btn:active {
+            transform: translateY(1px);
         }
     </style>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -256,7 +313,8 @@
                 {% endfor %}
             </select>
             <div class="button-group">
-                <button id="create-draw-btn" class="btn btn-primary" style="display: none;">Create Draw</button>
+                <button id="create-draw-btn" class="btn btn-primary">Create Draw</button>
+                <button id="stop-shuffle-btn" class="stop-shuffle-btn">Stop Shuffling</button>
                 <button id="save-draw-btn" class="btn btn-success" style="display: none;">Save Draw</button>
             </div>
         </div>
@@ -268,143 +326,260 @@
             <div id="editable-table-container" style="width: 40%;"></div>
         </div>
     </div>
+    <div id="shuffle-counter" class="shuffle-counter">Shuffle: <span id="shuffle-number">0</span></div>
     <script>
-    let currentPlayers = []; // Store the current players data
-    let currentCategory = ""; // Store the current category
+    let isShuffling = false;
+    let shuffleCount = 0;
+    let currentPlayers = [];
+    let shuffleInterval;
+    let seedingRanges = [];
 
-    $('#category-select').on('change', function() {
-        var category = $(this).val();
-        currentCategory = category;
-        var tournamentId = "{{ tournament_id }}";
-        if (category) {
-            $('#players-table-container').html('<p style="color:#1e3c72;">Loading players...</p>');
-            $('#editable-table-container').empty();
-            $('#create-draw-btn').hide();
-            $('#save-draw-btn').hide();
-            $('#status-message').hide();
-            
-            $.getJSON(`/tournament/${tournamentId}/get_category_players/${encodeURIComponent(category)}?fields=full`, function(data) {
-                if (data.success && data.players.length > 0) {
-                    // Store players data
-                    currentPlayers = data.players;
-                    
-                    // Different headers for each table
-                    var leftTableHeader = '<tr><th style="width: 15%;">Seeding</th><th style="width: 25%;">Name</th><th style="width: 60%;">School/Institution</th></tr>';
-                    var rightTableHeader = '<tr><th style="width: 10%;">Rank</th><th style="width: 15%;">Seeding</th><th style="width: 25%;">Name</th><th style="width: 50%;">School/Institution</th></tr>';
-                    
-                    // Build the player table rows
-                    var playerRows = '';
-                    var editableRows = '';
-                    
-                    data.players.forEach(function(player, idx) {
-                        playerRows += `<tr>
-                            <td>${player.seeding || ''}</td>
-                            <td>${player.name}</td>
-                            <td>${player.school || ''}</td>
-                        </tr>`;
-                        
-                        // Add the rank (serial number) column to the right table
-                        editableRows += `<tr>
-                            <td class="rank-cell">${idx + 1}</td>
-                            <td><input type="text" name="edit_seeding_${idx}" class="editable-input" style="width: 98%;" value="" autocomplete="off"></td>
-                            <td><input type="text" name="edit_name_${idx}" class="editable-input" style="width: 98%;" value="" autocomplete="off"></td>
-                            <td><input type="text" name="edit_school_${idx}" class="editable-input" style="width: 98%;" value="" autocomplete="off"></td>
-                        </tr>`;
-                    });
-                    
-                    // Full tables
-                    var tableHTML = `<table class="players-table fixed-table">${leftTableHeader}${playerRows}</table>`;
-                    var editableTableHTML = `<table class="players-table fixed-table" id="editable-table">${rightTableHeader}${editableRows}</table>`;
-                    
-                    // Render
-                    $('#players-table-container').html(tableHTML);
-                    $('#editable-table-container').html(editableTableHTML);
-                    $('#create-draw-btn').show();
+    // Function to load seeding ranges
+    function loadSeedingRanges() {
+        return $.getJSON('/get_seeding_ranges')
+            .then(function(data) {
+                if (data && data.seeding_ranges) {
+                    seedingRanges = data.seeding_ranges;
+                    console.log('Seeding ranges loaded successfully:', seedingRanges);
+                    return seedingRanges;
                 } else {
-                    $('#players-table-container').html('<p style="color:#b00;">No players found for this category.</p>');
-                    $('#editable-table-container').empty();
-                    $('#create-draw-btn').hide();
-                    $('#save-draw-btn').hide();
+                    console.warn('Seeding ranges data format unexpected:', data);
+                    // Fallback to default ranges if format is unexpected
+                    return setDefaultSeedingRanges();
                 }
+            })
+            .catch(function(error) {
+                console.error('Error loading seeding ranges:', error);
+                // Set default ranges if there's an error
+                return setDefaultSeedingRanges();
             });
-        } else {
-            $('#players-table-container').empty();
-            $('#editable-table-container').empty();
-            $('#create-draw-btn').hide();
-            $('#save-draw-btn').hide();
-            $('#status-message').hide();
-        }
-    });
+    }
 
-    $('#create-draw-btn').on('click', function() {
-        // Group players by seeding
-        const playersBySeeding = {};
+    // Set default seeding ranges as a fallback
+    function setDefaultSeedingRanges() {
+        console.warn('Using default seeding ranges');
+        seedingRanges = [
+            { min: 1, max: 2, description: "Top Seeds" },
+            { min: 3, max: 5, description: "Upper Seeds" },
+            { min: 6, max: 15, description: "Mid Seeds" },
+            { min: 16, max: 31, description: "Lower Seeds" },
+            { min: 32, max: 999, description: "Unseeded" }
+        ];
+        return seedingRanges;
+    }
+
+    // Function to get range for a seeding
+    function getRangeForSeeding(seeding) {
+        const seedNum = parseInt(seeding);
+        if (isNaN(seedNum)) return 'unseeded';
         
-        currentPlayers.forEach(player => {
-            const seeding = player.seeding || 'unseeded';
-            if (!playersBySeeding[seeding]) {
-                playersBySeeding[seeding] = [];
-            }
-            playersBySeeding[seeding].push(player);
-        });
-        
-        // Shuffle players with the same seeding
-        for (const seedingGroup in playersBySeeding) {
-            if (playersBySeeding[seedingGroup].length > 1) {
-                // Only shuffle if there are multiple players with the same seeding
-                shuffleArray(playersBySeeding[seedingGroup]);
+        for (const range of seedingRanges) {
+            if (seedNum >= range.min && seedNum <= range.max) {
+                return `${range.min}-${range.max}`;
             }
         }
-        
-        // Flatten the grouped and shuffled players back to a single array
-        // First arrange by seeding (numerical order)
-        const orderedSeedings = Object.keys(playersBySeeding).sort((a, b) => {
-            // Make sure numeric seedings are sorted correctly
-            const numA = parseInt(a);
-            const numB = parseInt(b);
-            
-            if (!isNaN(numA) && !isNaN(numB)) {
-                return numA - numB;
+        return 'unseeded';
+    }
+
+    // Function to perform one shuffle
+    function performShuffle() {
+        if (!isShuffling) return;
+
+        // Update shuffle counter
+        shuffleCount++;
+        $('#shuffle-number').text(shuffleCount);
+
+        // Create a deep copy of current players
+        let playersToShuffle = currentPlayers.map(player => ({...player}));
+
+        // Make sure seeding ranges are loaded
+        if (!seedingRanges || seedingRanges.length === 0) {
+            console.warn('Seeding ranges not loaded, initializing with defaults');
+            setDefaultSeedingRanges();
+        }
+
+        // Initialize groups based on seeding ranges
+        const playersByRange = {};
+        seedingRanges.forEach(range => {
+            playersByRange[`${range.min}-${range.max}`] = [];
+        });
+        playersByRange['unseeded'] = [];
+
+        // Sort players into their respective groups
+        playersToShuffle.forEach(player => {
+            const range = getRangeForSeeding(player.seeding);
+            if (!playersByRange[range]) {
+                console.warn(`Range ${range} not found in playersByRange, adding to unseeded`);
+                playersByRange['unseeded'].push({...player});
+            } else {
+                playersByRange[range].push({...player});
             }
-            
-            // If either isn't a number (e.g., 'unseeded'), put numbers first
-            if (!isNaN(numA)) return -1;
-            if (!isNaN(numB)) return 1;
-            
-            return a.localeCompare(b);
         });
-        
+
+        // Log groups for debugging
+        console.log('Players grouped by ranges:', Object.keys(playersByRange).map(r => ({
+            range: r, 
+            count: playersByRange[r].length
+        })));
+
+        // Shuffle players within each group
+        for (const range in playersByRange) {
+            if (playersByRange[range].length > 1) {
+                shuffleArray(playersByRange[range]);
+            }
+        }
+
+        // Combine players in the correct order based on seeding ranges
         const shuffledPlayers = [];
-        orderedSeedings.forEach(seeding => {
-            shuffledPlayers.push(...playersBySeeding[seeding]);
+        seedingRanges.forEach(range => {
+            const rangeKey = `${range.min}-${range.max}`;
+            if (playersByRange[rangeKey]) {
+                shuffledPlayers.push(...playersByRange[rangeKey]);
+            }
         });
-        
-        // Now populate the right-hand table with the shuffled players
-        // Skip the rank column since it's already populated with sequential numbers
+        shuffledPlayers.push(...playersByRange['unseeded']);
+
+        // Update the right-hand table with the shuffled players
         shuffledPlayers.forEach((player, idx) => {
-            const row = $(`#editable-table tr:eq(${idx + 1})`); // +1 to skip header row
+            const row = $(`#editable-table tr:eq(${idx + 1})`);
             if (row.length) {
                 row.find('input[name^="edit_seeding_"]').val(player.seeding || '');
                 row.find('input[name^="edit_name_"]').val(player.name);
                 row.find('input[name^="edit_school_"]').val(player.school || '');
             }
         });
-        
-        // Visual confirmation
+
+        // Add highlight animation
         $('#editable-table').addClass('highlight-animation');
         setTimeout(() => {
             $('#editable-table').removeClass('highlight-animation');
-        }, 1500);
+        }, 50);
+
+        // Schedule next shuffle if still shuffling
+        if (isShuffling) {
+            shuffleInterval = setTimeout(performShuffle, 30);
+        }
+    }
+
+    // Fisher-Yates shuffle algorithm
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    // Category change handler
+    $('#category-select').on('change', function() {
+        const category = $(this).val();
+        const tournamentId = "{{ tournament_id }}";
         
-        // Show the save button
-        $('#save-draw-btn').show();
+        if (category) {
+            // Load seeding ranges first - make sure this completes before proceeding
+            loadSeedingRanges().then(() => {
+                $('#players-table-container').html('<p style="color:#1e3c72;">Loading players...</p>');
+                $('#editable-table-container').empty();
+                $('#create-draw-btn').hide();
+                $('#save-draw-btn').hide();
+                $('#stop-shuffle-btn').hide();
+                $('#status-message').hide();
+                
+                // Fetch players for the selected category
+                $.getJSON(`/tournament/${tournamentId}/get_category_players/${encodeURIComponent(category)}?fields=full`, function(data) {
+                    if (data.players && data.players.length > 0) {
+                        // Store players data
+                        currentPlayers = data.players.map(player => ({...player}));
+                        
+                        // Different headers for each table
+                        var leftTableHeader = '<tr><th style="width: 15%;">Seeding</th><th style="width: 25%;">Name</th><th style="width: 60%;">School/Institution</th></tr>';
+                        var rightTableHeader = '<tr><th style="width: 10%;">Rank</th><th style="width: 15%;">Seeding</th><th style="width: 25%;">Name</th><th style="width: 50%;">School/Institution</th></tr>';
+                        
+                        // Build the player table rows
+                        var playerRows = '';
+                        var editableRows = '';
+                        
+                        currentPlayers.forEach(function(player, idx) {
+                            playerRows += `<tr>
+                                <td>${player.seeding || ''}</td>
+                                <td>${player.name}</td>
+                                <td>${player.school || ''}</td>
+                            </tr>`;
+                            
+                            editableRows += `<tr>
+                                <td class="rank-cell">${idx + 1}</td>
+                                <td><input type="text" name="edit_seeding_${idx}" class="editable-input" style="width: 98%;" value="${player.seeding || ''}" autocomplete="off"></td>
+                                <td><input type="text" name="edit_name_${idx}" class="editable-input" style="width: 98%;" value="${player.name}" autocomplete="off"></td>
+                                <td><input type="text" name="edit_school_${idx}" class="editable-input" style="width: 98%;" value="${player.school || ''}" autocomplete="off"></td>
+                            </tr>`;
+                        });
+                        
+                        // Full tables
+                        var tableHTML = `<table class="players-table fixed-table">${leftTableHeader}${playerRows}</table>`;
+                        var editableTableHTML = `<table class="players-table fixed-table" id="editable-table">${rightTableHeader}${editableRows}</table>`;
+                        
+                        // Render
+                        $('#players-table-container').html(tableHTML);
+                        $('#editable-table-container').html(editableTableHTML);
+                        $('#create-draw-btn').show();
+                    } else {
+                        $('#players-table-container').html('<p style="color:#b00;">No players found for this category.</p>');
+                        $('#editable-table-container').empty();
+                        $('#create-draw-btn').hide();
+                        $('#save-draw-btn').hide();
+                        $('#stop-shuffle-btn').hide();
+                    }
+                });
+            });
+        } else {
+            $('#players-table-container').empty();
+            $('#editable-table-container').empty();
+            $('#create-draw-btn').hide();
+            $('#save-draw-btn').hide();
+            $('#stop-shuffle-btn').hide();
+            $('#status-message').hide();
+        }
     });
-    
+
+    // Create draw button click handler
+    $('#create-draw-btn').on('click', function() {
+        const category = $('#category-select').val();
+        if (!category) {
+            alert('Please select a category first');
+            return;
+        }
+
+        // Reset shuffling state
+        isShuffling = true;
+        shuffleCount = 0;
+        
+        // Disable create draw button and show stop button
+        $(this).prop('disabled', true);
+        $('#save-draw-btn').hide();
+        $('#stop-shuffle-btn').show();
+        
+        const shuffleCounter = $('#shuffle-counter');
+        shuffleCounter.show();
+
+        // Start the first shuffle
+        performShuffle();
+    });
+
+    // Stop button click handler
+    $('#stop-shuffle-btn').on('click', function() {
+        isShuffling = false;
+        clearTimeout(shuffleInterval);
+        $('#shuffle-counter').hide();
+        $('#create-draw-btn').prop('disabled', false);
+        $('#save-draw-btn').show();
+        $(this).hide();
+    });
+
     $('#save-draw-btn').on('click', function() {
         // Collect data from the editable table
         const drawData = [];
         const tournamentId = "{{ tournament_id }}";
-        const category = currentCategory;
+        const category = $('#category-select').val();
         
         // Get data from each row
         $('#editable-table tr').each(function(index) {
@@ -471,15 +646,6 @@
                 $statusMsg.slideUp();
             }, 5000);
         }
-    }
-
-    // Fisher-Yates shuffle algorithm
-    function shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-        return array;
     }
     </script>
 </body>

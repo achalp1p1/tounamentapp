@@ -1,0 +1,29 @@
+{
+    "seeding_ranges": [
+        {
+            "min": 1,
+            "max": 2,
+            "description": "Top Seeds"
+        },
+        {
+            "min": 3,
+            "max": 4,
+            "description": "Upper Seeds"
+        },
+        {
+            "min": 5,
+            "max": 7,
+            "description": "Mid Seeds"
+        },
+        {
+            "min": 16,
+            "max": 31,
+            "description": "Lower Seeds"
+        },
+        {
+            "min": 32,
+            "max": 999,
+            "description": "Unseeded"
+        }
+    ]
+}
