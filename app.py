@@ -76,7 +76,7 @@ def initialize_csv():
 def initialize_tournament_registrations_csv():
     """Initialize the tournament registrations CSV file with correct headers if it doesn't exist"""
     fieldnames = [
-        'Tournament ID',  # Changed from 'Tournament Id' to match the code
+        'Tournament Id',  # Standardized field name
         'Player ID',      # Changed from 'Player Id' to match the code
         'Registration Date',
         'Category',
@@ -749,16 +749,64 @@ def tournament_info(tournament_id):
         girls_entries = {}  # Initialize empty dictionary for girls entries
         boys_entries = {}   # Initialize empty dictionary for boys entries
         
+        # First, get all categories
         with open('tournament_categories.csv', 'r') as f:
             reader = csv.DictReader(f)
             for row in reader:
                 if row['Tournament Id'] == tournament_id:
                     categories.append(row)
-                    # Organize categories by gender
+                    # Initialize empty lists for entries
                     if 'Girls' in row['Category']:
-                        girls_entries[row['Category']] = row
+                        girls_entries[row['Category']] = []
                     elif 'Boys' in row['Category']:
-                        boys_entries[row['Category']] = row
+                        boys_entries[row['Category']] = []
+
+        # Now get all registrations for this tournament
+        registrations = []
+        with open(TOURNAMENT_REGISTRATIONS_CSV, 'r', newline='', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if (row['Tournament Id'] == tournament_id and 
+                    row['Status'].lower() == 'active'):
+                    registrations.append(row)
+
+        # Get player details
+        players = {}
+        if os.path.exists(PLAYERS_CSV):
+            with open(PLAYERS_CSV, 'r', newline='', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    players[row['Player ID']] = row
+
+        # Organize entries by category
+        for reg in registrations:
+            player = players.get(reg['Player ID'])
+            if player:
+                entry = {
+                    'Name': player['Name'],
+                    'Category': reg['Category'],
+                    'Seeding': reg.get('Seeding', '')  # Get seeding value
+                }
+                
+                # Add to appropriate category
+                if reg['Category'] in girls_entries:
+                    girls_entries[reg['Category']].append(entry)
+                elif reg['Category'] in boys_entries:
+                    boys_entries[reg['Category']].append(entry)
+
+        # Sort entries in each category by seeding
+        def sort_by_seeding(entry):
+            seeding = entry.get('Seeding', '')
+            try:
+                return (int(seeding) if seeding else 999999, entry['Name'])
+            except ValueError:
+                return (999999, entry['Name'])
+
+        # Sort each category's entries
+        for category in girls_entries:
+            girls_entries[category].sort(key=sort_by_seeding)
+        for category in boys_entries:
+            boys_entries[category].sort(key=sort_by_seeding)
 
         return render_template('tournament_details.html', 
                              tournament=tournament, 
@@ -914,7 +962,7 @@ def tournament_register(tournament_id):
                     with open(TOURNAMENT_REGISTRATIONS_CSV, 'r', newline='', encoding='utf-8') as file:
                         reader = csv.DictReader(file)
                         for row in reader:
-                            if (row['Tournament ID'] == tournament_id and 
+                            if (row['Tournament Id'] == tournament_id and 
                                 row['Player ID'] == player_id and 
                                 row['Category'] == category and 
                                 row['Status'].lower() == 'active'):
@@ -932,7 +980,7 @@ def tournament_register(tournament_id):
 
                 # Add tournament registration
                 registration_data = {
-                    'Tournament ID': tournament_id,
+                    'Tournament Id': tournament_id,
                     'Player ID': player_id,
                     'Registration Date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                     'Category': category,
@@ -1036,7 +1084,7 @@ def tournament_entries(tournament_id):
             with open(TOURNAMENT_REGISTRATIONS_CSV, 'r', newline='', encoding='utf-8') as file:
                 reader = csv.DictReader(file)
                 for row in reader:
-                    if (row['Tournament ID'] == tournament_id and 
+                    if (row['Tournament Id'] == tournament_id and 
                         row['Status'].lower() == 'active'):
                         registrations.append(row)
 
@@ -1144,11 +1192,11 @@ def tournament_update_seeding(tournament_id):
                 for reg in registrations:
                     # Print exact values being compared
                     print(f"\nComparing:")
-                    print(f"Tournament IDs: '{reg['Tournament ID']}' == '{tournament_id}' : {reg['Tournament ID'] == tournament_id}")
+                    print(f"Tournament Ids: '{reg['Tournament Id']}' == '{tournament_id}' : {reg['Tournament Id'] == tournament_id}")
                     print(f"Player IDs: '{reg['Player ID']}' == '{player_id}' : {reg['Player ID'] == player_id}")
                     print(f"Categories: '{reg['Category']}' == '{category}' : {reg['Category'] == category}")
                     
-                    if (reg['Tournament ID'] == tournament_id and 
+                    if (reg['Tournament Id'] == tournament_id and 
                         reg['Player ID'] == player_id and 
                         reg['Category'] == category):
                         print(f"Match found! Updating seeding from {reg.get('Seeding', '')} to {seeding}")
@@ -1207,7 +1255,7 @@ def get_category_players(tournament_id, category):
     with open(TOURNAMENT_REGISTRATIONS_CSV, 'r', newline='', encoding='utf-8') as file:
         reader = csv.DictReader(file)
         for row in reader:
-            if (row['Tournament ID'] == tournament_id and
+            if (row['Tournament Id'] == tournament_id and
                 row['Category'] == category and
                 row['Status'].lower() == 'active'):
                 player_id = row['Player ID']
@@ -1577,20 +1625,20 @@ def submit_bulk_registration(tournament_id):
             # Check if player is already registered for this tournament/category
             already_registered = False
             try:
-                with open('tournament_registrations.csv', 'r', newline='') as file:
+                with open(TOURNAMENT_REGISTRATIONS_CSV, 'r', newline='') as file:
                     reader = csv.DictReader(file)
                     for row in reader:
-                        if (row['Tournament ID'] == tournament_id and 
+                        if (row['Tournament Id'] == tournament_id and 
                             row['Player ID'] == player_id and 
                             row['Category'] == category):
                             already_registered = True
                             break
             except FileNotFoundError:
                 # If file doesn't exist, create it with headers
-                with open('tournament_registrations.csv', 'w', newline='') as file:
+                with open(TOURNAMENT_REGISTRATIONS_CSV, 'w', newline='') as file:
                     writer = csv.writer(file)
                     writer.writerow([
-                        'Tournament ID', 
+                        'Tournament Id', 
                         'Player ID', 
                         'Registration Date',
                         'Category',
@@ -1603,7 +1651,7 @@ def submit_bulk_registration(tournament_id):
                 continue
 
             # Register the player for the tournament
-            with open('tournament_registrations.csv', 'a', newline='') as file:
+            with open(TOURNAMENT_REGISTRATIONS_CSV, 'a', newline='') as file:
                 writer = csv.writer(file)
                 registration_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 writer.writerow([
