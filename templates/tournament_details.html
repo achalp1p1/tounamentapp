@@ -589,10 +589,13 @@
                         <h2 class="section-title">Tournament Logos</h2>
                         <div class="logo-section">
                             {% if tournament.get('Tournament Logo Link') %}
-                            <div class="logo-container">
-                                <div class="detail-label">Tournament Logo</div>
-                                <img src="{{ tournament['Tournament Logo Link'] }}" alt="Tournament Logo">
-                            </div>
+                                {% set logo_links = tournament['Tournament Logo Link'].split('|') %}
+                                {% for logo_link in logo_links %}
+                                    <div class="logo-container">
+                                        <div class="detail-label">Tournament Logo</div>
+                                        <img src="{{ logo_link }}" alt="Tournament Logo">
+                                    </div>
+                                {% endfor %}
                             {% endif %}
                         </div>
                     </div>
