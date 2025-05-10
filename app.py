@@ -594,30 +594,29 @@ def edit_tournament(tournament_id):
             if not os.path.exists(tournament_folder):
                 os.makedirs(tournament_folder)
             
+            # Initialize logo links list with existing links
+            tournament_logo_links = []
+            if old_tournament.get('Tournament Logo Link'):
+                tournament_logo_links = old_tournament['Tournament Logo Link'].split(',')
+            
             # Handle multiple tournament logos
             tournament_logos = request.files.getlist('tournament_logo')
-            tournament_logo_links = []
             
-            # Keep existing logo links if no new logos are uploaded
-            if not any(logo.filename for logo in tournament_logos):
-                if old_tournament.get('Tournament Logo Link'):
-                    tournament_logo_links = old_tournament['Tournament Logo Link'].split(',')
-            else:
-                # Process new logo uploads
-                for logo in tournament_logos:
-                    if logo and logo.filename:
-                        # Get the original filename and extension
-                        original_filename = os.path.splitext(logo.filename)[0]
-                        file_extension = os.path.splitext(logo.filename)[1]
-                        # Create new filename with 'logo_' prefix
-                        filename = f"logo_{original_filename}{file_extension}"
-                        # Make the filename safe by removing any special characters
-                        safe_filename = "".join(c for c in filename if c.isalnum() or c in (' ', '-', '_', '.')).rstrip()
-                        logo_path = os.path.join(tournament_folder, safe_filename)
-                        logo.save(logo_path)
-                        # Store the relative path for the database
-                        logo_link = f"static/tournaments/{tournament_id}/{safe_filename}"
-                        tournament_logo_links.append(logo_link)
+            # Process new logo uploads
+            for logo in tournament_logos:
+                if logo and logo.filename:
+                    # Get the original filename and extension
+                    original_filename = os.path.splitext(logo.filename)[0]
+                    file_extension = os.path.splitext(logo.filename)[1]
+                    # Create new filename with 'logo_' prefix
+                    filename = f"logo_{original_filename}{file_extension}"
+                    # Make the filename safe by removing any special characters
+                    safe_filename = "".join(c for c in filename if c.isalnum() or c in (' ', '-', '_', '.')).rstrip()
+                    logo_path = os.path.join(tournament_folder, safe_filename)
+                    logo.save(logo_path)
+                    # Store the relative path for the database
+                    logo_link = f"static/tournaments/{tournament_id}/{safe_filename}"
+                    tournament_logo_links.append(logo_link)
             
             # Join all logo links with a comma
             tournament_logo_links_str = ','.join(tournament_logo_links)
