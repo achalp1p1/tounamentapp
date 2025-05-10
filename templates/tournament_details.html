@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tournament Details</title>
+    <title>{{ tournament['Tournament Name'] }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -11,18 +11,26 @@
         .container { flex: 1; display: flex; flex-direction: column; }
 
         .header {
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
-            padding: 2vh;
-            text-align: center;
-            position: relative;
+            padding: 20px 24px;
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .header .logo {
+            position: absolute;
+            left: 24px;
+            height: 40px;
+            width: auto;
         }
         .header h1 {
-            font-size: min(32px, 4vh);
-            margin-bottom: 1vh;
+            margin: 0;
+            font-size: 1.8em;
+            font-weight: 500;
+            text-align: center;
         }
         .tournament-subheader {
             text-align: center;
@@ -31,14 +39,6 @@
             margin: 10px 0 8px 0;
             padding: 0 20px;
             font-weight: 500;
-        }
-        .logo {
-            position: absolute;
-            left: 24px;
-            top: 50%;
-            transform: translateY(-50%);
-            height: 48px;
-            width: auto;
         }
 
         .back-button {
@@ -215,9 +215,15 @@
                 display: block;
                 overflow-x: auto;
             }
-            .logo {
-                height: 36px;
+            .header {
+                padding: 15px 16px;
+            }
+            .header .logo {
                 left: 16px;
+                height: 30px;
+            }
+            .header h1 {
+                font-size: 1.5em;
             }
         }
 
@@ -488,6 +494,84 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Update subheader and logo section styles */
+        .tournament-header-section {
+            padding: 10px 24px;
+            margin: 10px auto;
+            max-width: 1200px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .tournament-logos {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tournament-logo-small {
+            height: 40px;
+            width: auto;
+            object-fit: contain;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            padding: 2px;
+            background: white;
+        }
+
+        @media (max-width: 768px) {
+            .tournament-header-section {
+                padding: 10px 16px;
+            }
+
+            .tournament-logo-small {
+                height: 30px;
+            }
+        }
+
+        /* Add new styles for logo section */
+        .tournament-logos-section {
+            padding: 20px 24px;
+            margin: 0 auto;
+            max-width: 1200px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .tournament-logos {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .tournament-logo {
+            height: 60px;
+            width: auto;
+            object-fit: contain;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            padding: 5px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 768px) {
+            .tournament-logos-section {
+                padding: 15px 16px;
+            }
+
+            .tournament-logos {
+                gap: 15px;
+            }
+
+            .tournament-logo {
+                height: 45px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -495,9 +579,22 @@
     <div class="container">
         <div class="header">
             <img src="{{ url_for('static', filename='dilliLabsIcon.png') }}" alt="DilliLabs Logo" class="logo">
-            <h1>Tournament Details</h1>
+            <h1>{{ tournament['Tournament Name'] }}</h1>
         </div>
-        <h2 class="tournament-subheader" style="text-align:center; color:#1e3c72; font-size:1.5em; margin:10px 0 8px 0; font-weight:500;">{{ tournament['Tournament Name'] }}</h2>
+        
+        {% if tournament['Tournament Logo Link'] %}
+            <div class="tournament-logos-section">
+                <div class="tournament-logos">
+                    {% set logo_links = tournament['Tournament Logo Link'].split(',') %}
+                    {% for logo_link in logo_links %}
+                        <img src="{{ url_for('static', filename=logo_link.replace('static/', '')) }}" 
+                             alt="Tournament Logo" 
+                             class="tournament-logo">
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
         <div class="content">
             <div class="tab-header">
                 <button class="tab-button active" onclick="showTab('info')">
@@ -604,25 +701,6 @@
                         <div class="detail-value">{{ tournament['General Information'] }}</div>
                     </div>
                     {% endif %}
-
-                    <!-- Tournament Logos Section -->
-                    <div class="tournament-section">
-                        <h3>Tournament Logos</h3>
-                        <div class="logo-section">
-                            {% if tournament['Tournament Logo Link'] %}
-                                {% set logo_links = tournament['Tournament Logo Link'].split(',') %}
-                                {% for logo_link in logo_links %}
-                                    <div class="logo-container">
-                                        <img src="{{ url_for('static', filename=logo_link.replace('static/', '')) }}" 
-                                             alt="Tournament Logo" 
-                                             class="tournament-logo">
-                                    </div>
-                                {% endfor %}
-                            {% else %}
-                                <p>No logos available</p>
-                            {% endif %}
-                        </div>
-                    </div>
                 </div>
             </div>
 
