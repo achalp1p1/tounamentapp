@@ -729,88 +729,48 @@ def list_tournament_last2():
 @app.route('/tournament/<tournament_id>/info')
 def tournament_info(tournament_id):
     try:
-        # Get tournament details
+        print(f"=== Starting tournament_info route ===")
+        print(f"Tournament ID: {tournament_id}")
+        
+        # Read tournament data
         tournament = None
-        with open('tournaments.csv', 'r', newline='', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
+        with open('tournaments.csv', 'r') as f:
+            reader = csv.DictReader(f)
             for row in reader:
                 if row['Tournament Id'] == tournament_id:
                     tournament = row
                     break
-        
+
         if not tournament:
-            return redirect(url_for('list_tournament'))
+            return "Tournament not found", 404
+
+        # Read categories data
+        categories = []
+        girls_entries = {}  # Initialize empty dictionary for girls entries
+        boys_entries = {}   # Initialize empty dictionary for boys entries
         
-        # Get categories and initialize entries dictionaries
-        girls_categories = []
-        boys_categories = []
-        girls_entries = {}
-        boys_entries = {}
-        
-        # Get tournament categories
-        with open('tournament_categories.csv', 'r', newline='', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
+        with open('tournament_categories.csv', 'r') as f:
+            reader = csv.DictReader(f)
             for row in reader:
                 if row['Tournament Id'] == tournament_id:
+                    categories.append(row)
+                    # Organize categories by gender
                     if 'Girls' in row['Category']:
-                        girls_categories.append(row['Category'])
-                        girls_entries[row['Category']] = []
+                        girls_entries[row['Category']] = row
                     elif 'Boys' in row['Category']:
-                        boys_categories.append(row['Category'])
-                        boys_entries[row['Category']] = []
+                        boys_entries[row['Category']] = row
 
-        # Get registrations
-        registrations = []
-        with open('tournament_registrations.csv', 'r', newline='', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                if row['Tournament ID'] == tournament_id and row['Status'].lower() == 'active':
-                    registrations.append(row)
-
-        # Get player details
-        players = {}
-        with open('players_data.csv', 'r', newline='', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                players[row['Player ID']] = row
-
-        # Organize entries by category
-        for reg in registrations:
-            player = players.get(reg['Player ID'])
-            if player:
-                entry = {
-                    'Name': player['Name'],
-                    'Category': reg['Category'],
-                    'Seeding': reg.get('Seeding', '')
-                }
-                
-                if reg['Category'] in girls_entries:
-                    girls_entries[reg['Category']].append(entry)
-                elif reg['Category'] in boys_entries:
-                    boys_entries[reg['Category']].append(entry)
-
-        # Sort entries by seeding in each category
-        def sort_by_seeding(entry):
-            seeding = entry.get('Seeding', '')
-            try:
-                return (int(seeding) if seeding else 999999, entry['Name'])
-            except ValueError:
-                return (999999, entry['Name'])
-
-        for category in girls_entries:
-            girls_entries[category].sort(key=sort_by_seeding)
-        for category in boys_entries:
-            boys_entries[category].sort(key=sort_by_seeding)
-        
         return render_template('tournament_details.html', 
-                             tournament=tournament,
+                             tournament=tournament, 
+                             categories=categories,
                              girls_entries=girls_entries,
-                             boys_entries=boys_entries,
-                             categories=girls_categories + boys_categories,
-                             active_subpage='info')
+                             boys_entries=boys_entries)
+
     except Exception as e:
-        print(f"Error in tournament_info: {str(e)}")
-        return redirect(url_for('list_tournament'))
+        print(f"Error in tournament_info route: {str(e)}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        return "Error loading tournament details", 500
 
 @app.route('/tournament/<tournament_id>/register', methods=['GET', 'POST'])
 def tournament_register(tournament_id):
