@@ -24,6 +24,14 @@
             font-size: min(32px, 4vh);
             margin-bottom: 1vh;
         }
+        .tournament-subheader {
+            text-align: center;
+            color: #1e3c72;
+            font-size: 1.5em;
+            margin: 20px 0;
+            padding: 0 20px;
+            font-weight: 500;
+        }
         .logo {
             position: absolute;
             left: 24px;
@@ -448,6 +456,7 @@
             <img src="{{ url_for('static', filename='dilliLabsIcon.png') }}" alt="DilliLabs Logo" class="logo">
             <h1>Tournament Details</h1>
         </div>
+        <h2 class="tournament-subheader">{{ tournament['Tournament Name'] }}</h2>
         <div class="content">
             <div class="tab-header">
                 <button class="tab-button active" onclick="showTab('info')">
