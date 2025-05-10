@@ -387,15 +387,19 @@ def create_tournament():
             tournament_logos = request.files.getlist('tournament_logo')
             tournament_logo_links = []
             
-            for idx, logo in enumerate(tournament_logos):
+            for logo in tournament_logos:
                 if logo and logo.filename:
-                    # Create a safe filename from tournament name
-                    safe_tournament_name = "".join(c for c in tournament_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
-                    filename = f"{safe_tournament_name}_logo_{idx+1}{os.path.splitext(logo.filename)[1]}"
-                    logo_path = os.path.join(tournament_folder, filename)
+                    # Get the original filename and extension
+                    original_filename = os.path.splitext(logo.filename)[0]
+                    file_extension = os.path.splitext(logo.filename)[1]
+                    # Create new filename with 'logo_' prefix
+                    filename = f"logo_{original_filename}{file_extension}"
+                    # Make the filename safe by removing any special characters
+                    safe_filename = "".join(c for c in filename if c.isalnum() or c in (' ', '-', '_', '.')).rstrip()
+                    logo_path = os.path.join(tournament_folder, safe_filename)
                     logo.save(logo_path)
                     # Store the relative path for the database
-                    logo_link = f"static/tournaments/{tournament_id}/{filename}"
+                    logo_link = f"static/tournaments/{tournament_id}/{safe_filename}"
                     tournament_logo_links.append(logo_link)
             
             # Join all logo links with a separator
@@ -594,13 +598,17 @@ def edit_tournament(tournament_id):
             tournament_logo = request.files.get('tournament_logo')
             tournament_logo_link = old_tournament.get('Tournament Logo Link', '')
             if tournament_logo and tournament_logo.filename:
-                # Create a safe filename from tournament name
-                safe_tournament_name = "".join(c for c in tournament_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
-                filename = f"{safe_tournament_name}_logo{os.path.splitext(tournament_logo.filename)[1]}"
-                logo_path = os.path.join(tournament_folder, filename)
+                # Get the original filename and extension
+                original_filename = os.path.splitext(tournament_logo.filename)[0]
+                file_extension = os.path.splitext(tournament_logo.filename)[1]
+                # Create new filename with 'logo_' prefix
+                filename = f"logo_{original_filename}{file_extension}"
+                # Make the filename safe by removing any special characters
+                safe_filename = "".join(c for c in filename if c.isalnum() or c in (' ', '-', '_', '.')).rstrip()
+                logo_path = os.path.join(tournament_folder, safe_filename)
                 tournament_logo.save(logo_path)
                 # Store the relative path for the database
-                tournament_logo_link = f"static/tournaments/{tournament_id}/{filename}"
+                tournament_logo_link = f"static/tournaments/{tournament_id}/{safe_filename}"
             
             # Get category information
             categories = request.form.getlist('categories[]')
