@@ -519,6 +519,24 @@
         .selected-category .remove-category:hover {
             color: var(--error-color);
         }
+
+        .logo-preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .logo-preview {
+            max-width: 150px;
+            max-height: 150px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .logo-row {
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 <body>
@@ -548,8 +566,8 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="last_entry_date" class="required-field">Last Entry Date</label>
-                        <input type="date" id="last_entry_date" name="last_entry_date" required>
+                        <label for="last_registration_date" class="required-field">Last Entry Date</label>
+                        <input type="date" id="last_registration_date" name="last_registration_date" required>
                     </div>
                     <div class="form-group">
                         <label for="venue">Venue</label>
@@ -640,8 +658,8 @@
                 <div id="logos-container">
                     <div class="logo-row">
                         <div class="form-group">
-                            <input type="file" name="logos[]" accept="image/*">
-                            <img class="logo-preview" style="display: none;">
+                            <input type="file" name="tournament_logo" accept="image/*" multiple>
+                            <div class="logo-preview-container"></div>
                         </div>
                         <button type="button" class="remove-logo-btn" style="display: none;">
                             <i class="material-icons">delete</i>
@@ -775,17 +793,17 @@
 
             document.getElementById('start_date').value = startDate.toISOString().split('T')[0];
             document.getElementById('end_date').value = endDate.toISOString().split('T')[0];
-            document.getElementById('last_entry_date').value = lastEntryDate.toISOString().split('T')[0];
+            document.getElementById('last_registration_date').value = lastEntryDate.toISOString().split('T')[0];
 
             // Add event listeners for date validation
             document.getElementById('start_date').addEventListener('change', validateDates);
             document.getElementById('end_date').addEventListener('change', validateDates);
-            document.getElementById('last_entry_date').addEventListener('change', validateDates);
+            document.getElementById('last_registration_date').addEventListener('change', validateDates);
 
             function validateDates() {
                 const startDate = new Date(document.getElementById('start_date').value);
                 const endDate = new Date(document.getElementById('end_date').value);
-                const lastEntryDate = new Date(document.getElementById('last_entry_date').value);
+                const lastEntryDate = new Date(document.getElementById('last_registration_date').value);
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
 
@@ -817,8 +835,8 @@
                 logoRow.className = 'logo-row';
                 logoRow.innerHTML = `
                     <div class="form-group">
-                        <input type="file" name="logos[]" accept="image/*">
-                        <img class="logo-preview" style="display: none;">
+                        <input type="file" name="tournament_logo" accept="image/*" multiple>
+                        <div class="logo-preview-container"></div>
                     </div>
                     <button type="button" class="remove-logo-btn">
                         <i class="material-icons">delete</i>
@@ -827,17 +845,23 @@
 
                 // Add file change handler
                 const fileInput = logoRow.querySelector('input[type="file"]');
-                const preview = logoRow.querySelector('.logo-preview');
+                const previewContainer = logoRow.querySelector('.logo-preview-container');
+                
                 fileInput.addEventListener('change', function(e) {
-                    const file = e.target.files[0];
-                    if (file) {
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            preview.src = e.target.result;
-                            preview.style.display = 'block';
+                    previewContainer.innerHTML = ''; // Clear existing previews
+                    Array.from(e.target.files).forEach(file => {
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                const preview = document.createElement('img');
+                                preview.src = e.target.result;
+                                preview.className = 'logo-preview';
+                                preview.style.display = 'block';
+                                previewContainer.appendChild(preview);
+                            }
+                            reader.readAsDataURL(file);
                         }
-                        reader.readAsDataURL(file);
-                    }
+                    });
                 });
 
                 // Add remove handler
@@ -866,18 +890,23 @@
             // Initialize first logo row
             const firstRow = logosContainer.querySelector('.logo-row');
             const firstFileInput = firstRow.querySelector('input[type="file"]');
-            const firstPreview = firstRow.querySelector('.logo-preview');
+            const firstPreviewContainer = firstRow.querySelector('.logo-preview-container');
             
             firstFileInput.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        firstPreview.src = e.target.result;
-                        firstPreview.style.display = 'block';
+                firstPreviewContainer.innerHTML = ''; // Clear existing previews
+                Array.from(e.target.files).forEach(file => {
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const preview = document.createElement('img');
+                            preview.src = e.target.result;
+                            preview.className = 'logo-preview';
+                            preview.style.display = 'block';
+                            firstPreviewContainer.appendChild(preview);
+                        }
+                        reader.readAsDataURL(file);
                     }
-                    reader.readAsDataURL(file);
-                }
+                });
             });
         });
     </script>

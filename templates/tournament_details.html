@@ -28,7 +28,7 @@
             text-align: center;
             color: #1e3c72;
             font-size: 1.5em;
-            margin: 20px 0;
+            margin: 10px 0 8px 0;
             padding: 0 20px;
             font-weight: 500;
         }
@@ -486,7 +486,7 @@
             <img src="{{ url_for('static', filename='dilliLabsIcon.png') }}" alt="DilliLabs Logo" class="logo">
             <h1>Tournament Details</h1>
         </div>
-        <h2 class="tournament-subheader">{{ tournament['Tournament Name'] }}</h2>
+        <h2 class="tournament-subheader" style="text-align:center; color:#1e3c72; font-size:1.5em; margin:10px 0 8px 0; font-weight:500;">{{ tournament['Tournament Name'] }}</h2>
         <div class="content">
             <div class="tab-header">
                 <button class="tab-button active" onclick="showTab('info')">
@@ -596,23 +596,20 @@
 
                     <div class="detail-section">
                         <h2 class="section-title">Tournament Logos</h2>
-                        <div class="logo-section">
+                        <div class="logo-section" style="display: flex; gap: 24px; flex-wrap: wrap;">
                             {% if tournament.get('Tournament Logo Link') %}
-                            <div class="logo-container">
-                                <div class="detail-label">Tournament Logo</div>
-                                <img src="{{ tournament['Tournament Logo Link'] }}" alt="Tournament Logo">
-                            </div>
-                            {% endif %}
-                            
-                            {% if tournament.get('Sponsor Logo Links') %}
-                            {% for logo in tournament['Sponsor Logo Links'].split(',') %}
-                            {% if logo %}
-                            <div class="logo-container">
-                                <div class="detail-label">Sponsor Logo</div>
-                                <img src="{{ logo }}" alt="Sponsor Logo">
-                            </div>
-                            {% endif %}
-                            {% endfor %}
+                                {% set logo_links = tournament['Tournament Logo Link'].split('|') %}
+                                {% for logo_link in logo_links %}
+                                    {% if logo_link.strip() %}
+                                    <div class="logo-container" style="flex: 1 1 200px; max-width: 220px;">
+                                        <div class="detail-label">Tournament Logo</div>
+                                        <img src="{{ url_for('static', filename=logo_link.strip()) }}" alt="Tournament Logo">
+                                        <div class="logo-path" style="font-size: 0.9em; color: #888; margin-top: 4px; word-break: break-all;">
+                                            {{ logo_link.strip() }}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
                             {% endif %}
                         </div>
                     </div>

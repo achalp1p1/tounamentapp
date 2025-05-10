@@ -11,8 +11,27 @@ import re
 import io
 from io import StringIO, BytesIO
 import json
+import pandas as pd
 
 app = Flask(__name__)
+
+# Define the function first
+def ensure_tournament_directories():
+    """Ensure the required directory structure exists for tournament files"""
+    # Create static directory if it doesn't exist
+    if not os.path.exists('static'):
+        os.makedirs('static')
+    
+    # Create tournaments directory if it doesn't exist
+    tournaments_dir = os.path.join('static', 'tournaments')
+    if not os.path.exists(tournaments_dir):
+        os.makedirs(tournaments_dir)
+
+# Then call the function
+ensure_tournament_directories()
+
+# Add this near the top of your app.py file, after app initialization
+ensure_tournament_directories()
 
 # Add custom datetime filter
 @app.template_filter('datetime')
@@ -50,28 +69,16 @@ def get_image_base64():
         return None
 
 def initialize_csv():
-    """Initialize the CSV file with correct headers if it doesn't exist"""
-    fieldnames = [
-        'Player ID',
-        'Name',
-        'Date of Birth',
-        'Gender',
-        'Phone Number',
-        'Email ID',
-        'Address',
-        'State',
-        'TTFI ID',
-        'DSTTA ID',
-        'School/Institution',
-        'Academy',
-        'UPI ID'
-    ]
-    
-    if not os.path.exists(PLAYERS_CSV):
-        with open(PLAYERS_CSV, 'w', newline='', encoding='utf-8') as file:
+    # Initialize tournaments.csv if it doesn't exist
+    if not os.path.exists('tournaments.csv'):
+        with open('tournaments.csv', 'w', newline='', encoding='utf-8') as file:
+            fieldnames = [
+                'Tournament Id', 'Tournament Name', 'Categories', 'Venue',
+                'Start Date', 'End Date', 'Last Registration Date', 'Total Prize',
+                'General Information', 'Tournament Logo Link', 'Status'
+            ]
             writer = csv.DictWriter(file, fieldnames=fieldnames)
             writer.writeheader()
-    return fieldnames
 
 def initialize_tournament_registrations_csv():
     """Initialize the tournament registrations CSV file with correct headers if it doesn't exist"""
@@ -358,110 +365,95 @@ def create_draws():
 @app.route('/create-tournament', methods=['GET', 'POST'])
 def create_tournament():
     if request.method == 'POST':
-        # Generate unique tournament ID
-        tournament_id = str(uuid.uuid4())
-        
-        # Get form data
-        tournament_name = request.form.get('tournament_name')
-        venue = request.form.get('venue')
-        start_date = request.form.get('start_date')
-        end_date = request.form.get('end_date')
-        last_registration_date = request.form.get('last_registration_date')
-        total_prize = request.form.get('total_prize')
-        general_info = request.form.get('general_info')
-        
-        # Handle file uploads
-        tournament_logo = request.files.get('tournament_logo')
-        sponsor_logos = request.files.getlist('sponsor_logos')
-        
-        # Create logo directory if it doesn't exist
-        if not os.path.exists('logo'):
-            os.makedirs('logo')
-        
-        # Save tournament logo
-        tournament_logo_link = ''
-        if tournament_logo and tournament_logo.filename:
-            filename = f"{tournament_id}_tournament{os.path.splitext(tournament_logo.filename)[1]}"
-            tournament_logo.save(os.path.join('logo', filename))
-            tournament_logo_link = f"logo/{filename}"
-        
-        # Save sponsor logos
-        sponsor_logo_links = []
-        for i, logo in enumerate(sponsor_logos):
-            if logo and logo.filename:
-                filename = f"{tournament_id}_sponsor_{i}{os.path.splitext(logo.filename)[1]}"
-                logo.save(os.path.join('logo', filename))
-                sponsor_logo_links.append(f"logo/{filename}")
-        
-        # Get category information
-        categories = request.form.getlist('categories[]')
-        fees = request.form.getlist('fees[]')
-        first_prizes = request.form.getlist('first_prizes[]')
-        second_prizes = request.form.getlist('second_prizes[]')
-        third_prizes = request.form.getlist('third_prizes[]')
-        formats = request.form.getlist('formats[]')
-        
-        # Prepare tournament data
-        tournament_data = {
-            'Tournament Id': tournament_id,
-            'Tournament Name': tournament_name,
-            'Categories': ','.join(categories),
-            'Venue': venue,
-            'Start Date': start_date,
-            'End Date': end_date,
-            'Last Registration Date': last_registration_date,
-            'Total Prize': total_prize,
-            'General Information': general_info,
-            'Tournament Logo Link': tournament_logo_link,
-            'Sponsor Logo Links': ','.join(sponsor_logo_links),
-            'Status': 'active'
-        }
-        
-        # Write to tournaments.csv
-        tournaments_file_exists = os.path.exists('tournaments.csv')
-        with open('tournaments.csv', 'a', newline='', encoding='utf-8') as file:
-            fieldnames = [
-                'Tournament Id', 'Tournament Name', 'Categories', 'Venue',
-                'Start Date', 'End Date', 'Last Registration Date', 'Total Prize',
-                'General Information', 'Tournament Logo Link', 'Sponsor Logo Links',
-                'Status'  # Adding status to fieldnames
-            ]
-            writer = csv.DictWriter(file, fieldnames=fieldnames)
+        try:
+            # Generate unique tournament ID
+            tournament_id = str(uuid.uuid4())
             
-            # Write header only if file is newly created
-            if not tournaments_file_exists:
-                writer.writeheader()
+            # Get form data
+            tournament_name = request.form.get('tournament_name')
+            venue = request.form.get('venue')
+            start_date = request.form.get('start_date')
+            end_date = request.form.get('end_date')
+            last_registration_date = request.form.get('last_registration_date')
+            total_prize = request.form.get('total_prize')
+            general_info = request.form.get('general_info')
             
-            writer.writerow(tournament_data)
-        
-        # Write to tournament_categories.csv
-        categories_file_exists = os.path.exists('tournament_categories.csv')
-        with open('tournament_categories.csv', 'a', newline='', encoding='utf-8') as file:
-            fieldnames = [
-                'Tournament Id', 'Tournament Name', 'Category', 'Fee',
-                'First Prize', 'Second Prize', 'Third Prize', 'Format'
-            ]
-            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            # Create tournament directory structure
+            tournament_folder = os.path.join('static', 'tournaments', tournament_id)
+            if not os.path.exists(tournament_folder):
+                os.makedirs(tournament_folder)
             
-            # Write header only if file is newly created
-            if not categories_file_exists:
-                writer.writeheader()
+            # Handle multiple tournament logos
+            tournament_logos = request.files.getlist('tournament_logo')
+            tournament_logo_links = []
             
-            # Write each category
-            for i in range(len(categories)):
-                category_data = {
-                    'Tournament Id': tournament_id,
-                    'Tournament Name': tournament_name,
-                    'Category': categories[i],
-                    'Fee': fees[i],
-                    'First Prize': first_prizes[i],
-                    'Second Prize': second_prizes[i],
-                    'Third Prize': third_prizes[i],
-                    'Format': formats[i]
-                }
-                writer.writerow(category_data)
-        
-        return redirect(url_for('list_tournament'))
+            for logo in tournament_logos:
+                if logo and logo.filename:
+                    # Get the original filename and extension
+                    original_filename = os.path.splitext(logo.filename)[0]
+                    file_extension = os.path.splitext(logo.filename)[1]
+                    # Create new filename with 'logo_' prefix
+                    filename = f"logo_{original_filename}{file_extension}"
+                    # Make the filename safe by removing any special characters
+                    safe_filename = "".join(c for c in filename if c.isalnum() or c in (' ', '-', '_', '.')).rstrip()
+                    logo_path = os.path.join(tournament_folder, safe_filename)
+                    logo.save(logo_path)
+                    # Store the relative path for the database
+                    logo_link = f"static/tournaments/{tournament_id}/{safe_filename}"
+                    tournament_logo_links.append(logo_link)
+            
+            # Join all logo links with a separator
+            tournament_logo_links_str = '|'.join(tournament_logo_links)
+            
+            # Get category information
+            categories = request.form.getlist('categories[]')
+            fees = request.form.getlist('fees[]')
+            first_prizes = request.form.getlist('first_prizes[]')
+            second_prizes = request.form.getlist('second_prizes[]')
+            third_prizes = request.form.getlist('third_prizes[]')
+            formats = request.form.getlist('formats[]')
+            
+            # Prepare tournament data
+            tournament_data = {
+                'Tournament Id': tournament_id,
+                'Tournament Name': tournament_name,
+                'Categories': ','.join(categories),
+                'Venue': venue,
+                'Start Date': start_date,
+                'End Date': end_date,
+                'Last Registration Date': last_registration_date,
+                'Total Prize': total_prize,
+                'General Information': general_info,
+                'Tournament Logo Link': tournament_logo_links_str,  # Store all logo links
+                'Status': 'active'
+            }
+            
+            # Save tournament data
+            with open('tournaments.csv', 'a', newline='', encoding='utf-8') as file:
+                writer = csv.DictWriter(file, fieldnames=tournament_data.keys())
+                writer.writerow(tournament_data)
+            
+            # Save category data
+            with open('tournament_categories.csv', 'a', newline='', encoding='utf-8') as file:
+                writer = csv.DictWriter(file, fieldnames=['Tournament Id', 'Tournament Name', 'Category', 'Fee', 'First Prize', 'Second Prize', 'Third Prize', 'Format'])
+                for i in range(len(categories)):
+                    writer.writerow({
+                        'Tournament Id': tournament_id,
+                        'Tournament Name': tournament_name,
+                        'Category': categories[i],
+                        'Fee': fees[i],
+                        'First Prize': first_prizes[i],
+                        'Second Prize': second_prizes[i],
+                        'Third Prize': third_prizes[i],
+                        'Format': formats[i]
+                    })
+            
+            flash('Tournament created successfully!', 'success')
+            return redirect(url_for('tournament_info', tournament_id=tournament_id))
+            
+        except Exception as e:
+            flash(f'Error creating tournament: {str(e)}', 'error')
+            return redirect(url_for('create_tournament'))
     
     return render_template('tournament_creation.html')
 
@@ -588,15 +580,7 @@ def edit_tournament(tournament_id):
             total_prize = request.form.get('total_prize')
             general_info = request.form.get('general_info')
             
-            # Handle file uploads
-            tournament_logo = request.files.get('tournament_logo')
-            sponsor_logos = request.files.getlist('sponsor_logos')
-            
-            # Create logo directory if it doesn't exist
-            if not os.path.exists('logo'):
-                os.makedirs('logo')
-            
-            # Get the old tournament data for existing logo links
+            # Get the old tournament data for existing logo link
             old_tournament = None
             with open('tournaments.csv', 'r', newline='', encoding='utf-8') as file:
                 reader = csv.DictReader(file)
@@ -605,22 +589,26 @@ def edit_tournament(tournament_id):
                         old_tournament = row
                         break
             
+            # Create tournament directory if it doesn't exist
+            tournament_folder = os.path.join('static', 'tournaments', tournament_id)
+            if not os.path.exists(tournament_folder):
+                os.makedirs(tournament_folder)
+            
             # Handle tournament logo
+            tournament_logo = request.files.get('tournament_logo')
             tournament_logo_link = old_tournament.get('Tournament Logo Link', '')
             if tournament_logo and tournament_logo.filename:
-                filename = f"{tournament_id}_tournament{os.path.splitext(tournament_logo.filename)[1]}"
-                tournament_logo.save(os.path.join('logo', filename))
-                tournament_logo_link = f"logo/{filename}"
-            
-            # Handle sponsor logos
-            sponsor_logo_links = old_tournament.get('Sponsor Logo Links', '').split(',') if old_tournament.get('Sponsor Logo Links') else []
-            if any(logo.filename for logo in sponsor_logos):
-                sponsor_logo_links = []
-                for i, logo in enumerate(sponsor_logos):
-                    if logo and logo.filename:
-                        filename = f"{tournament_id}_sponsor_{i}{os.path.splitext(logo.filename)[1]}"
-                        logo.save(os.path.join('logo', filename))
-                        sponsor_logo_links.append(f"logo/{filename}")
+                # Get the original filename and extension
+                original_filename = os.path.splitext(tournament_logo.filename)[0]
+                file_extension = os.path.splitext(tournament_logo.filename)[1]
+                # Create new filename with 'logo_' prefix
+                filename = f"logo_{original_filename}{file_extension}"
+                # Make the filename safe by removing any special characters
+                safe_filename = "".join(c for c in filename if c.isalnum() or c in (' ', '-', '_', '.')).rstrip()
+                logo_path = os.path.join(tournament_folder, safe_filename)
+                tournament_logo.save(logo_path)
+                # Store the relative path for the database
+                tournament_logo_link = f"static/tournaments/{tournament_id}/{safe_filename}"
             
             # Get category information
             categories = request.form.getlist('categories[]')
@@ -648,7 +636,6 @@ def edit_tournament(tournament_id):
                             'Total Prize': total_prize,
                             'General Information': general_info,
                             'Tournament Logo Link': tournament_logo_link,
-                            'Sponsor Logo Links': ','.join(sponsor_logo_links),
                             'Status': 'active'
                         })
                     tournaments.append(row)
@@ -1270,28 +1257,24 @@ def get_category_players(tournament_id, category):
 
 # Helper function to get tournament details
 def get_tournament(tournament_id):
-    try:
-        with open('tournaments.csv', 'r', newline='') as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                if row['Tournament Id'] == tournament_id:
-                    return {
-                        'Tournament Id': row['Tournament Id'],
-                        'Tournament Name': row['Tournament Name'],
-                        'Categories': row.get('Categories', ''),
-                        'Venue': row.get('Venue', ''),
-                        'Start Date': row.get('Start Date', ''),
-                        'End Date': row.get('End Date', ''),
-                        'Last Registration Date': row.get('Last Registration Date', ''),
-                        'Total Prize': row.get('Total Prize', ''),
-                        'General Information': row.get('General Information', ''),
-                        'Tournament Logo Link': row.get('Tournament Logo Link', ''),
-                        'Sponsor Logo Links': row.get('Sponsor Logo Links', ''),
-                        'Status': row.get('Status', '')
-                    }
-    except Exception as e:
-        print(f"Error reading tournaments.csv: {str(e)}")
-        return None
+    with open('tournaments.csv', 'r', newline='', encoding='utf-8') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            if row['Tournament Id'] == tournament_id:
+                return {
+                    'Tournament Id': row['Tournament Id'],
+                    'Tournament Name': row['Tournament Name'],
+                    'Categories': row['Categories'],
+                    'Venue': row['Venue'],
+                    'Start Date': row['Start Date'],
+                    'End Date': row['End Date'],
+                    'Last Registration Date': row['Last Registration Date'],
+                    'Total Prize': row['Total Prize'],
+                    'General Information': row['General Information'],
+                    'Tournament Logo Link': row.get('Tournament Logo Link', ''),
+                    'Status': row['Status']
+                }
+    return None
 
 @app.route('/get-players')
 def get_players():
@@ -1900,4 +1883,6 @@ if __name__ == '__main__':
     initialize_tournament_registrations_csv()
     # Migrate existing CSV files if needed
     migrate_tournament_registrations_csv()
+    # Ensure tournament directories exist
+    ensure_tournament_directories()
     app.run(debug=True)
