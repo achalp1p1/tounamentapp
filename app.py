@@ -739,15 +739,17 @@ def tournament_info(tournament_id):
         if not tournament:
             return "Tournament not found", 404
 
-        # Get categories for this tournament from tournament_categories.csv
+        # Get categories for this tournament
         tournament_categories = []
+        category_details = []  # New list to store category details
         with open('tournament_categories.csv', 'r') as f:
             reader = csv.DictReader(f)
             for row in reader:
                 if row['Tournament Id'] == tournament_id:
                     tournament_categories.append(row['Category'])
+                    category_details.append(row)  # Store the complete category details
 
-        print(f"Tournament categories: {tournament_categories}")  # Debug print
+        print(f"Tournament categories: {tournament_categories}")
 
         # Initialize empty lists for entries
         girls_entries = {}
@@ -788,7 +790,6 @@ def tournament_info(tournament_id):
                         }
                         
                         category = reg['Category']
-                        # Only add entries for categories that exist in tournament_categories
                         if category in girls_categories and category in tournament_categories:
                             if category not in girls_entries:
                                 girls_entries[category] = []
@@ -814,7 +815,7 @@ def tournament_info(tournament_id):
 
         return render_template('tournament_details.html', 
                              tournament=tournament, 
-                             categories=tournament_categories,  # Pass only the tournament's categories
+                             categories=category_details,  # Pass the complete category details
                              girls_entries=girls_entries,
                              boys_entries=boys_entries)
 
