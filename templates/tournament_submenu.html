@@ -3,49 +3,6 @@
        class="submenu-link {% if active_subpage == 'info' %}active{% endif %}">
         <i class="fas fa-info-circle"></i>Info
     </a>
-    
-    <a href="{{ url_for('tournament_register', tournament_id=tournament['Tournament Id']) }}?tab=register" 
-       class="submenu-link {% if active_subpage == 'register' %}active{% endif %}">
-        <i class="fas fa-user-plus"></i>Register
-    </a>
-    
-    <a href="{{ url_for('tournament_entries', tournament_id=tournament['Tournament Id']) }}?tab=entries" 
-       class="submenu-link {% if active_subpage == 'entries' %}active{% endif %}">
-        <i class="fas fa-list"></i>Entries
-    </a>
-    
-    <a href="{{ url_for('tournament_schedule', tournament_id=tournament['Tournament Id']) }}?tab=schedule" 
-       class="submenu-link {% if active_subpage == 'schedule' %}active{% endif %}">
-        <i class="fas fa-calendar"></i>Schedule
-    </a>
-    
-    <a href="{{ url_for('tournament_results', tournament_id=tournament['Tournament Id']) }}?tab=draws" 
-       class="submenu-link {% if active_subpage == 'results' %}active{% endif %}">
-        <i class="fas fa-trophy"></i>Draws
-    </a>
-
-    <!-- ONLY ONE DROPDOWN CONTROL -->
-    <div id="manageMenuContainer" class="manage-dropdown">
-        <button id="manageButton" class="submenu-link manage-button {% if active_subpage in ['update_seeding', 'create_draw', 'create_bracket'] %}active{% endif %}">
-            <i class="fas fa-cog"></i>Manage
-            <span id="manageArrow">▼</span>
-        </button>
-        
-        <div id="manageMenu" class="manage-menu">
-            <a href="{{ url_for('tournament_update_seeding', tournament_id=tournament['Tournament Id']) }}" 
-               class="menu-item {% if active_subpage == 'update_seeding' %}active{% endif %}">
-                <i class="fas fa-sort-numeric-up"></i>Update Seeding
-            </a>
-            <a href="{{ url_for('tournament_create_draw', tournament_id=tournament['Tournament Id']) }}" 
-               class="menu-item {% if active_subpage == 'create_draw' %}active{% endif %}">
-                <i class="fas fa-random"></i>Create Draw
-            </a>
-            <a href="{{ url_for('tournament_create_bracket', tournament_id=tournament['Tournament Id']) }}" 
-               class="menu-item {% if active_subpage == 'create_bracket' %}active{% endif %}">
-                <i class="fas fa-sitemap"></i>Create Bracket
-            </a>
-        </div>
-    </div>
 </nav>
 
 <!-- NO OTHER CONTROLS OR PREVIOUS IMPLEMENTATION OUTSIDE THIS SECTION -->
