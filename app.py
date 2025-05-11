@@ -739,55 +739,64 @@ def tournament_info(tournament_id):
         if not tournament:
             return "Tournament not found", 404
 
-        # Read categories data
-        categories = []
-        girls_entries = {}  # Initialize empty dictionary for girls entries
-        boys_entries = {}   # Initialize empty dictionary for boys entries
-        
-        # First, get all categories
+        # Get categories for this tournament from tournament_categories.csv
+        tournament_categories = []
         with open('tournament_categories.csv', 'r') as f:
             reader = csv.DictReader(f)
             for row in reader:
                 if row['Tournament Id'] == tournament_id:
-                    categories.append(row)
-                    # Initialize empty lists for entries
-                    if 'Girls' in row['Category']:
-                        girls_entries[row['Category']] = []
-                    elif 'Boys' in row['Category']:
-                        boys_entries[row['Category']] = []
+                    tournament_categories.append(row['Category'])
 
-        # Now get all registrations for this tournament
-        registrations = []
-        with open(TOURNAMENT_REGISTRATIONS_CSV, 'r', newline='', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                if (row['Tournament Id'] == tournament_id and 
-                    row['Status'].lower() == 'active'):
-                    registrations.append(row)
+        print(f"Tournament categories: {tournament_categories}")  # Debug print
 
-        # Get player details
-        players = {}
-        if os.path.exists(PLAYERS_CSV):
-            with open(PLAYERS_CSV, 'r', newline='', encoding='utf-8') as file:
-                reader = csv.DictReader(file)
-                for row in reader:
-                    players[row['Player ID']] = row
+        # Initialize empty lists for entries
+        girls_entries = {}
+        boys_entries = {}
 
-        # Organize entries by category
-        for reg in registrations:
-            player = players.get(reg['Player ID'])
-            if player:
-                entry = {
-                    'Name': player['Name'],
-                    'Category': reg['Category'],
-                    'Seeding': reg.get('Seeding', '')  # Get seeding value
-                }
-                
-                # Add to appropriate category
-                if reg['Category'] in girls_entries:
-                    girls_entries[reg['Category']].append(entry)
-                elif reg['Category'] in boys_entries:
-                    boys_entries[reg['Category']].append(entry)
+        # Define category mappings
+        girls_categories = ['u9', 'u11 Girls', 'u13 Girls', 'u15 Girls', 'u19 Girls', 'Women', 'Veterans 39+ Women']
+        boys_categories = ['u11 Boys', 'u13 Boys', 'u17 Boys', 'u19 Boys', 'Men', 'Veterans 39+ Men']
+
+        # Initialize category dictionaries only for categories that exist in tournament_categories
+        for category in girls_categories:
+            if category in tournament_categories:
+                girls_entries[category] = []
+        for category in boys_categories:
+            if category in tournament_categories:
+                boys_entries[category] = []
+
+        # Read registrations
+        with open('tournament_registrations.csv', 'r') as f:
+            reader = csv.DictReader(f)
+            for reg in reader:
+                if reg['Tournament Id'] == tournament_id and reg['Status'].lower() == 'active':
+                    # Get player details
+                    player = None
+                    with open('players_data.csv', 'r') as players_file:
+                        players_reader = csv.DictReader(players_file)
+                        for p in players_reader:
+                            if p['Player ID'] == reg['Player ID']:
+                                player = p
+                                break
+
+                    if player:
+                        entry = {
+                            'Player ID': player['Player ID'],
+                            'Name': player['Name'],
+                            'School/Institution': player.get('School/Institution', ''),
+                            'Seeding': reg.get('Seeding', '')
+                        }
+                        
+                        category = reg['Category']
+                        # Only add entries for categories that exist in tournament_categories
+                        if category in girls_categories and category in tournament_categories:
+                            if category not in girls_entries:
+                                girls_entries[category] = []
+                            girls_entries[category].append(entry)
+                        elif category in boys_categories and category in tournament_categories:
+                            if category not in boys_entries:
+                                boys_entries[category] = []
+                            boys_entries[category].append(entry)
 
         # Sort entries in each category by seeding
         def sort_by_seeding(entry):
@@ -805,7 +814,7 @@ def tournament_info(tournament_id):
 
         return render_template('tournament_details.html', 
                              tournament=tournament, 
-                             categories=categories,
+                             categories=tournament_categories,  # Pass only the tournament's categories
                              girls_entries=girls_entries,
                              boys_entries=boys_entries)
 
