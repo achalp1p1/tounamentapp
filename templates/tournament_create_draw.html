@@ -29,18 +29,29 @@
             box-shadow: 0 2px 12px rgba(30,60,114,0.07);
             padding: 32px 24px 40px 24px;
         }
+        .controls-container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+        .category-select {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
         label {
             font-weight: 500;
             color: #1e3c72;
             font-size: 1.1em;
+            white-space: nowrap;
         }
         select {
             padding: 8px 12px;
             font-size: 1em;
             border-radius: 6px;
             border: 1px solid #b0b8c9;
-            margin-left: 12px;
-            margin-bottom: 18px;
+            width: 200px;
         }
         table {
             width: 100%;
@@ -164,12 +175,13 @@
             padding: 12px 10px;
             text-align: left;
             border: 1px solid #e0e6f0;
+            font-size: 0.9em;
         }
         /* Left Table Column Widths */
         #players-table-container .players-table.fixed-table th:nth-child(1), 
-        #players-table-container .players-table.fixed-table td:nth-child(1) { width: 15%; }
+        #players-table-container .players-table.fixed-table td:nth-child(1) { width: 20%; }
         #players-table-container .players-table.fixed-table th:nth-child(2), 
-        #players-table-container .players-table.fixed-table td:nth-child(2) { width: 25%; }
+        #players-table-container .players-table.fixed-table td:nth-child(2) { width: 20%; }
         #players-table-container .players-table.fixed-table th:nth-child(3), 
         #players-table-container .players-table.fixed-table td:nth-child(3) { width: 60%; }
         
@@ -179,15 +191,15 @@
         #editable-table-container .players-table.fixed-table th:nth-child(2), 
         #editable-table-container .players-table.fixed-table td:nth-child(2) { width: 15%; }
         #editable-table-container .players-table.fixed-table th:nth-child(3), 
-        #editable-table-container .players-table.fixed-table td:nth-child(3) { width: 25%; }
+        #editable-table-container .players-table.fixed-table td:nth-child(3) { width: 20%; }
         #editable-table-container .players-table.fixed-table th:nth-child(4), 
-        #editable-table-container .players-table.fixed-table td:nth-child(4) { width: 50%; }
+        #editable-table-container .players-table.fixed-table td:nth-child(4) { width: 55%; }
         
         .players-table.fixed-table th {
             background: #1e3c72;
             color: #fff;
             font-weight: 600;
-            font-size: 1.05em;
+            font-size: 0.95em;
         }
         .players-table.fixed-table tr:nth-child(even) {
             background: #eaf0fa;
@@ -236,7 +248,7 @@
         .button-group {
             display: flex;
             gap: 10px;
-            align-items: center;
+            margin-left: auto;
         }
         .draw-table {
             position: relative;
@@ -304,14 +316,16 @@
         {% include 'tournament_submenu.html' with context %}
     </div>
     <div class="container">
-        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 18px;">
-            <label for="category-select">Select Category:</label>
-            <select id="category-select">
-                <option value="">-- Select Category --</option>
-                {% for category in categories %}
-                <option value="{{ category }}">{{ category }}</option>
-                {% endfor %}
-            </select>
+        <div class="controls-container">
+            <div class="category-select">
+                <label for="category-select">Select Category:</label>
+                <select id="category-select">
+                    <option value="">-- Select Category --</option>
+                    {% for category in categories %}
+                    <option value="{{ category }}">{{ category }}</option>
+                    {% endfor %}
+                </select>
+            </div>
             <div class="button-group">
                 <button id="create-draw-btn" class="btn btn-primary">Create Draw</button>
                 <button id="stop-shuffle-btn" class="stop-shuffle-btn">Stop Shuffling</button>
@@ -491,9 +505,22 @@
                         // Store players data
                         currentPlayers = data.players.map(player => ({...player}));
                         
-                        // Different headers for each table
-                        var leftTableHeader = '<tr><th style="width: 15%;">Seeding</th><th style="width: 25%;">Name</th><th style="width: 60%;">School/Institution</th></tr>';
-                        var rightTableHeader = '<tr><th style="width: 10%;">Rank</th><th style="width: 15%;">Seeding</th><th style="width: 25%;">Name</th><th style="width: 50%;">School/Institution</th></tr>';
+                        // Create table headers
+                        var leftTableHeader = `
+                            <tr>
+                                <th>Seed</th>
+                                <th>Name</th>
+                                <th>School/Institution</th>
+                            </tr>
+                        `;
+                        var rightTableHeader = `
+                            <tr>
+                                <th>Rank</th>
+                                <th>Seed</th>
+                                <th>Name</th>
+                                <th>School/Institution</th>
+                            </tr>
+                        `;
                         
                         // Build the player table rows
                         var playerRows = '';
