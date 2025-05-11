@@ -446,28 +446,31 @@ def create_tournament():
 
 @app.route('/list-tournament')
 def list_tournament():
-    tournaments = []
-    categories_by_tid = {}
-    tournament_categories = {}
-    
     try:
-        # Read tournaments
-        with open('tournaments.csv', 'r') as file:
+        tournaments = []
+        tournament_categories = {}
+        categories_by_tid = {}
+        search_query = request.args.get('search', '').strip().lower()
+
+        # Read tournament data
+        with open('tournaments.csv', 'r', newline='', encoding='utf-8') as file:
             reader = csv.DictReader(file)
             for row in reader:
                 if row.get('Status', '').lower() == 'active':
-                    tournaments.append({
-                        'Tournament Id': row['Tournament Id'],
-                        'Tournament Name': row['Tournament Name'],
-                        'Venue': row['Venue'],
-                        'Start Date': row.get('Start Date', row.get('Tournament Date', '')),
-                        'End Date': row.get('End Date', row.get('Tournament Date', '')),
-                        'Last Registration Date': row['Last Registration Date'],
-                        'Total Prize': row['Total Prize'],
-                        'Categories': row['Categories'],
-                        'Status': row['Status']
-                    })
-                    categories_by_tid[row['Tournament Id']] = []
+                    # Add tournament if it matches search query or if no search query
+                    if not search_query or search_query in row['Tournament Name'].lower():
+                        tournaments.append({
+                            'Tournament Id': row['Tournament Id'],
+                            'Tournament Name': row['Tournament Name'],
+                            'Venue': row['Venue'],
+                            'Start Date': row.get('Start Date', row.get('Tournament Date', '')),
+                            'End Date': row.get('End Date', row.get('Tournament Date', '')),
+                            'Last Registration Date': row['Last Registration Date'],
+                            'Total Prize': row['Total Prize'],
+                            'Categories': row['Categories'],
+                            'Status': row['Status']
+                        })
+                        categories_by_tid[row['Tournament Id']] = []
 
         # Read tournament categories
         with open('tournament_categories.csv', 'r') as file:
@@ -487,17 +490,19 @@ def list_tournament():
                         'Format': row['Format']
                     })
 
-        # Sort tournaments by start date
+        # Sort tournaments by start date in ascending order
         tournaments.sort(key=lambda x: datetime.strptime(x['Start Date'], '%Y-%m-%d'))
 
         return render_template('list_tournament.html', 
                              tournaments=tournaments,
-                             tournament_categories=tournament_categories)
+                             tournament_categories=tournament_categories,
+                             search_query=search_query)
     except Exception as e:
         return render_template('list_tournament.html', 
                              error=str(e),
                              tournaments=[],
-                             tournament_categories={})
+                             tournament_categories={},
+                             search_query='')
 
 @app.route('/delete-tournament/<tournament_id>', methods=['POST'])
 def delete_tournament(tournament_id):

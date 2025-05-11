@@ -323,6 +323,63 @@
         .prize-value {
             color: #1e3c72;
         }
+        .search-container {
+            margin-bottom: 20px;
+            padding: 0 20px;
+            text-align: left;
+        }
+        .search-form {
+            max-width: 400px;
+            margin: 0;
+        }
+        .search-input-group {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+        .search-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            width: 300px;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #1e3c72;
+        }
+        .search-button {
+            padding: 8px 15px;
+            background-color: #1e3c72;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .search-button:hover {
+            background-color: #2a5298;
+        }
+        .search-button i {
+            font-size: 14px;
+        }
+        @media (max-width: 768px) {
+            .search-container {
+                padding: 0 10px;
+            }
+            .search-input-group {
+                flex-direction: row;
+                width: 100%;
+            }
+            .search-input {
+                width: 100%;
+            }
+            .search-button {
+                width: auto;
+            }
+        }
     </style>
 </head>
 <body>
@@ -333,6 +390,20 @@
             <h1>Tournaments</h1>
         </div>
         <div class="content">
+            <div class="search-container">
+                <form method="GET" action="{{ url_for('list_tournament') }}" class="search-form">
+                    <div class="search-input-group">
+                        <input type="text" 
+                               name="search" 
+                               placeholder="Search tournaments by name..." 
+                               value="{{ search_query }}"
+                               class="search-input">
+                        <button type="submit" class="search-button">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
             {% if error %}
             <div class="error-message">
                 Error loading tournaments: {{ error }}
@@ -344,7 +415,7 @@
                         <th>Tournament Name</th>
                         <th>Venue</th>
                         <th>Tournament Dates</th>
-                        <th>Entry Last Date</th>
+                        <th>Last Date of Entry</th>
                         <th>Categories</th>
                         <th>Actions</th>
                     </tr>
@@ -492,6 +563,29 @@
                 modal.style.display = "none";
             }
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.querySelector('.search-input');
+            const searchForm = document.querySelector('.search-form');
+            
+            // Optional: Add debounce function for instant search
+            function debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+
+            // Optional: Add instant search functionality
+            const instantSearch = debounce(() => {
+                searchForm.submit();
+            });
+        });
     </script>
 </body>
 </html>
