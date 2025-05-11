@@ -514,7 +514,8 @@
                             {% for logo_link in logo_links %}
                                 <div class="logo-preview-item">
                                     <img src="{{ url_for('static', filename=logo_link.replace('static/', '')) }}" alt="Tournament Logo" class="logo-preview">
-                                    <button type="button" class="remove-logo-btn" onclick="removeLogo(this)">
+                                    <input type="hidden" name="existing_logos[]" value="{{ logo_link }}">
+                                    <button type="button" class="remove-logo-btn" onclick="removeLogo(this, '{{ logo_link }}')">
                                         <i class="material-icons">close</i>
                                     </button>
                                 </div>
@@ -559,8 +560,18 @@
             }
         });
 
-        function removeLogo(button) {
+        function removeLogo(button, logoPath) {
             const previewItem = button.parentElement;
+            const logoContainer = document.getElementById('logo-preview-container');
+            
+            // Create a hidden input to track deleted logos
+            const deletedLogosInput = document.createElement('input');
+            deletedLogosInput.type = 'hidden';
+            deletedLogosInput.name = 'deleted_logos[]';
+            deletedLogosInput.value = logoPath;
+            document.querySelector('form').appendChild(deletedLogosInput);
+            
+            // Remove the preview item
             previewItem.remove();
         }
 

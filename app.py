@@ -553,10 +553,12 @@ def edit_tournament(tournament_id):
             if not os.path.exists(tournament_folder):
                 os.makedirs(tournament_folder)
             
-            # Initialize logo links list with existing links
-            tournament_logo_links = []
-            if old_tournament.get('Tournament Logo Link'):
-                tournament_logo_links = old_tournament['Tournament Logo Link'].split(',')
+            # Get existing and deleted logos
+            existing_logos = request.form.getlist('existing_logos[]')
+            deleted_logos = request.form.getlist('deleted_logos[]')
+            
+            # Initialize logo links list with existing logos that weren't deleted
+            tournament_logo_links = [logo for logo in existing_logos if logo not in deleted_logos]
             
             # Handle multiple tournament logos
             tournament_logos = request.files.getlist('tournament_logo')
@@ -576,6 +578,15 @@ def edit_tournament(tournament_id):
                     # Store the relative path for the database
                     logo_link = f"static/tournaments/{tournament_id}/{safe_filename}"
                     tournament_logo_links.append(logo_link)
+            
+            # Delete removed logo files from the filesystem
+            for deleted_logo in deleted_logos:
+                try:
+                    logo_path = os.path.join('static', deleted_logo.replace('static/', ''))
+                    if os.path.exists(logo_path):
+                        os.remove(logo_path)
+                except Exception as e:
+                    print(f"Error deleting logo file {logo_path}: {str(e)}")
             
             # Join all logo links with a comma
             tournament_logo_links_str = ','.join(tournament_logo_links)
