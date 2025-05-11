@@ -321,12 +321,40 @@ def save_seeding():
 def create_draws():
     return render_template('create_draws.html')
 
+def generate_tournament_id():
+    # Get current year's last 2 digits
+    current_year = str(datetime.now().year)[-2:]
+    
+    # Read existing tournaments to get the last used number
+    last_number = 0
+    try:
+        with open('tournaments.csv', 'r', newline='', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if row['Tournament Id'].startswith(current_year):
+                    try:
+                        number = int(row['Tournament Id'][2:])
+                        last_number = max(last_number, number)
+                    except ValueError:
+                        continue
+    except FileNotFoundError:
+        pass
+    
+    # Generate new number
+    new_number = last_number + 1
+    if new_number > 9999:
+        raise ValueError("Maximum tournament limit reached for this year")
+    
+    # Format the tournament ID
+    tournament_id = f"{current_year}{new_number:04d}"
+    return tournament_id
+
 @app.route('/create-tournament', methods=['GET', 'POST'])
 def create_tournament():
     if request.method == 'POST':
         try:
-            # Generate unique tournament ID
-            tournament_id = str(uuid.uuid4())
+            # Generate tournament ID in the format YYXXXX
+            tournament_id = generate_tournament_id()
             
             # Get form data
             tournament_name = request.form.get('tournament_name')
@@ -383,7 +411,7 @@ def create_tournament():
                 'Last Registration Date': last_registration_date,
                 'Total Prize': total_prize,
                 'General Information': general_info,
-                'Tournament Logo Link': tournament_logo_links_str,  # Now using comma-separated format
+                'Tournament Logo Link': tournament_logo_links_str,
                 'Status': 'active'
             }
             
