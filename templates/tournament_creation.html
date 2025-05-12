@@ -657,58 +657,12 @@
                         Select Categories
                     </div>
                     <div class="category-options" id="categoryOptions">
+                        {% for category in categories %}
                         <div class="category-option">
-                            <input type="checkbox" value="u9" id="cat-u9">
-                            <label for="cat-u9">u9</label>
+                            <input type="checkbox" value="{{ category.name }}" id="cat-{{ category.id }}">
+                            <label for="cat-{{ category.id }}">{{ category.name }}</label>
                         </div>
-                        <div class="category-option">
-                            <input type="checkbox" value="u11 Girls" id="cat-u11g">
-                            <label for="cat-u11g">u11 Girls</label>
-                        </div>
-                        <div class="category-option">
-                            <input type="checkbox" value="u11 Boys" id="cat-u11b">
-                            <label for="cat-u11b">u11 Boys</label>
-                        </div>
-                        <div class="category-option">
-                            <input type="checkbox" value="u13 Girls" id="cat-u13g">
-                            <label for="cat-u13g">u13 Girls</label>
-                        </div>
-                        <div class="category-option">
-                            <input type="checkbox" value="u13 Boys" id="cat-u13b">
-                            <label for="cat-u13b">u13 Boys</label>
-                        </div>
-                        <div class="category-option">
-                            <input type="checkbox" value="u15 Girls" id="cat-u15g">
-                            <label for="cat-u15g">u15 Girls</label>
-                        </div>
-                        <div class="category-option">
-                            <input type="checkbox" value="u17 Boys" id="cat-u17b">
-                            <label for="cat-u17b">u17 Boys</label>
-                        </div>
-                        <div class="category-option">
-                            <input type="checkbox" value="u19 Girls" id="cat-u19g">
-                            <label for="cat-u19g">u19 Girls</label>
-                        </div>
-                        <div class="category-option">
-                            <input type="checkbox" value="u19 Boys" id="cat-u19b">
-                            <label for="cat-u19b">u19 Boys</label>
-                        </div>
-                        <div class="category-option">
-                            <input type="checkbox" value="Women" id="cat-women">
-                            <label for="cat-women">Women</label>
-                        </div>
-                        <div class="category-option">
-                            <input type="checkbox" value="Men" id="cat-men">
-                            <label for="cat-men">Men</label>
-                        </div>
-                        <div class="category-option">
-                            <input type="checkbox" value="Veterans 39+ Men" id="cat-vetm">
-                            <label for="cat-vetm">Veterans 39+ Men</label>
-                        </div>
-                        <div class="category-option">
-                            <input type="checkbox" value="Veterans 39+ Women" id="cat-vetw">
-                            <label for="cat-vetw">Veterans 39+ Women</label>
-                        </div>
+                        {% endfor %}
                     </div>
                     <div class="selected-categories" id="selectedCategories"></div>
                 </div>

@@ -15,6 +15,15 @@ Rank,Seeding,TournamentId,Player Name,School/Institution,Category
 14,8,8647d782-7fb6-4cf8-b166-61b2dd612b9a,Akanksha,ABC3 School,Boys Under 15
 15,8,8647d782-7fb6-4cf8-b166-61b2dd612b9a,Ankur,ABC4 School,Boys Under 15
 1,,250002,Tushar,ABC7 School,u19 Girls
-2,,250002,Satish,ABC6 School,u19 Girls
+2,,250002,Shashi,ABC7 School,u19 Girls
 3,,250002,Abhay,ABC6 School,u19 Girls
-4,,250002,Shashi,ABC7 School,u19 Girls
+4,,250002,Satish,ABC6 School,u19 Girls
+1,1,250001,Amit,ABC1 School,u13 Boys
+2,2,250001,Ankit,ABC2 School,u13 Boys
+3,3,250001,Deepak,ABC2 School,u13 Boys
+4,4,250001,Sonar,ABC2 School,u13 Boys
+5,5,250001,Arka,ABC3 School,u13 Boys
+6,7,250001,Ayushi,ABC3 School,u13 Boys
+7,6,250001,Svara,ABC3 School,u13 Boys
+8,8,250001,Akanksha,ABC3 School,u13 Boys
+9,9,250001,Amit,ABC4 School,u13 Boys

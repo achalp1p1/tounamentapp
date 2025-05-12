@@ -390,6 +390,102 @@
             border-radius: 4px;
             font-size: 1rem;
         }
+
+        .category-select-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .category-select-dropdown {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .category-select-dropdown::after {
+            content: '▼';
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .category-options {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-top: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .category-options.show {
+            display: block;
+        }
+
+        .category-option {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            min-height: 32px;
+        }
+
+        .category-option:hover {
+            background-color: var(--primary-light);
+        }
+
+        .category-option input[type="checkbox"] {
+            margin: 0;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            margin-top: 2px;
+        }
+
+        .category-option label {
+            cursor: pointer;
+            font-size: 0.9rem;
+            flex: 1;
+            line-height: 1.2;
+            padding-top: 2px;
+        }
+
+        .selected-categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .selected-category {
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .selected-category .remove-category {
+            cursor: pointer;
+            font-size: 1.2rem;
+            line-height: 1;
+        }
     </style>
 </head>
 <body>
@@ -436,54 +532,22 @@
             <!-- Categories section -->
             <div class="form-section">
                 <label>Tournament Categories</label>
-                <div class="category-fee-header">
-                    <div>Category</div>
-                    <div>Fee</div>
-                    <div>First Prize</div>
-                    <div>Second Prize</div>
-                    <div>Third Prize</div>
-                    <div>Format</div>
-                </div>
-                <div id="categories">
+                <div id="categories-container">
                     {% for category in categories %}
                     <div class="category-row">
-                        <select name="categories[]" required multiple>
-                            <option value="u9" {% if category['Category'] == 'u9' %}selected{% endif %}>u9</option>
-                            <option value="u11 Girls" {% if category['Category'] == 'u11 Girls' %}selected{% endif %}>u11 Girls</option>
-                            <option value="u11 Boys" {% if category['Category'] == 'u11 Boys' %}selected{% endif %}>u11 Boys</option>
-                            <option value="u13 Girls" {% if category['Category'] == 'u13 Girls' %}selected{% endif %}>u13 Girls</option>
-                            <option value="u13 Boys" {% if category['Category'] == 'u13 Boys' %}selected{% endif %}>u13 Boys</option>
-                            <option value="u15 Girls" {% if category['Category'] == 'u15 Girls' %}selected{% endif %}>u15 Girls</option>
-                            <option value="u17 Boys" {% if category['Category'] == 'u17 Boys' %}selected{% endif %}>u17 Boys</option>
-                            <option value="u19 Girls" {% if category['Category'] == 'u19 Girls' %}selected{% endif %}>u19 Girls</option>
-                            <option value="u19 Boys" {% if category['Category'] == 'u19 Boys' %}selected{% endif %}>u19 Boys</option>
-                            <option value="Women" {% if category['Category'] == 'Women' %}selected{% endif %}>Women</option>
-                            <option value="Men" {% if category['Category'] == 'Men' %}selected{% endif %}>Men</option>
-                            <option value="Veterans 39+ Men" {% if category['Category'] == 'Veterans 39+ Men' %}selected{% endif %}>Veterans 39+ Men</option>
-                            <option value="Veterans 39+ Women" {% if category['Category'] == 'Veterans 39+ Women' %}selected{% endif %}>Veterans 39+ Women</option>
+                        <select name="categories[]" required readonly>
+                            <option value="{{ category }}" selected>{{ category }}</option>
                         </select>
+                        <select name="formats[]" required>
+                            <option value="Knockout" {% if category['Format'] == 'Knockout' %}selected{% endif %}>Knockout</option>
+                            <option value="Two Stage" {% if category['Format'] == 'Two Stage' %}selected{% endif %}>Two Stage</option>
+                        </select>
+                        <input type="text" name="fees[]" value="{{ category['Fee'] }}" placeholder="Fee">
                         <div class="prize-section">
-                            <div class="prize-section-header">Fee</div>
-                            <input type="number" name="fees[]" value="{{ category['Fee'] }}">
-                        </div>
-                        <div class="prize-section">
-                            <div class="prize-section-header">First Prize</div>
-                            <input type="text" name="first_prizes[]" value="{{ category['First Prize'] }}">
-                        </div>
-                        <div class="prize-section">
-                            <div class="prize-section-header">Second Prize</div>
-                            <input type="text" name="second_prizes[]" value="{{ category['Second Prize'] }}">
-                        </div>
-                        <div class="prize-section">
-                            <div class="prize-section-header">Third Prize</div>
-                            <input type="text" name="third_prizes[]" value="{{ category['Third Prize'] }}">
-                        </div>
-                        <div class="prize-section">
-                            <div class="prize-section-header">Format</div>
-                            <select name="formats[]" required>
-                                <option value="Knockout" {% if category['Format'] == 'Knockout' %}selected{% endif %}>Knockout</option>
-                                <option value="Two Stage" {% if category['Format'] == 'Two Stage' %}selected{% endif %}>Two Stage</option>
-                            </select>
+                            <div>Prizes</div>
+                            <input type="text" name="first_prizes[]" value="{{ category['First Prize'] }}" placeholder="First Prize">
+                            <input type="text" name="second_prizes[]" value="{{ category['Second Prize'] }}" placeholder="Second Prize">
+                            <input type="text" name="third_prizes[]" value="{{ category['Third Prize'] }}" placeholder="Third Prize">
                         </div>
                         <button type="button" class="remove-category" {% if loop.first %}style="display:none;"{% endif %}>
                             <i class="material-icons">delete</i>
@@ -491,10 +555,24 @@
                     </div>
                     {% endfor %}
                 </div>
-                <button type="button" id="add-category-btn">
-                    <i class="material-icons">add</i>
-                    Add Category
-                </button>
+                <div class="category-select-container" style="margin-top: 1em;">
+                    <div class="category-select-dropdown" id="categoryDropdown">
+                        Select Categories
+                    </div>
+                    <div class="category-options" id="categoryOptions">
+                        {% for config_category in all_categories %}
+                        <div class="category-option">
+                            <input type="checkbox" value="{{ config_category.name }}" id="cat-{{ config_category.id }}">
+                            <label for="cat-{{ config_category.id }}">{{ config_category.name }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="selected-categories" id="selectedCategories"></div>
+                    <button type="button" id="add-category-btn">
+                        <i class="material-icons">add</i>
+                        Add Category
+                    </button>
+                </div>
             </div>
 
             <!-- Logo Upload section -->
@@ -536,6 +614,116 @@
     </div>
 
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const categoryDropdown = document.getElementById('categoryDropdown');
+            const categoryOptions = document.getElementById('categoryOptions');
+            const selectedCategories = document.getElementById('selectedCategories');
+            const categoriesContainer = document.getElementById('categories-container');
+            const addCategoryBtn = document.getElementById('add-category-btn');
+
+            // Toggle dropdown
+            categoryDropdown.addEventListener('click', function() {
+                categoryOptions.classList.toggle('show');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!categoryDropdown.contains(e.target) && !categoryOptions.contains(e.target)) {
+                    categoryOptions.classList.remove('show');
+                }
+            });
+
+            // Handle category selection
+            const checkboxes = categoryOptions.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    updateSelectedCategories();
+                });
+            });
+
+            function updateSelectedCategories() {
+                selectedCategories.innerHTML = '';
+                const selected = Array.from(checkboxes)
+                    .filter(cb => cb.checked)
+                    .map(cb => cb.value);
+
+                selected.forEach(category => {
+                    const tag = document.createElement('div');
+                    tag.className = 'selected-category';
+                    tag.innerHTML = `
+                        ${category}
+                        <span class="remove-category" data-category="${category}">×</span>
+                    `;
+                    selectedCategories.appendChild(tag);
+                });
+
+                // Update dropdown text
+                categoryDropdown.textContent = selected.length > 0 
+                    ? `${selected.length} categories selected` 
+                    : 'Select Categories';
+            }
+
+            // Remove category tag
+            selectedCategories.addEventListener('click', function(e) {
+                if (e.target.classList.contains('remove-category')) {
+                    const category = e.target.dataset.category;
+                    const checkbox = document.querySelector(`input[value="${category}"]`);
+                    if (checkbox) {
+                        checkbox.checked = false;
+                        updateSelectedCategories();
+                    }
+                }
+            });
+
+            // Add selected categories (only if not already present)
+            addCategoryBtn.addEventListener('click', function() {
+                // Get already present categories
+                const presentCategories = Array.from(categoriesContainer.querySelectorAll('select[name="categories[]"]'))
+                    .map(select => select.value);
+
+                // Get selected categories from checkboxes
+                const selected = Array.from(checkboxes)
+                    .filter(cb => cb.checked)
+                    .map(cb => cb.value);
+
+                selected.forEach(category => {
+                    if (!presentCategories.includes(category)) {
+                        const newRow = document.createElement('div');
+                        newRow.className = 'category-row';
+                        newRow.setAttribute('data-label', 'Category Details');
+                        newRow.innerHTML = `
+                            <select name="categories[]" required>
+                                <option value="${category}" selected>${category}</option>
+                            </select>
+                            <select name="formats[]" required>
+                                <option value="Knockout">Knockout</option>
+                                <option value="Two Stage">Two Stage</option>
+                            </select>
+                            <input type="text" name="fees[]" placeholder="Fee">
+                            <div class="prize-section">
+                                <div>Prizes</div>
+                                <input type="text" name="first_prizes[]" placeholder="First Prize">
+                                <input type="text" name="second_prizes[]" placeholder="Second Prize">
+                                <input type="text" name="third_prizes[]" placeholder="Third Prize">
+                            </div>
+                            <button type="button" class="remove-category" onclick="this.parentElement.remove()">
+                                <i class="material-icons">delete</i>
+                            </button>
+                        `;
+                        categoriesContainer.appendChild(newRow);
+                    }
+                });
+
+                // Clear selections
+                checkboxes.forEach(cb => cb.checked = false);
+                updateSelectedCategories();
+                categoryOptions.classList.remove('show');
+            });
+
+            // Initialize selected categories display
+            updateSelectedCategories();
+        });
+
         // Add JavaScript for handling multiple file uploads and previews
         document.getElementById('tournament_logo').addEventListener('change', function(e) {
             const files = e.target.files;
@@ -574,67 +762,6 @@
             // Remove the preview item
             previewItem.remove();
         }
-
-        // Add category functionality
-        document.getElementById('add-category-btn').addEventListener('click', function() {
-            const categoriesDiv = document.getElementById('categories');
-            const newCategory = document.createElement('div');
-            newCategory.className = 'category-row';
-            newCategory.innerHTML = `
-                <select name="categories[]" required multiple>
-                    <option value="u9">u9</option>
-                    <option value="u11 Girls">u11 Girls</option>
-                    <option value="u11 Boys">u11 Boys</option>
-                    <option value="u13 Girls">u13 Girls</option>
-                    <option value="u13 Boys">u13 Boys</option>
-                    <option value="u15 Girls">u15 Girls</option>
-                    <option value="u17 Boys">u17 Boys</option>
-                    <option value="u19 Girls">u19 Girls</option>
-                    <option value="u19 Boys">u19 Boys</option>
-                    <option value="Women">Women</option>
-                    <option value="Men">Men</option>
-                    <option value="Veterans 39+ Men">Veterans 39+ Men</option>
-                    <option value="Veterans 39+ Women">Veterans 39+ Women</option>
-                </select>
-                <div class="prize-section">
-                    <div class="prize-section-header">Fee</div>
-                    <input type="number" name="fees[]">
-                </div>
-                <div class="prize-section">
-                    <div class="prize-section-header">First Prize</div>
-                    <input type="text" name="first_prizes[]">
-                </div>
-                <div class="prize-section">
-                    <div class="prize-section-header">Second Prize</div>
-                    <input type="text" name="second_prizes[]">
-                </div>
-                <div class="prize-section">
-                    <div class="prize-section-header">Third Prize</div>
-                    <input type="text" name="third_prizes[]">
-                </div>
-                <div class="prize-section">
-                    <div class="prize-section-header">Format</div>
-                    <select name="formats[]" required>
-                        <option value="Knockout">Knockout</option>
-                        <option value="Two Stage">Two Stage</option>
-                    </select>
-                </div>
-                <button type="button" class="remove-category">
-                    <i class="material-icons">delete</i>
-                </button>
-            `;
-            categoriesDiv.appendChild(newCategory);
-        });
-
-        // Remove category functionality
-        document.addEventListener('click', function(e) {
-            if (e.target.closest('.remove-category')) {
-                const categoryRow = e.target.closest('.category-row');
-                if (document.querySelectorAll('.category-row').length > 1) {
-                    categoryRow.remove();
-                }
-            }
-        });
     </script>
 </body>
 </html>

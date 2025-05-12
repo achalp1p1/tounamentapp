@@ -1,0 +1,84 @@
+{
+    "categories": [
+        {
+            "id": "u9",
+            "name": "u9",
+            "type": "age"
+        },
+        {
+            "id": "u11g",
+            "name": "u11 Girls",
+            "type": "age"
+        },
+        {
+            "id": "u11b",
+            "name": "u11 Boys",
+            "type": "age"
+        },
+        {
+            "id": "u13g",
+            "name": "u13 Girls",
+            "type": "age"
+        },
+        {
+            "id": "u13b",
+            "name": "u13 Boys",
+            "type": "age"
+        },
+        {
+            "id": "u15g",
+            "name": "u15 Girls",
+            "type": "age"
+        },
+        {
+            "id": "u15b",
+            "name": "u15 Boys",
+            "type": "age"
+        },
+        {
+            "id": "u17g",
+            "name": "u17 Girls",
+            "type": "age"
+        },
+        {
+            "id": "u17b",
+            "name": "u17 Boys",
+            "type": "age"
+        },
+        {
+            "id": "u19g",
+            "name": "u19 Girls",
+            "type": "age"
+        },
+        {
+            "id": "u19b",
+            "name": "u19 Boys",
+            "type": "age"
+        },
+        {
+            "id": "women",
+            "name": "Women",
+            "type": "gender"
+        },
+        {
+            "id": "men",
+            "name": "Men",
+            "type": "gender"
+        },
+        {
+            "id": "vetm",
+            "name": "Veterans 39+ Men",
+            "type": "veteran"
+        },
+        {
+            "id": "vetw",
+            "name": "Veterans 39+ Women",
+            "type": "veteran"
+        },
+        {
+            "id": "UX",
+            "name": "UX",
+            "type": "age"
+        }
+    ]
+}

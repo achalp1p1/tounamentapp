@@ -441,8 +441,13 @@ def create_tournament():
         except Exception as e:
             flash(f'Error creating tournament: {str(e)}', 'error')
             return redirect(url_for('create_tournament'))
-    
-    return render_template('tournament_creation.html')
+    else:
+        # Get categories from config
+        categories = get_categories_from_config()
+        print("Categories from config:", categories)  # Debug print
+        return render_template('tournament_creation.html', 
+                             categories=categories,
+                             current_year=datetime.now().year)
 
 @app.route('/list-tournament')
 def list_tournament():
@@ -536,32 +541,9 @@ def delete_tournament(tournament_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-@app.route('/edit-tournament/<tournament_id>', methods=['GET', 'POST'])
+@app.route('/tournament/<tournament_id>/edit', methods=['GET', 'POST'])
 def edit_tournament(tournament_id):
-    if request.method == 'GET':
-        # Get tournament details
-        tournament = None
-        with open('tournaments.csv', 'r', newline='', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                if row['Tournament Id'] == tournament_id:
-                    tournament = row
-                    break
-        
-        if not tournament:
-            return redirect(url_for('list_tournament'))
-        
-        # Get category details
-        categories = []
-        with open('tournament_categories.csv', 'r', newline='', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                if row['Tournament Id'] == tournament_id:
-                    categories.append(row)
-        
-        return render_template('edit_tournament.html', tournament=tournament, categories=categories)
-    
-    elif request.method == 'POST':
+    if request.method == 'POST':
         try:
             # Get form data
             tournament_name = request.form.get('tournament_name')
@@ -695,6 +677,25 @@ def edit_tournament(tournament_id):
         except Exception as e:
             flash(f'Error updating tournament: {str(e)}', 'error')
             return redirect(url_for('edit_tournament', tournament_id=tournament_id))
+    else:
+        # Get tournament data
+        tournament = get_tournament(tournament_id)
+        if not tournament:
+            return redirect(url_for('list_tournament'))
+        
+        # Get tournament categories
+        categories = get_tournament_categories(tournament_id)
+        print("Tournament categories from database:", categories)  # Debug print
+        
+        # Get all available categories from config
+        all_categories = get_categories_from_config()
+        print("All categories from config:", all_categories)  # Debug print
+        
+        return render_template('edit_tournament.html', 
+                             tournament=tournament,
+                             categories=categories,
+                             all_categories=all_categories,
+                             current_year=datetime.now().year)
 
 @app.route('/list-tournament-last2')
 def list_tournament_last2():
@@ -1826,6 +1827,18 @@ def search_players():
             players=None,
             search_performed=False
         )
+
+def get_categories_from_config():
+    try:
+        config_path = os.path.join('config', 'categories_config.json')
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+            categories = config.get('categories', [])
+            print("Loaded categories:", categories)  # Debug print
+            return categories
+    except Exception as e:
+        print(f"Error reading categories config: {e}")
+        return []
 
 if __name__ == '__main__':
     # Initialize CSV files if they don't exist

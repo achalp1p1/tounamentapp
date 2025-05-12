@@ -1,10 +1,7 @@
 Tournament Id,Tournament Name,Category,Fee,First Prize,Second Prize,Third Prize,Format
+250001,T1,u11 Girls,,,,,Knockout
+250001,T1,u11 Boys,,,,,Knockout
+250001,T1,u13 Boys,,,,,Knockout
 250001,T1,u19 Girls,,,,,Knockout
-250005,T6,u11 Girls,1000,2,22,1,Knockout
-250002,T2,u11 Boys,1000,1,1,1,Knockout
-250002,T2,u13 Girls,11,,,,Knockout
-250002,T2,u9,1,,,,Knockout
-250002,T2,u19 Girls,,11,,,Knockout
-250002,T2,u13 Boys,1,,,,Knockout
-250002,T2,Veterans 39+ Women,,,,,Knockout
-250002,T2,u19 Girls,,,,,Knockout
+250003,Badminton 1,u11 Boys,100,100,1000,10,Knockout
+250003,Badminton 1,u13 Girls,,,,,Knockout
