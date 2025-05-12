@@ -532,9 +532,32 @@
             <!-- Categories section -->
             <div class="form-section">
                 <label>Tournament Categories</label>
+                
+                <!-- Select Categories dropdown and Add button first -->
+                <div class="category-select-container" style="margin-bottom: 1.5em; position: relative;">
+                    <div class="category-select-dropdown" id="categoryDropdown">
+                        Select Categories
+                    </div>
+                    <div class="category-options" id="categoryOptions" style="z-index: 100;">
+                        {% for config_category in all_categories %}
+                        <div class="category-option">
+                            <input type="checkbox" value="{{ config_category.name }}" id="cat-{{ config_category.id }}">
+                            <label for="cat-{{ config_category.id }}">{{ config_category.name }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="selected-categories" id="selectedCategories"></div>
+                </div>
+                
+                <button type="button" id="add-category-btn" style="margin-bottom: 1.5em;">
+                    <i class="material-icons">add</i>
+                    Add Category
+                </button>
+                
+                <!-- Existing categories list with inline styles -->
                 <div id="categories-container">
                     {% for category in categories %}
-                    <div class="category-row">
+                    <div class="category-row existing-category" style="background-color: #f0f8ff; border-left: 3px solid #1e3c72; padding-left: 10px; margin-bottom: 8px; border-radius: 4px;">
                         <select name="categories[]" required readonly>
                             <option value="{{ category }}" selected>{{ category }}</option>
                         </select>
@@ -549,29 +572,11 @@
                             <input type="text" name="second_prizes[]" value="{{ category['Second Prize'] }}" placeholder="Second Prize">
                             <input type="text" name="third_prizes[]" value="{{ category['Third Prize'] }}" placeholder="Third Prize">
                         </div>
-                        <button type="button" class="remove-category" {% if loop.first %}style="display:none;"{% endif %}>
+                        <button type="button" class="remove-category">
                             <i class="material-icons">delete</i>
                         </button>
                     </div>
                     {% endfor %}
-                </div>
-                <div class="category-select-container" style="margin-top: 1em;">
-                    <div class="category-select-dropdown" id="categoryDropdown">
-                        Select Categories
-                    </div>
-                    <div class="category-options" id="categoryOptions">
-                        {% for config_category in all_categories %}
-                        <div class="category-option">
-                            <input type="checkbox" value="{{ config_category.name }}" id="cat-{{ config_category.id }}">
-                            <label for="cat-{{ config_category.id }}">{{ config_category.name }}</label>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    <div class="selected-categories" id="selectedCategories"></div>
-                    <button type="button" id="add-category-btn">
-                        <i class="material-icons">add</i>
-                        Add Category
-                    </button>
                 </div>
             </div>
 
@@ -675,7 +680,7 @@
                 }
             });
 
-            // Add selected categories (only if not already present)
+            // Add selected categories
             addCategoryBtn.addEventListener('click', function() {
                 // Get already present categories
                 const presentCategories = Array.from(categoriesContainer.querySelectorAll('select[name="categories[]"]'))
@@ -686,11 +691,13 @@
                     .filter(cb => cb.checked)
                     .map(cb => cb.value);
 
-                selected.forEach(category => {
+                // Add them in reverse order so they appear in the same order at the top
+                selected.slice().reverse().forEach(category => {
                     if (!presentCategories.includes(category)) {
                         const newRow = document.createElement('div');
                         newRow.className = 'category-row';
-                        newRow.setAttribute('data-label', 'Category Details');
+                        newRow.setAttribute('style', 'background-color: #ffffff; border-left: 3px solid #28a745; padding-left: 10px; margin-bottom: 8px; border-radius: 4px;');
+                        
                         newRow.innerHTML = `
                             <select name="categories[]" required>
                                 <option value="${category}" selected>${category}</option>
@@ -710,7 +717,13 @@
                                 <i class="material-icons">delete</i>
                             </button>
                         `;
-                        categoriesContainer.appendChild(newRow);
+                        
+                        // Insert at the beginning of the container
+                        if (categoriesContainer.firstChild) {
+                            categoriesContainer.insertBefore(newRow, categoriesContainer.firstChild);
+                        } else {
+                            categoriesContainer.appendChild(newRow);
+                        }
                     }
                 });
 
@@ -762,6 +775,13 @@
             // Remove the preview item
             previewItem.remove();
         }
+
+        // Add event listeners for existing remove buttons
+        document.querySelectorAll('.remove-category').forEach(button => {
+            button.addEventListener('click', function() {
+                this.parentElement.remove();
+            });
+        });
     </script>
 </body>
 </html>

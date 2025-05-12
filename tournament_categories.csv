@@ -1,7 +1,6 @@
 Tournament Id,Tournament Name,Category,Fee,First Prize,Second Prize,Third Prize,Format
-250001,T1,u11 Girls,,,,,Knockout
-250001,T1,u11 Boys,,,,,Knockout
-250001,T1,u13 Boys,,,,,Knockout
-250001,T1,u19 Girls,,,,,Knockout
 250003,Badminton 1,u11 Boys,100,100,1000,10,Knockout
 250003,Badminton 1,u13 Girls,,,,,Knockout
+250001,T1,u19 Boys,1000,11,,11,Knockout
+250001,T1,u11 Girls,100,,111,,Knockout
+250001,T1,u9,,,,,Knockout
