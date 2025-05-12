@@ -683,17 +683,29 @@ def edit_tournament(tournament_id):
         if not tournament:
             return redirect(url_for('list_tournament'))
         
-        # Get tournament categories
+        # Get category names (for backward compatibility)
         categories = get_tournament_categories(tournament_id)
-        print("Tournament categories from database:", categories)  # Debug print
+        
+        # Get FULL tournament categories with all details
+        full_categories = []
+        try:
+            with open('tournament_categories.csv', 'r', newline='', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    if row['Tournament Id'] == tournament_id:
+                        full_categories.append(row)
+        except Exception as e:
+            print(f"Error reading full tournament categories: {e}")
+        
+        print("Full categories data:", full_categories)  # Debug print
         
         # Get all available categories from config
         all_categories = get_categories_from_config()
-        print("All categories from config:", all_categories)  # Debug print
         
         return render_template('edit_tournament.html', 
                              tournament=tournament,
                              categories=categories,
+                             full_categories=full_categories,  # Pass full category data
                              all_categories=all_categories,
                              current_year=datetime.now().year)
 
@@ -1839,6 +1851,26 @@ def get_categories_from_config():
     except Exception as e:
         print(f"Error reading categories config: {e}")
         return []
+
+def get_full_tournament_categories(tournament_id):
+    """Get complete category details for a tournament including fees and prizes"""
+    categories = []
+    try:
+        with open('tournament_categories.csv', 'r', newline='', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if row['Tournament Id'] == tournament_id:
+                    categories.append(row)
+    except Exception as e:
+        print(f"Error reading tournament categories: {str(e)}")
+        # Return empty list if there's an error
+        return []
+    
+    # If no categories found for this tournament, return an empty list
+    return categories
+
+# Make the function available to templates
+app.jinja_env.globals.update(get_full_tournament_categories=get_full_tournament_categories)
 
 if __name__ == '__main__':
     # Initialize CSV files if they don't exist

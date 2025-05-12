@@ -669,10 +669,6 @@
                 <div id="categories-container">
                     <!-- Category rows will be added here -->
                 </div>
-                <button type="button" id="add-category-btn">
-                    <i class="material-icons">add</i>
-                    Add Category
-                </button>
             </div>
 
             <!-- Logo Upload section -->
@@ -717,7 +713,6 @@
             const categoryOptions = document.getElementById('categoryOptions');
             const selectedCategories = document.getElementById('selectedCategories');
             const categoriesContainer = document.getElementById('categories-container');
-            const addCategoryBtn = document.getElementById('add-category-btn');
 
             // Toggle dropdown
             categoryDropdown.addEventListener('click', function() {
@@ -731,19 +726,92 @@
                 }
             });
 
-            // Handle category selection
+            // Handle category selection with immediate row creation
             const checkboxes = categoryOptions.querySelectorAll('input[type="checkbox"]');
             checkboxes.forEach(checkbox => {
                 checkbox.addEventListener('change', function() {
+                    console.log("Checkbox changed:", this.value, "Checked:", this.checked); // Debug log
+                    
+                    // Automatically add/remove category rows based on checkbox state
+                    if (this.checked) {
+                        addCategoryRow(this.value);
+                    } else {
+                        removeCategoryRow(this.value);
+                    }
+                    
                     updateSelectedCategories();
                 });
             });
+
+            // Function to add category row
+            function addCategoryRow(category) {
+                console.log("Adding category row for:", category); // Debug log
+                
+                // Check if row already exists
+                const existingRows = Array.from(categoriesContainer.querySelectorAll('select[name="categories[]"]'))
+                    .map(select => select.value);
+                    
+                if (!existingRows.includes(category)) {
+                    const newRow = document.createElement('div');
+                    newRow.className = 'category-row';
+                    newRow.setAttribute('data-category', category);
+                    newRow.innerHTML = `
+                        <select name="categories[]" required>
+                            <option value="${category}" selected>${category}</option>
+                        </select>
+                        <select name="formats[]" required>
+                            <option value="Knockout">Knockout</option>
+                            <option value="Two Stage">Two Stage</option>
+                        </select>
+                        <input type="text" name="fees[]" placeholder="Fee">
+                        <div class="prize-section">
+                            <div>Prizes</div>
+                            <input type="text" name="first_prizes[]" placeholder="First Prize">
+                            <input type="text" name="second_prizes[]" placeholder="Second Prize">
+                            <input type="text" name="third_prizes[]" placeholder="Third Prize">
+                        </div>
+                        <button type="button" class="remove-category">
+                            <i class="material-icons">delete</i>
+                        </button>
+                    `;
+                    
+                    // Add click handler for remove button
+                    newRow.querySelector('.remove-category').addEventListener('click', function() {
+                        // Uncheck the corresponding checkbox
+                        const checkbox = document.querySelector(`input[value="${category}"]`);
+                        if (checkbox) {
+                            checkbox.checked = false;
+                            updateSelectedCategories();
+                        }
+                        newRow.remove();
+                    });
+                    
+                    categoriesContainer.appendChild(newRow);
+                    console.log("Row added successfully"); // Debug log
+                }
+            }
+            
+            // Function to remove category row
+            function removeCategoryRow(category) {
+                console.log("Removing category row for:", category); // Debug log
+                
+                const rows = Array.from(categoriesContainer.querySelectorAll('.category-row'));
+                rows.forEach(row => {
+                    const select = row.querySelector('select[name="categories[]"]');
+                    if (select && select.value === category) {
+                        row.remove();
+                        console.log("Row removed successfully"); // Debug log
+                    }
+                });
+            }
 
             function updateSelectedCategories() {
                 selectedCategories.innerHTML = '';
                 const selected = Array.from(checkboxes)
                     .filter(cb => cb.checked)
                     .map(cb => cb.value);
+                
+                console.log("Selected categories:", selected); // Debug log
 
                 selected.forEach(category => {
                     const tag = document.createElement('div');
@@ -768,47 +836,10 @@
                     const checkbox = document.querySelector(`input[value="${category}"]`);
                     if (checkbox) {
                         checkbox.checked = false;
+                        removeCategoryRow(category);
                         updateSelectedCategories();
                     }
                 }
-            });
-
-            // Add selected categories
-            addCategoryBtn.addEventListener('click', function() {
-                const selected = Array.from(checkboxes)
-                    .filter(cb => cb.checked)
-                    .map(cb => cb.value);
-
-                selected.forEach(category => {
-                    const newRow = document.createElement('div');
-                    newRow.className = 'category-row';
-                    newRow.setAttribute('data-label', 'Category Details');
-                    newRow.innerHTML = `
-                        <select name="categories[]" required>
-                            <option value="${category}" selected>${category}</option>
-                        </select>
-                        <select name="formats[]" required>
-                            <option value="Knockout">Knockout</option>
-                            <option value="Two Stage">Two Stage</option>
-                        </select>
-                        <input type="text" name="fees[]" placeholder="Fee">
-                        <div class="prize-section">
-                            <div>Prizes</div>
-                            <input type="text" name="first_prizes[]" placeholder="First Prize">
-                            <input type="text" name="second_prizes[]" placeholder="Second Prize">
-                            <input type="text" name="third_prizes[]" placeholder="Third Prize">
-                        </div>
-                        <button type="button" class="remove-category" onclick="this.parentElement.remove()">
-                            <i class="material-icons">delete</i>
-                        </button>
-                    `;
-                    categoriesContainer.appendChild(newRow);
-                });
-
-                // Clear selections
-                checkboxes.forEach(cb => cb.checked = false);
-                updateSelectedCategories();
-                categoryOptions.classList.remove('show');
             });
 
             // Set default dates

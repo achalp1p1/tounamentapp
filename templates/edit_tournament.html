@@ -554,23 +554,23 @@
                     Add Category
                 </button>
                 
-                <!-- Existing categories list with inline styles -->
+                <!-- Existing categories list with different background -->
                 <div id="categories-container">
-                    {% for category in categories %}
-                    <div class="category-row existing-category" style="background-color: #f0f8ff; border-left: 3px solid #1e3c72; padding-left: 10px; margin-bottom: 8px; border-radius: 4px;">
+                    {% for category_info in full_categories %}
+                    <div class="category-row existing-category" style="background-color: #f0f8ff; border-left: 3px solid #1e3c72; padding-left: 10px; margin-bottom: 8px; border-radius: 4px;" data-category="{{ category_info.Category }}">
                         <select name="categories[]" required readonly>
-                            <option value="{{ category }}" selected>{{ category }}</option>
+                            <option value="{{ category_info.Category }}" selected>{{ category_info.Category }}</option>
                         </select>
                         <select name="formats[]" required>
-                            <option value="Knockout" {% if category['Format'] == 'Knockout' %}selected{% endif %}>Knockout</option>
-                            <option value="Two Stage" {% if category['Format'] == 'Two Stage' %}selected{% endif %}>Two Stage</option>
+                            <option value="Knockout" {% if category_info.Format == 'Knockout' %}selected{% endif %}>Knockout</option>
+                            <option value="Two Stage" {% if category_info.Format == 'Two Stage' %}selected{% endif %}>Two Stage</option>
                         </select>
-                        <input type="text" name="fees[]" value="{{ category['Fee'] }}" placeholder="Fee">
+                        <input type="text" name="fees[]" value="{{ category_info.Fee }}" placeholder="Fee">
                         <div class="prize-section">
                             <div>Prizes</div>
-                            <input type="text" name="first_prizes[]" value="{{ category['First Prize'] }}" placeholder="First Prize">
-                            <input type="text" name="second_prizes[]" value="{{ category['Second Prize'] }}" placeholder="Second Prize">
-                            <input type="text" name="third_prizes[]" value="{{ category['Third Prize'] }}" placeholder="Third Prize">
+                            <input type="text" name="first_prizes[]" value="{{ category_info['First Prize'] }}" placeholder="First Prize">
+                            <input type="text" name="second_prizes[]" value="{{ category_info['Second Prize'] }}" placeholder="Second Prize">
+                            <input type="text" name="third_prizes[]" value="{{ category_info['Third Prize'] }}" placeholder="Third Prize">
                         </div>
                         <button type="button" class="remove-category">
                             <i class="material-icons">delete</i>
