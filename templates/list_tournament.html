@@ -325,85 +325,53 @@
         }
         .search-container {
             margin-bottom: 20px;
-            padding: 0 20px;
-            text-align: left;
         }
         .search-form {
-            max-width: 400px;
-            margin: 0;
-        }
-        .search-input-group {
-            display: flex;
-            gap: 10px;
             width: 100%;
         }
-        .search-input {
-            flex: 1;
+        .search-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .search-input-group {
+            flex: 0 0 auto;
+            width: 250px;
+        }
+        .search-input-group input {
+            width: 100%;
             padding: 8px 12px;
             border: 1px solid #ddd;
             border-radius: 4px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-            width: 300px;
+            font-size: 0.9em;
         }
-        .search-input:focus {
+        .search-input-group input:focus {
             outline: none;
             border-color: #1e3c72;
         }
-        .search-button {
-            padding: 8px 15px;
-            background-color: #1e3c72;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .search-button:hover {
-            background-color: #2a5298;
-        }
-        .search-button i {
-            font-size: 14px;
-        }
-        @media (max-width: 768px) {
-            .search-container {
-                padding: 0 10px;
-            }
-            .search-input-group {
-                flex-direction: row;
-                width: 100%;
-            }
-            .search-input {
-                width: 100%;
-            }
-            .search-button {
-                width: auto;
-            }
-        }
         .filter-container {
-            display: inline-block;
-            margin-left: 15px;
+            min-width: 150px;
         }
-        
         .filter-select {
-            padding: 10px 15px;
+            width: 100%;
+            padding: 8px 12px;
             border: 1px solid #ddd;
             border-radius: 4px;
             background-color: white;
             font-size: 0.9em;
-            min-width: 150px;
+            height: 36px;
         }
-        
-        /* Make sure the form displays properly on all screen sizes */
-        @media (max-width: 768px) {
-            .search-form {
+        @media (max-width: 600px) {
+            .search-controls {
                 flex-direction: column;
                 align-items: stretch;
             }
-            
+            .search-input-group {
+                width: 100%;
+            }
             .filter-container {
-                margin-left: 0;
                 margin-top: 10px;
+                width: 100%;
             }
         }
     </style>
@@ -417,20 +385,19 @@
         </div>
         <div class="content">
             <div class="search-container">
-                <form action="{{ url_for('list_tournament') }}" method="get" class="search-form">
-                    <div class="search-input-group">
-                        <input type="text" name="search" placeholder="Search tournaments..." value="{{ search_query }}">
-                        <button type="submit">
-                            <i class="material-icons">search</i>
-                        </button>
-                    </div>
-                    <div class="filter-container">
-                        <select name="schedule" id="schedule-filter" class="filter-select">
-                            <option value="all" {% if schedule_filter == 'all' %}selected{% endif %}>All Schedule</option>
-                            <option value="upcoming" {% if schedule_filter == 'upcoming' %}selected{% endif %}>Upcoming</option>
-                            <option value="in-progress" {% if schedule_filter == 'in-progress' %}selected{% endif %}>In Progress</option>
-                            <option value="completed" {% if schedule_filter == 'completed' %}selected{% endif %}>Completed</option>
-                        </select>
+                <form action="{{ url_for('list_tournament') }}" method="get" class="search-form" id="search-form">
+                    <div class="search-controls">
+                        <div class="search-input-group">
+                            <input type="text" name="search" id="search-input" placeholder="Search tournaments..." value="{{ search_query }}">
+                        </div>
+                        <div class="filter-container">
+                            <select name="schedule" id="schedule-filter" class="filter-select">
+                                <option value="all" {% if schedule_filter == 'all' %}selected{% endif %}>All Schedule</option>
+                                <option value="upcoming" {% if schedule_filter == 'upcoming' %}selected{% endif %}>Upcoming</option>
+                                <option value="in-progress" {% if schedule_filter == 'in-progress' %}selected{% endif %}>In Progress</option>
+                                <option value="completed" {% if schedule_filter == 'completed' %}selected{% endif %}>Completed</option>
+                            </select>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -619,7 +586,18 @@
 
         // Auto-submit when schedule filter changes
         document.getElementById('schedule-filter').addEventListener('change', function() {
-            this.closest('form').submit();
+            document.getElementById('search-form').submit();
+        });
+        
+        // Auto-submit when user types in search box (with debounce)
+        const searchInput = document.getElementById('search-input');
+        let debounceTimer;
+        
+        searchInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(function() {
+                document.getElementById('search-form').submit();
+            }, 500); // 500ms delay before submitting
         });
     </script>
 </body>
