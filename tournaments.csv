@@ -1,10 +1,10 @@
 Tournament Id,Tournament Name,Categories,Venue,Start Date,End Date,Last Registration Date,Total Prize,General Information,Tournament Logo Link,Status
-250001,T1,"Veterans 39+ Men,u19 Boys,u11 Girls,u9",Delhi,2025-05-19,2025-05-24,2025-05-17,,,"static/tournaments/250001/logo_PHOTO6-scaled.jpg,static/tournaments/250001/logo_Coffee 2.jpeg",inactive
-250002,Badminton ,,,2025-05-19,2025-05-24,2025-05-17,,,,inactive
-250003,Badminton 1,"u11 Boys,u13 Girls",,2025-05-19,2025-05-24,2025-05-17,,,,active
-250004,another one1,,,2025-05-19,2025-05-24,2025-05-17,,,,active
-250005,another one2,"u11 Boys,Women",,2025-05-19,2025-05-24,2025-05-17,,,,active
-250006,profession,"u9,u11 Girls,u11 Boys,u13 Girls",,2025-05-19,2025-05-24,2025-05-17,,,,inactive
-250007,profession,"u11 Girls,u9,u13 Girls,u11 Boys,u13 Boys",,2025-05-19,2025-05-24,2025-05-17,,,"static/tournaments/250007/logo_Coffee 2.jpeg,static/tournaments/250007/logo_Taxi 2.jpeg",inactive
-250008,another one3,"u11 Girls,u11 Boys,u13 Girls",,2025-05-19,2025-05-24,2025-05-17,,,,active
-250009,Final,"u11 Boys,u13 Girls,u9,u11 Girls",,2025-05-19,2025-05-24,2025-05-17,,,"static/tournaments/250009/logo_Coffee 2.jpeg,static/tournaments/250009/logo_Taxi 2.jpeg,static/tournaments/250009/logo_PHOTO6-scaled.jpg",active
+250001,T1,"Veterans 39+ Men,u19 Boys,u11 Girls,u9",Delhi,2025-05-08,2025-05-10,2025-05-17,,,"static/tournaments/250001/logo_PHOTO6-scaled.jpg,static/tournaments/250001/logo_Coffee 2.jpeg",active
+250002,Badminton ,,,2025-05-11,2025-05-12,2025-05-17,,,,active
+250003,Badminton 1,"u11 Boys,u13 Girls",,2025-05-10,2025-05-12,2025-05-17,,,,active
+250004,another one1,,,2025-05-9,2025-05-11,2025-05-17,,,,active
+250005,another one2,"u11 Boys,Women",,2025-05-13,2025-05-14,2025-05-17,,,,active
+250006,profession,"u9,u11 Girls,u11 Boys,u13 Girls",,2025-05-12,2025-05-24,2025-05-17,,,,active
+250007,profession,"u11 Girls,u9,u13 Girls,u11 Boys,u13 Boys",,2025-05-11,2025-05-24,2025-05-17,,,"static/tournaments/250007/logo_Coffee 2.jpeg,static/tournaments/250007/logo_Taxi 2.jpeg",active
+250008,another one3,"u11 Girls,u11 Boys,u13 Girls",,2025-05-20,2025-05-24,2025-05-17,,,,active
+250009,Final,"u11 Boys,u13 Girls,u9,u11 Girls",,2025-05-19,2025-05-12,2025-05-17,,,"static/tournaments/250009/logo_Coffee 2.jpeg,static/tournaments/250009/logo_Taxi 2.jpeg,static/tournaments/250009/logo_PHOTO6-scaled.jpg",active

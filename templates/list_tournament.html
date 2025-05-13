@@ -380,6 +380,32 @@
                 width: auto;
             }
         }
+        .filter-container {
+            display: inline-block;
+            margin-left: 15px;
+        }
+        
+        .filter-select {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            font-size: 0.9em;
+            min-width: 150px;
+        }
+        
+        /* Make sure the form displays properly on all screen sizes */
+        @media (max-width: 768px) {
+            .search-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-container {
+                margin-left: 0;
+                margin-top: 10px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -391,16 +417,20 @@
         </div>
         <div class="content">
             <div class="search-container">
-                <form method="GET" action="{{ url_for('list_tournament') }}" class="search-form">
+                <form action="{{ url_for('list_tournament') }}" method="get" class="search-form">
                     <div class="search-input-group">
-                        <input type="text" 
-                               name="search" 
-                               placeholder="Search tournaments by name..." 
-                               value="{{ search_query }}"
-                               class="search-input">
-                        <button type="submit" class="search-button">
-                            <i class="fas fa-search"></i>
+                        <input type="text" name="search" placeholder="Search tournaments..." value="{{ search_query }}">
+                        <button type="submit">
+                            <i class="material-icons">search</i>
                         </button>
+                    </div>
+                    <div class="filter-container">
+                        <select name="schedule" id="schedule-filter" class="filter-select">
+                            <option value="all" {% if schedule_filter == 'all' %}selected{% endif %}>All Schedule</option>
+                            <option value="upcoming" {% if schedule_filter == 'upcoming' %}selected{% endif %}>Upcoming</option>
+                            <option value="in-progress" {% if schedule_filter == 'in-progress' %}selected{% endif %}>In Progress</option>
+                            <option value="completed" {% if schedule_filter == 'completed' %}selected{% endif %}>Completed</option>
+                        </select>
                     </div>
                 </form>
             </div>
@@ -585,6 +615,11 @@
             const instantSearch = debounce(() => {
                 searchForm.submit();
             });
+        });
+
+        // Auto-submit when schedule filter changes
+        document.getElementById('schedule-filter').addEventListener('change', function() {
+            this.closest('form').submit();
         });
     </script>
 </body>
