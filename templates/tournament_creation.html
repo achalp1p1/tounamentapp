@@ -605,6 +605,26 @@
                 font-size: 0.85em;
             }
         }
+
+        /* Add error message styles */
+        .error-message {
+            color: var(--error-color);
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+            display: none;
+            padding: 0.5rem;
+            background-color: #ffebee;
+            border-radius: 4px;
+            border-left: 3px solid var(--error-color);
+        }
+
+        .form-group.error input {
+            border-color: var(--error-color);
+        }
+
+        .form-group.error .error-message {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -627,16 +647,19 @@
                     <div class="form-group">
                         <label for="start_date" class="required-field">Start Date</label>
                         <input type="date" id="start_date" name="start_date" required>
+                        <div class="error-message" id="start_date_error"></div>
                     </div>
                     <div class="form-group">
                         <label for="end_date" class="required-field">End Date</label>
                         <input type="date" id="end_date" name="end_date" required>
+                        <div class="error-message" id="end_date_error"></div>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="last_registration_date" class="required-field">Last Entry Date</label>
                         <input type="date" id="last_registration_date" name="last_registration_date" required>
+                        <div class="error-message" id="last_registration_date_error"></div>
                     </div>
                     <div class="form-group">
                         <label for="venue">Venue</label>
@@ -856,34 +879,67 @@
             document.getElementById('last_registration_date').value = lastEntryDate.toISOString().split('T')[0];
 
             // Add event listeners for date validation
-            document.getElementById('start_date').addEventListener('change', validateDates);
-            document.getElementById('end_date').addEventListener('change', validateDates);
-            document.getElementById('last_registration_date').addEventListener('change', validateDates);
+            document.querySelector('form').addEventListener('submit', function(e) {
+                if (!validateDates()) {
+                    e.preventDefault();
+                }
+            });
 
             function validateDates() {
-                const startDate = new Date(document.getElementById('start_date').value);
-                const endDate = new Date(document.getElementById('end_date').value);
-                const lastEntryDate = new Date(document.getElementById('last_registration_date').value);
+                const startDateInput = document.getElementById('start_date');
+                const endDateInput = document.getElementById('end_date');
+                const lastEntryDateInput = document.getElementById('last_registration_date');
+                
+                // Reset all error states
+                [startDateInput, endDateInput, lastEntryDateInput].forEach(input => {
+                    input.parentElement.classList.remove('error');
+                    document.getElementById(`${input.id}_error`).textContent = '';
+                });
+
+                // Only validate if all date fields have values
+                if (!startDateInput.value || !endDateInput.value || !lastEntryDateInput.value) {
+                    return true;
+                }
+
+                const startDate = new Date(startDateInput.value);
+                const endDate = new Date(endDateInput.value);
+                const lastEntryDate = new Date(lastEntryDateInput.value);
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
 
+                let isValid = true;
+                let firstErrorField = null;
+
                 if (startDate < today) {
-                    alert('Start Date cannot be in the past');
-                    return false;
+                    startDateInput.parentElement.classList.add('error');
+                    document.getElementById('start_date_error').textContent = 'Start Date cannot be in the past';
+                    isValid = false;
+                    if (!firstErrorField) firstErrorField = startDateInput;
                 }
-                if (startDate > endDate) {
-                    alert('End Date must be after Start Date');
-                    return false;
+                if (endDate < startDate) {
+                    endDateInput.parentElement.classList.add('error');
+                    document.getElementById('end_date_error').textContent = 'End Date must be equal to or after Start Date';
+                    isValid = false;
+                    if (!firstErrorField) firstErrorField = endDateInput;
                 }
                 if (lastEntryDate >= startDate) {
-                    alert('Last Entry Date must be before Start Date');
-                    return false;
+                    lastEntryDateInput.parentElement.classList.add('error');
+                    document.getElementById('last_registration_date_error').textContent = 'Last Entry Date must be before Start Date';
+                    isValid = false;
+                    if (!firstErrorField) firstErrorField = lastEntryDateInput;
                 }
                 if (lastEntryDate < today) {
-                    alert('Last Entry Date cannot be in the past');
-                    return false;
+                    lastEntryDateInput.parentElement.classList.add('error');
+                    document.getElementById('last_registration_date_error').textContent = 'Last Entry Date cannot be in the past';
+                    isValid = false;
+                    if (!firstErrorField) firstErrorField = lastEntryDateInput;
                 }
-                return true;
+
+                if (!isValid && firstErrorField) {
+                    firstErrorField.focus();
+                }
+
+                return isValid;
             }
 
             // Logo upload functionality
