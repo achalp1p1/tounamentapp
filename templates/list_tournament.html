@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>List Tournament</title>
+    <title>Tournaments - DilliLabs Tournify</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <style>
         * { 
             margin: 0; 
@@ -350,16 +350,35 @@
             border-color: #1e3c72;
         }
         .filter-container {
-            min-width: 150px;
+            position: relative;
+            display: flex;
+            align-items: center;
         }
         .filter-select {
-            width: 100%;
             padding: 8px 12px;
             border: 1px solid #ddd;
             border-radius: 4px;
             background-color: white;
-            font-size: 0.9em;
-            height: 36px;
+            cursor: pointer;
+            padding-right: 30px; /* Make room for the icon */
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+        }
+        .filter-container::after {
+            content: '\f0b0'; /* Font Awesome filter icon */
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            pointer-events: none;
+        }
+        .filter-select:focus {
+            outline: none;
+            border-color: #1e3c72;
         }
         @media (max-width: 600px) {
             .search-controls {
@@ -392,10 +411,10 @@
                         </div>
                         <div class="filter-container">
                             <select name="schedule" id="schedule-filter" class="filter-select">
-                                <option value="all" {% if schedule_filter == 'all' %}selected{% endif %}>All Schedule</option>
                                 <option value="upcoming" {% if schedule_filter == 'upcoming' %}selected{% endif %}>Upcoming</option>
                                 <option value="in-progress" {% if schedule_filter == 'in-progress' %}selected{% endif %}>In Progress</option>
                                 <option value="completed" {% if schedule_filter == 'completed' %}selected{% endif %}>Completed</option>
+                                <option value="all" {% if schedule_filter == 'all' %}selected{% endif %}>All</option>
                             </select>
                         </div>
                     </div>
