@@ -21,7 +21,7 @@
             <span style="font-size:0.8em;">▼</span>
         </span>
         <div class="dropdown-content">
-            <a href="{{ url_for('player_registration') }}" class="{% if request.endpoint == 'player_registration' %}active{% endif %}">New Player</a>
+            <a href="{{ url_for('player_registration') }}" class="{% if request.endpoint == 'player_registration' %}active{% endif %}">Register Player</a>
             <a href="{{ url_for('list_players') }}" class="{% if request.endpoint == 'list_players' %}active{% endif %}">Find Players</a>
         </div>
     </div>

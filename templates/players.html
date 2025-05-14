@@ -237,7 +237,7 @@
                     <div class="form-container">
                         <!-- Left Column - Required Fields -->
                         <div class="mandatory-fields">
-                            <div class="section-title">Required Fields</div>
+                            <div class="section-title">Basic Information</div>
                             
                             <div class="form-group">
                                 <label for="player_name" class="required">Name</label>
@@ -271,6 +271,12 @@
                                        pattern="[0-9]{10}"
                                        title="Please enter a valid 10-digit phone number">
                             </div>
+
+                            <div class="form-group">
+                                <label for="email">Email ID</label>
+                                <input type="email" id="email" name="email" 
+                                       placeholder="Enter email address">
+                            </div>
                         </div>
 
                         <!-- Right Column - Additional Fields -->
@@ -278,33 +284,9 @@
                             <div class="section-title">Additional Information</div>
                             
                             <div class="form-group">
-                                <label for="email">Email ID</label>
-                                <input type="email" id="email" name="email" 
-                                       placeholder="Enter email address">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="address">Address</label>
-                                <textarea id="address" name="address" 
-                                          placeholder="Enter complete address"></textarea>
-                            </div>
-                            
-                            <div class="form-group">
                                 <label for="state">State</label>
                                 <input type="text" id="state" name="state" 
                                        placeholder="Enter state">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="ttfi_id">TTFI ID</label>
-                                <input type="text" id="ttfi_id" name="ttfi_id" 
-                                       placeholder="Enter TTFI ID">
-                            </div>
-                            
-                            <div id="dstta_id_container" class="form-group" style="display: none;">
-                                <label for="dstta_id">DSTTA ID</label>
-                                <input type="text" id="dstta_id" name="dstta_id" 
-                                       placeholder="Enter DSTTA ID">
                             </div>
                             
                             <div class="form-group">
@@ -320,9 +302,22 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="upi_id">UPI ID</label>
+                                <label for="address">Address</label>
+                                <textarea id="address" name="address" 
+                                          placeholder="Enter complete address"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="upi_id">UPI ID or Bank A/C Details</label>
                                 <input type="text" id="upi_id" name="upi_id" 
-                                       placeholder="Enter UPI ID">
+                                       placeholder="Enter UPI ID or bank account details">
+                                <small style="display: block; margin-top: 4px; color: #666; font-size: 0.85em;">This information will be used for prize money distribution</small>
+                            </div>
+                            
+                            <div id="dstta_id_container" class="form-group" style="display: none;">
+                                <label for="dstta_id">DSTTA ID</label>
+                                <input type="text" id="dstta_id" name="dstta_id" 
+                                       placeholder="Enter DSTTA ID">
                             </div>
                         </div>
                     </div>

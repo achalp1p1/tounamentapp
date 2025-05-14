@@ -150,9 +150,8 @@
             color: #dc2626;
         }
         .delete-icon:hover {
-            background: #fee2e2;
-            color: #b91c1c;
-            transform: translateY(-1px);
+            background-color: #dc3545;
+            color: white;
         }
 
         /* Modern Modal */
@@ -410,6 +409,16 @@
         .status-indicator.completed {
             background: #9E9E9E;
         }
+
+        .add-player-icon {
+            background-color: #f8f9fa;
+            color: #1e3c72;
+        }
+
+        .add-player-icon:hover {
+            background-color: #1e3c72;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -480,6 +489,11 @@
                             <a href="#" onclick="deleteTournament('{{ tournament['Tournament Id'] }}')" class="icon-btn delete-icon" title="Delete">
                                 <i class="fas fa-trash-alt"></i>
                             </a>
+                            {% if tournament['Last Registration Date'] >= current_date %}
+                            <a href="{{ url_for('tournament_info', tournament_id=tournament['Tournament Id']) }}#register" class="icon-btn add-player-icon" title="Add Player">
+                                <i class="fas fa-user-plus"></i>
+                            </a>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

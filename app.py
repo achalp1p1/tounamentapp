@@ -193,12 +193,11 @@ def player_registration():
                 'Gender',
                 'Phone Number',
                 'Email ID',
-                'Address',
                 'State',
-                'TTFI ID',
-                'DSTTA ID',
                 'School/Institution',
                 'Academy',
+                'Address',
+                'DSTTA ID',
                 'UPI ID'
             ]
 
@@ -209,12 +208,11 @@ def player_registration():
                 'Gender': gender,
                 'Phone Number': phone,
                 'Email ID': email,
-                'Address': address,
                 'State': state,
-                'TTFI ID': ttfi_id,
-                'DSTTA ID': dstta_id,
                 'School/Institution': institution,
                 'Academy': academy,
+                'Address': address,
+                'DSTTA ID': dstta_id,
                 'UPI ID': upi_id
             }
 
@@ -498,12 +496,14 @@ def list_tournament():
                              tournaments=tournaments,
                              tournament_categories=tournament_categories,
                              search_query=search_query,
-                             schedule_filter=schedule_filter)
+                             schedule_filter=schedule_filter,
+                             current_date=datetime.now().strftime('%Y-%m-%d'))
     except Exception as e:
         return render_template('list_tournament.html', 
                              error=str(e),
                              search_query=search_query,
-                             schedule_filter=schedule_filter)
+                             schedule_filter=schedule_filter,
+                             current_date=datetime.now().strftime('%Y-%m-%d'))
 
 @app.route('/delete-tournament/<tournament_id>', methods=['POST'])
 def delete_tournament(tournament_id):
@@ -843,8 +843,8 @@ def tournament_info(tournament_id):
                              categories=category_details,  # Pass the complete category details
                              girls_entries=girls_entries,
                              boys_entries=boys_entries,
-                             today=today,
-                             tournament_status=tournament_status)  # Pass today's date and status to the template
+                             tournament_status=tournament_status,
+                             current_date=datetime.now().strftime('%Y-%m-%d'))
 
     except Exception as e:
         print(f"Error in tournament_info route: {str(e)}")
@@ -951,12 +951,11 @@ def tournament_register(tournament_id):
                         'Gender',
                         'Phone Number',
                         'Email ID',
-                        'Address',
                         'State',
-                        'TTFI ID',
-                        'DSTTA ID',
                         'School/Institution',
                         'Academy',
+                        'Address',
+                        'DSTTA ID',
                         'UPI ID'
                     ]
 
@@ -974,12 +973,11 @@ def tournament_register(tournament_id):
                         'Gender': gender,
                         'Phone Number': phone,
                         'Email ID': email,
-                        'Address': address,
                         'State': state,
-                        'TTFI ID': ttfi_id,
-                        'DSTTA ID': dstta_id,
                         'School/Institution': institution,
                         'Academy': academy,
+                        'Address': address,
+                        'DSTTA ID': dstta_id,
                         'UPI ID': upi_id
                     }
 
