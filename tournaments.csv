@@ -9,3 +9,4 @@ Tournament Id,Tournament Name,Categories,Venue,Start Date,End Date,Last Registra
 250008,another one3,"u11 Girls,u11 Boys,u13 Girls",,2025-05-20,2025-05-24,2025-05-17,,,,active
 250009,Final,"u11 Boys,u13 Girls,u9,u11 Girls",Noida,2025-05-13,2025-05-12,2025-05-17,100000,,"static/tournaments/250009/logo_Coffee 2.jpeg,static/tournaments/250009/logo_Taxi 2.jpeg,static/tournaments/250009/logo_PHOTO6-scaled.jpg",active
 250010,test_wrong_date,,,2025-05-15,2025-05-24,2025-05-13,,,,active
+250011,NewMay14Tournament,"Veterans 39+ Women,Veterans 39+ Men,Men,u15 Girls,u13 Boys,u15 Boys,u13 Girls,u11 Girls,u9,u11 Boys",Noida Indoor Stadium,2025-05-21,2025-05-26,2025-05-19,,,"static/tournaments/250011/logo_AU Small Finance Logo.jpg,static/tournaments/250011/logo_Foundation_Logo_Png.png",active

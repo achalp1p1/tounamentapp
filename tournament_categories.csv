@@ -7,19 +7,33 @@ Tournament Id,Tournament Name,Category,Fee,First Prize,Second Prize,Third Prize,
 250001,T1,u9,,,,,Knockout
 250005,another one2,u11 Boys,100,100,1000,10,Knockout
 250005,another one2,Women,100,,,,Knockout
-250006,profession,u9,,,,,Knockout
-250006,profession,u11 Girls,,,,,Knockout
-250006,profession,u11 Boys,,,,,Knockout
-250006,profession,u13 Girls,,,,,Knockout
 250007,profession,u11 Girls,,,,,Knockout
 250007,profession,u9,,,,,Knockout
 250007,profession,u13 Girls,,,,,Knockout
 250007,profession,u11 Boys,,,,,Knockout
 250007,profession,u13 Boys,,,,,Knockout
-250008,another one3,u11 Girls,,,,,Knockout
-250008,another one3,u11 Boys,,,,,Knockout
-250008,another one3,u13 Girls,,,2,2,Knockout
 250009,Final,u11 Boys,800,1000,1000,400,Knockout
 250009,Final,u13 Girls,500,,,,Knockout
 250009,Final,u9,1000,100,1000,100,Knockout
 250009,Final,u11 Girls,100,22,33,44,Knockout
+250006,profession,u9,1000,,,,Knockout
+250006,profession,u11 Girls,800,,,,Knockout
+250006,profession,u11 Boys,700,,,,Knockout
+250006,profession,u13 Girls,600,,,,Knockout
+250008,another one3,Veterans 39+ Men,,,,,Knockout
+250008,another one3,Men,,,,,Knockout
+250008,another one3,u17 Boys,,,,,Knockout
+250008,another one3,u19 Boys,400,,,,Knockout
+250008,another one3,u11 Girls,300,,,,Knockout
+250008,another one3,u11 Boys,600,,,,Knockout
+250008,another one3,u13 Girls,800,,2,2,Knockout
+250011,NewMay14Tournament,Veterans 39+ Women,,,,,Knockout
+250011,NewMay14Tournament,Veterans 39+ Men,,,,,Knockout
+250011,NewMay14Tournament,Men,600,,,,Knockout
+250011,NewMay14Tournament,u15 Girls,600,,,,Knockout
+250011,NewMay14Tournament,u13 Boys,600,,,,Knockout
+250011,NewMay14Tournament,u15 Boys,600,,,,Knockout
+250011,NewMay14Tournament,u13 Girls,600,,,,Knockout
+250011,NewMay14Tournament,u11 Girls,600,,,,Knockout
+250011,NewMay14Tournament,u9,600,,,,Knockout
+250011,NewMay14Tournament,u11 Boys,600,,,,Knockout

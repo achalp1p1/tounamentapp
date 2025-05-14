@@ -4,6 +4,7 @@
     <title>Tournament Registration</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
     <style>
         * {
             margin: 0;
@@ -48,31 +49,14 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             padding: 24px;
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr;
             gap: 20px;
         }
 
         .form-title {
-            grid-column: 1 / -1;
             margin-bottom: 20px;
             color: #1e3c72;
             font-size: 24px;
-        }
-
-        .required-fields {
-            border-right: 1px solid #ddd;
-            padding-right: 20px;
-        }
-
-        .optional-fields {
-            padding-left: 20px;
-        }
-
-        .form-section-title {
-            margin-bottom: 20px;
-            color: #1e3c72;
-            font-size: 18px;
-            font-weight: 500;
         }
 
         .form-group {
@@ -105,31 +89,87 @@
             box-shadow: 0 0 0 2px rgba(30,60,114,0.2);
         }
 
-        .search-group {
-            display: flex;
+        .player-search-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .search-result-item {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .search-result-item:hover {
+            background: #f0f2f5;
+        }
+
+        .selected-player {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .category-selection {
+            margin-bottom: 20px;
+        }
+
+        .category-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 10px;
+            margin-top: 10px;
         }
 
-        .search-group .form-control {
-            flex: 1;
-        }
-
-        .search-group button {
-            padding: 8px 16px;
-            background: #4CAF50;
-            color: white;
-            border: none;
+        .category-item {
+            background: #f8f9fa;
+            padding: 10px;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 14px;
+            transition: all 0.3s ease;
         }
 
-        .search-group button:hover {
-            background: #45a049;
+        .category-item.selected {
+            background: #1e3c72;
+            color: white;
+        }
+
+        .fee-summary {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .fee-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .fee-total {
+            font-weight: bold;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+            margin-top: 10px;
         }
 
         .submit-button {
-            grid-column: 1 / -1;
             padding: 12px 24px;
             background: #1e3c72;
             color: white;
@@ -139,143 +179,53 @@
             font-size: 16px;
             font-weight: 500;
             margin-top: 20px;
+            width: 100%;
         }
 
         .submit-button:hover {
             background: #2a5298;
         }
 
-        @media (max-width: 768px) {
-            .registration-form {
-                grid-template-columns: 1fr;
-            }
-
-            .required-fields {
-                border-right: none;
-                padding-right: 0;
-                border-bottom: 1px solid #ddd;
-                padding-bottom: 20px;
-            }
-
-            .optional-fields {
-                padding-left: 0;
-                padding-top: 20px;
-            }
+        .submit-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
         }
 
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.4);
-        }
-
-        .modal-content {
-            background-color: #fefefe;
-            margin: 5% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 90%;
-            max-width: 1000px;
-            border-radius: 8px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .search-box {
-            margin-bottom: 20px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .search-box input {
-            flex: 1;
-            padding: 8px;
+        /* Select2 Customization */
+        .select2-container--default .select2-selection--multiple {
             border: 1px solid #ddd;
             border-radius: 4px;
-            font-size: 14px;
         }
 
-        .search-box button {
-            padding: 8px 16px;
-            background-color: #4CAF50;
+        .select2-container--default.select2-container--focus .select2-selection--multiple {
+            border-color: #1e3c72;
+            box-shadow: 0 0 0 2px rgba(30,60,114,0.2);
+        }
+
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background-color: #1e3c72;
             color: white;
             border: none;
+        }
+
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+            color: white;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
             border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
+            margin-bottom: 20px;
         }
 
-        .search-results-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        .search-results-table th,
-        .search-results-table td {
-            padding: 10px;
-            text-align: left;
-            border: 1px solid #ddd;
-        }
-
-        .search-results-table th {
-            background-color: #f4f4f4;
-            font-weight: 600;
-        }
-
-        .clickable-row {
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .search-container {
-            position: relative;
-            width: 100%;
-        }
-
-        .search-results-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            max-height: 300px;
-            overflow-y: auto;
-            background: white;
-            border: 1px solid #ddd;
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
             border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            z-index: 1000;
-            display: none;
-        }
-
-        .search-result-item {
-            padding: 8px 12px;
-            cursor: pointer;
-            border-bottom: 1px solid #eee;
-        }
-
-        .search-result-item:hover {
-            background-color: #f5f5f5;
-        }
-
-        .search-result-item .player-name {
-            font-weight: bold;
-        }
-
-        .search-result-item .player-details {
-            font-size: 0.9em;
-            color: #666;
-        }
-
-        /* Hide dropdown when input is not focused */
-        .search-container:not(:focus-within) .search-results-dropdown {
-            display: none;
+            margin-bottom: 20px;
         }
     </style>
 </head>
@@ -304,25 +254,29 @@
                 Bulk Register
             </a>
 
-            <form method="POST" class="registration-form">
-                <h2 class="form-title">Add Player</h2>
+            <form class="registration-form" id="registrationForm" method="POST">
+                <h2 class="form-title">Add Player to Tournament</h2>
 
-                <!-- Required Fields Section -->
-                <div class="required-fields">
-                    <h3 class="form-section-title">Required Information</h3>
-                    
+                <!-- Player Search -->
+                <div class="form-group required">
+                    <label for="playerSearch">Search Player</label>
+                    <input type="text" id="playerSearch" class="form-control" placeholder="Type player name to search...">
+                    <div id="searchResults" class="search-results"></div>
+                </div>
+
+                <!-- Selected Player Info -->
+                <div id="selectedPlayer" class="selected-player">
+                    <div class="form-group">
+                        <label>Player Details</label>
+                        <div id="playerDetails"></div>
+                    </div>
+                </div>
+
+                <!-- New Player Form (shown when no player is selected) -->
+                <div id="newPlayerForm" style="display: none;">
                     <div class="form-group required">
                         <label for="player_name">Player Name</label>
-                        <div class="search-container">
-                            <input type="text" 
-                                   id="player_name" 
-                                   name="player_name" 
-                                   class="form-control" 
-                                   required 
-                                   autocomplete="off"
-                                   oninput="searchPlayers(this.value)">
-                            <div id="searchResults" class="search-results-dropdown"></div>
-                        </div>
+                        <input type="text" id="player_name" name="player_name" class="form-control" required>
                     </div>
 
                     <div class="form-group required">
@@ -340,39 +294,23 @@
                     </div>
 
                     <div class="form-group required">
-                        <label for="category">Category</label>
-                        <select id="category" name="category" class="form-control" required>
-                            <option value="">Select Category</option>
-                            {% for category in tournament_categories %}
-                            <option value="{{ category }}">{{ category }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="form-group required">
                         <label for="phone">Phone Number</label>
                         <input type="tel" id="phone" name="phone" class="form-control" required>
                     </div>
-                </div>
-
-                <!-- Optional Fields Section -->
-                <div class="optional-fields">
-                    <h3 class="form-section-title">Optional Information</h3>
                     
                     <div class="form-group">
-                        <label for="email">Email ID</label>
+                        <label for="email">Email</label>
                         <input type="email" id="email" name="email" class="form-control">
                     </div>
 
                     <div class="form-group">
                         <label for="address">Address</label>
-                        <textarea id="address" name="address" class="form-control" rows="3"></textarea>
+                        <textarea id="address" name="address" class="form-control"></textarea>
                     </div>
 
                     <div class="form-group">
                         <label for="state">State</label>
-                        <input type="text" id="state" name="state" 
-                               placeholder="Enter state">
+                        <input type="text" id="state" name="state" class="form-control">
                     </div>
 
                     <div class="form-group">
@@ -380,15 +318,14 @@
                         <input type="text" id="ttfi_id" name="ttfi_id" class="form-control">
                     </div>
 
-                    <div class="form-group" id="dstta_id_container" style="display: none;">
+                    <div class="form-group">
                         <label for="dstta_id">DSTTA ID</label>
                         <input type="text" id="dstta_id" name="dstta_id" class="form-control">
                     </div>
 
                     <div class="form-group">
                         <label for="institution">School/Institution</label>
-                        <input type="text" id="institution" name="institution" 
-                               placeholder="Enter school/institution name">
+                        <input type="text" id="institution" name="institution" class="form-control">
                     </div>
 
                     <div class="form-group">
@@ -402,275 +339,182 @@
                     </div>
                 </div>
 
-                <!-- Hidden player_id field -->
-                <input type="hidden" id="player_id" name="player_id">
+                <!-- Category Selection -->
+                <div class="form-group required">
+                    <label for="categories">Select Categories</label>
+                    <select id="categories" name="category" class="form-control" required>
+                        <option value="">Select Category</option>
+                        {% for category in tournament_categories %}
+                        <option value="{{ category.Category }}" 
+                                data-fee="{{ category.Fee }}"
+                                data-first-prize="{{ category['First Prize'] }}"
+                                data-second-prize="{{ category['Second Prize'] }}"
+                                data-third-prize="{{ category['Third Prize'] }}"
+                                data-format="{{ category.Format }}">
+                            {{ category.Category }} (₹{{ category.Fee }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Fee Summary -->
+                <div class="fee-summary">
+                    <h3>Fee Summary</h3>
+                    <div id="feeDetails"></div>
+                    <div class="fee-row fee-total">
+                        <span>Total Fee:</span>
+                        <span id="totalFee">₹0</span>
+                    </div>
+                </div>
 
                 <!-- Submit Button -->
-                <button type="submit" class="submit-button">Register Player</button>
+                <button type="submit" class="submit-button" id="submitButton" disabled>
+                    Pay Fee and Add Entry
+                </button>
             </form>
         </div>
     </div>
 
-    <!-- Search Modal -->
-    <div id="searchModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeSearchModal()">&times;</span>
-            <h2>Search Players</h2>
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Enter player name to search">
-                <button onclick="fetchPlayers()">Search</button>
-            </div>
-            <div id="searchResults"></div>
-        </div>
-    </div>
-
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
     <script>
-        const modal = document.getElementById('searchModal');
-        const searchBox = document.getElementById('modalSearchBox');
-        let players = []; // Will store all players
+        $(document).ready(function() {
+            let selectedPlayer = null;
 
-        // Get tournament categories from the server-side template
-        const tournamentCategories = {{ tournament_categories|tojson|safe }};
-        console.log("Tournament categories:", tournamentCategories);
+            // Initialize Select2 for categories
+            $('#categories').select2({
+                placeholder: 'Select category',
+                allowClear: true
+            });
 
-        // Function to calculate age from date of birth
-        function calculateAge(dob) {
-            const dobDate = new Date(dob);
-            const today = new Date();
-            let age = today.getFullYear() - dobDate.getFullYear();
-            const monthDiff = today.getMonth() - dobDate.getMonth();
-            
-            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dobDate.getDate())) {
-                age--;
-            }
-            return age;
-        }
-
-        // Function to filter categories based on age and gender
-        function updateCategories() {
-            const dobInput = document.getElementById('dob');
-            const genderSelect = document.getElementById('gender');
-            const categorySelect = document.getElementById('category');
-            
-            // Clear current options except the first one
-            while (categorySelect.options.length > 1) {
-                categorySelect.remove(1);
-            }
-
-            if (!dobInput.value || !genderSelect.value) {
-                // If either DOB or gender is not selected, show all tournament categories
-                tournamentCategories.forEach(category => {
-                    const option = new Option(category, category);
-                    categorySelect.add(option);
-                });
+            // Player search functionality
+            let searchTimeout;
+            $('#playerSearch').on('input', function() {
+                clearTimeout(searchTimeout);
+                const searchTerm = $(this).val().trim();
+                
+                if (searchTerm.length < 2) {
+                    $('#searchResults').hide();
                 return;
             }
 
-            const age = calculateAge(dobInput.value);
-            const gender = genderSelect.value;
-
-            // Store the current selection if any
-            const currentSelection = categorySelect.value;
-
-            // Filter categories based on age and gender
-            const eligibleCategories = tournamentCategories.filter(category => {
-                if (gender === 'Male') {
-                    // Men's categories
-                    if (category === 'Men') {
-                        return age >= 19 && age < 39;
-                    }
-                    if (category === 'Veterans 39+ Men') {
-                        return age >= 39;
-                    }
-                    // Boys' categories
-                    if (category === 'u9') return age <= 9;
-                    if (category === 'u11 Boys') return age <= 11;
-                    if (category === 'u13 Boys') return age <= 13;
-                    if (category === 'u17 Boys') return age <= 17;
-                    if (category === 'u19 Boys') return age <= 19;
-                } 
-                else if (gender === 'Female') {
-                    // Women's categories
-                    if (category === 'Women') {
-                        return age >= 19 && age < 39;
-                    }
-                    if (category === 'Veterans 39+ Women') {
-                        return age >= 39;
-                    }
-                    // Girls' categories
-                    if (category === 'u9') return age <= 9;
-                    if (category === 'u11 Girls') return age <= 11;
-                    if (category === 'u13 Girls') return age <= 13;
-                    if (category === 'u15 Girls') return age <= 15;
-                    if (category === 'u19 Girls') return age <= 19;
-                }
-                return false;
-            });
-
-            // Add filtered categories to the dropdown
-            eligibleCategories.forEach(category => {
-                const option = new Option(category, category);
-                categorySelect.add(option);
-            });
-
-            // Try to restore the previous selection if it's still valid
-            if (eligibleCategories.includes(currentSelection)) {
-                categorySelect.value = currentSelection;
-            }
-        }
-
-        let debounceTimer;
-
-        function searchPlayers(searchText) {
-            clearTimeout(debounceTimer);
-            const resultsDiv = document.getElementById('searchResults');
-            
-            if (!searchText.trim()) {
-                resultsDiv.style.display = 'none';
-                return;
-            }
-
-            // Add debounce to prevent too many requests
-            debounceTimer = setTimeout(() => {
-                fetch(`/get-players?name=${encodeURIComponent(searchText)}`)
-                    .then(response => response.json())
-                    .then(players => {
-                        if (players.length === 0) {
-                            resultsDiv.style.display = 'none';
-                            return;
-                        }
-
-                        let html = '';
-                        players.forEach((player, index) => {
-                            html += `
-                                <div class="search-result-item" onclick="selectPlayer(${index})">
-                                    <div class="player-name">${player.Player_Name}</div>
-                                    <div class="player-details">
-                                        DOB: ${player.Date_of_Birth} | Gender: ${player.Gender} | Phone: ${player.Phone_Number}
-                                    </div>
-                                </div>
-                            `;
+                searchTimeout = setTimeout(() => {
+                    $.get('/get-players', { name: searchTerm }, function(players) {
+                        const results = $('#searchResults');
+                        results.empty();
+                        
+                        players.forEach(player => {
+                            const item = $('<div>')
+                                .addClass('search-result-item')
+                                .text(`${player.Player_Name} (${player.Player_Id})`)
+                                .data('player', player)
+                                .click(function() {
+                                    selectPlayer($(this).data('player'));
+                                });
+                            results.append(item);
                         });
-
-                        resultsDiv.innerHTML = html;
-                        resultsDiv.style.display = 'block';
-                        window.searchResults = players;
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        resultsDiv.style.display = 'none';
+                        
+                        results.show();
                     });
-            }, 300); // 300ms delay
-        }
+                }, 300);
+            });
 
-        function selectPlayer(index) {
-            const player = window.searchResults[index];
-            console.log('Selecting player:', player);
-
-            // Populate form fields
-            document.getElementById('player_id').value = player.Player_Id;
-            document.getElementById('player_name').value = player.Player_Name;
-            document.getElementById('dob').value = player.Date_of_Birth;
-            document.getElementById('gender').value = player.Gender;
-            document.getElementById('phone').value = player.Phone_Number;
-            document.getElementById('email').value = player.Email || '';
-            document.getElementById('address').value = player.Address || '';
-            document.getElementById('state').value = player.State || '';
-            document.getElementById('ttfi_id').value = player.TTFI_ID || '';
-            
-            // Handle DSTTA ID visibility
-            if (player.State === 'Delhi') {
-                document.getElementById('dstta_id_container').style.display = 'block';
-                document.getElementById('dstta_id').value = player.DSTTA_ID || '';
+            // Handle player selection
+            function selectPlayer(player) {
+                selectedPlayer = player;
+                $('#playerSearch').val(player.Player_Name);
+                $('#searchResults').hide();
+                
+                // Show player details
+                const details = $('#playerDetails');
+                details.html(`
+                    <p><strong>Name:</strong> ${player.Player_Name}</p>
+                    <p><strong>ID:</strong> ${player.Player_Id}</p>
+                    <p><strong>Date of Birth:</strong> ${player.Date_of_Birth}</p>
+                    <p><strong>Gender:</strong> ${player.Gender}</p>
+                `);
+                $('#selectedPlayer').show();
+                $('#newPlayerForm').hide();
+                
+                // Add hidden input for player ID
+                if (!$('#player_id').length) {
+                    $('<input>').attr({
+                        type: 'hidden',
+                        id: 'player_id',
+                        name: 'player_id',
+                        value: player.Player_Id
+                    }).appendTo('#registrationForm');
             } else {
-                document.getElementById('dstta_id_container').style.display = 'none';
-                document.getElementById('dstta_id').value = '';
+                    $('#player_id').val(player.Player_Id);
+                }
+                
+                updateSubmitButton();
             }
-            
-            document.getElementById('institution').value = player.School_Institution || '';
-            document.getElementById('academy').value = player.Academy || '';
-            document.getElementById('upi_id').value = player.UPI_ID || '';
 
-            // Update categories based on gender and DOB
-            document.getElementById('gender').dispatchEvent(new Event('change'));
-            updateCategories();
+            // Show new player form when search is empty
+            $('#playerSearch').on('change', function() {
+                if (!$(this).val().trim()) {
+                    $('#selectedPlayer').hide();
+                    $('#newPlayerForm').show();
+                    selectedPlayer = null;
+                    updateSubmitButton();
+                }
+            });
 
-            // Hide the results dropdown
-            document.getElementById('searchResults').style.display = 'none';
-        }
+            // Handle category selection
+            $('#categories').on('change', function() {
+                updateFeeSummary();
+                updateSubmitButton();
+            });
 
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(event) {
-            const searchContainer = document.querySelector('.search-container');
-            const resultsDiv = document.getElementById('searchResults');
-            
-            if (!searchContainer.contains(event.target)) {
-                resultsDiv.style.display = 'none';
+            // Update fee summary
+            function updateFeeSummary() {
+                const selectedOption = $('#categories option:selected');
+                const fee = parseFloat(selectedOption.data('fee')) || 0;
+                
+                $('#feeDetails').html(`
+                    <div class="fee-row">
+                        <span>${selectedOption.text()}</span>
+                        <span>₹${fee}</span>
+                    </div>
+                `);
+                
+                $('#totalFee').text(`₹${fee}`);
             }
-        });
 
-        // Prevent form submission when selecting from dropdown
-        document.getElementById('player_name').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && document.getElementById('searchResults').style.display === 'block') {
+            // Update submit button state
+            function updateSubmitButton() {
+                const hasPlayer = selectedPlayer !== null || $('#newPlayerForm input[required], #newPlayerForm select[required]').toArray().every(input => $(input).val());
+                const hasCategory = $('#categories').val();
+                $('#submitButton').prop('disabled', !(hasPlayer && hasCategory));
+            }
+
+            // Handle form submission
+            $('#registrationForm').on('submit', function(e) {
                 e.preventDefault();
-            }
-        });
+                
+                if (!selectedPlayer && !$('#newPlayerForm input[required], #newPlayerForm select[required]').toArray().every(input => $(input).val())) {
+                    alert('Please fill in all required fields');
+                    return;
+                }
 
-        // Add event listeners for date of birth and gender changes
-        document.getElementById('dob').addEventListener('change', updateCategories);
-        document.getElementById('gender').addEventListener('change', updateCategories);
-        
-        // Phone number validation
-        document.getElementById('phone').addEventListener('input', function(e) {
-            this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
-        });
+                if (!$('#categories').val()) {
+                    alert('Please select a category');
+                    return;
+                }
 
-        // State change handler for DSTTA ID
-        document.getElementById('state').addEventListener('change', function() {
-            const dsttaContainer = document.getElementById('dstta_id_container');
-            if (this.value.toLowerCase() === 'delhi') {
-                dsttaContainer.style.display = 'block';
-            } else {
-                dsttaContainer.style.display = 'none';
-                document.getElementById('dstta_id').value = '';
-            }
-        });
+                this.submit();
+            });
 
-        // Add event listener for Enter key in search input
-        document.getElementById('searchInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                fetchPlayers();
-            }
-        });
+            // Close search results when clicking outside
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('.player-search-container').length) {
+                    $('#searchResults').hide();
+                }
+            });
 
-        // Close modal when clicking outside
-        window.onclick = function(event) {
-            const modal = document.getElementById('searchModal');
-            if (event.target == modal) {
-                closeSearchModal();
-            }
-        }
-
-        // Initialize categories when the page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            updateCategories();
-        });
-
-        function toggleDSTTAField() {
-            const state = document.getElementById('state').value;
-            const dsttaContainer = document.getElementById('dstta_id_container');
-            
-            if (state === 'Delhi') {
-                dsttaContainer.style.display = 'block';
-            } else {
-                dsttaContainer.style.display = 'none';
-                document.getElementById('dstta_id').value = '';
-            }
-        }
-
-        // Initialize DSTTA field visibility on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            toggleDSTTAField();
+            // Show new player form initially
+            $('#newPlayerForm').show();
         });
     </script>
 </body>

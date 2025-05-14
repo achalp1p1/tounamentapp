@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
         body { min-height: 100vh; background: #f0f2f5; display: flex; flex-direction: column; }
@@ -597,6 +600,272 @@
                 height: 45px;
             }
         }
+
+        .registration-form {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 24px;
+            margin-top: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group.required label:after {
+            content: " ✓";
+            color: #1e3c72;
+            font-weight: bold;
+        }
+
+        .form-group.required label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-control:focus {
+            border-color: #1e3c72;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(30,60,114,0.2);
+        }
+
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .search-result-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+
+        .search-result-item:hover {
+            background: #f5f5f5;
+        }
+
+        .selected-player {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #e9ecef;
+        }
+
+        .fee-summary {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border: 1px solid #e9ecef;
+        }
+
+        .fee-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .fee-total {
+            font-weight: bold;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+        .submit-button {
+            padding: 12px 24px;
+            background: #1e3c72;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .submit-button:hover {
+            background: #2a5298;
+        }
+
+        .submit-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        /* Category Checkbox Styles */
+        .category-checkbox {
+            margin-bottom: 12px;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            background: #f8fafc;
+        }
+
+        .category-checkbox:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .category-checkbox input[type="checkbox"] {
+            display: none;
+        }
+
+        .category-checkbox label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 500;
+            color: #1e3c72;
+            margin: 0;
+            padding-left: 32px;
+            position: relative;
+            user-select: none;
+        }
+
+        .category-checkbox label:before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            border: 2px solid #cbd5e1;
+            border-radius: 4px;
+            background: white;
+            transition: all 0.2s ease;
+        }
+
+        .category-checkbox label:after {
+            content: '✓';
+            position: absolute;
+            left: 3px;
+            top: 50%;
+            transform: translateY(-50%) scale(0);
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: bold;
+            transition: transform 0.2s ease;
+            text-shadow: 0 1px 1px rgba(0,0,0,0.2);
+        }
+
+        .category-checkbox input[type="checkbox"]:checked + label:before {
+            background: #1e3c72;
+            border-color: #1e3c72;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .category-checkbox input[type="checkbox"]:checked + label:after {
+            transform: translateY(-50%) scale(1);
+            color: #ffffff;
+        }
+
+        .category-checkbox input[type="checkbox"]:disabled + label {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .category-checkbox input[type="checkbox"]:disabled + label:before {
+            background: #e2e8f0;
+            border-color: #cbd5e1;
+        }
+
+        #categoryCheckboxes {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        @media (max-width: 768px) {
+            #categoryCheckboxes {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .registration-button-container {
+            margin: 20px 0;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        .registration-button-container .submit-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: #1e3c72;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            max-width: 300px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .registration-button-container .submit-button:hover {
+            background: #2a5298;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .registration-button-container .submit-button i {
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
@@ -670,14 +939,17 @@
                             <div class="detail-item">
                                 <div class="detail-label">Tournament Dates</div>
                                 <div class="detail-value">
-                                    {{ tournament['Start Date'].split('-')[2] }}-{{ tournament['Start Date'].split('-')[1] }}-{{ tournament['Start Date'].split('-')[0][2:] }} - 
-                                    {{ tournament['End Date'].split('-')[2] }}-{{ tournament['End Date'].split('-')[1] }}-{{ tournament['End Date'].split('-')[0][2:] }}
+                                    {% set start_date = tournament['Start Date'].split('-') %}
+                                    {% set end_date = tournament['End Date'].split('-') %}
+                                    {{ start_date[2] }} {{ ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][start_date[1]|int - 1] }} {{ start_date[0] }} - 
+                                    {{ end_date[2] }} {{ ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][end_date[1]|int - 1] }} {{ end_date[0] }}
                                 </div>
                             </div>
                             <div class="detail-item">
                                 <div class="detail-label">Last Registration Date</div>
                                 <div class="detail-value">
-                                    {{ tournament['Last Registration Date'].split('-')[2] }}-{{ tournament['Last Registration Date'].split('-')[1] }}-{{ tournament['Last Registration Date'].split('-')[0][2:] }}
+                                    {% set reg_date = tournament['Last Registration Date'].split('-') %}
+                                    {{ reg_date[2] }} {{ ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][reg_date[1]|int - 1] }} {{ reg_date[0] }}
                                 </div>
                             </div>
                             <div class="detail-item">
@@ -688,17 +960,18 @@
                             <div class="detail-item" style="grid-column: 1 / -1;">
                                 <div class="detail-label">Tournament Description</div>
                                 <div class="detail-value" style="white-space: pre-line;">{{ tournament['General Information'] }}</div>
-                            </div>
-                            {% endif %}
-                            <div class="detail-item" style="grid-column: 1 / -1; margin-top: 20px;">
-                                <a href="#register" 
-                                   class="registration-button" 
-                                   style="max-width: 180px; padding: 12px 24px; font-size: 0.95em; {% if tournament['Last Registration Date'] < current_date %}opacity: 0.5; pointer-events: none;{% endif %}">
-                                    <i class="fas fa-user-plus"></i>
-                                    Add Player
-                                </a>
-                            </div>
                         </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if registration_open %}
+                    <div class="registration-button-container">
+                        <button onclick="showTab('register')" class="submit-button">
+                            <i class="fas fa-user-plus"></i> Add Player
+                        </button>
+                    </div>
+                    {% endif %}
                     </div>
 
                     <div class="detail-section">
@@ -738,24 +1011,137 @@
                                 {% endfor %}
                             </tbody>
                         </table>
-                    </div>
                 </div>
-            </div>
+                    </div>
 
             <!-- Register Tab -->
             <div id="register" class="tab-content">
                 <div id="section-register" class="detail-card">
                     <h2 class="section-title">Add Player</h2>
-                    <div class="registration-options">
-                        <a href="{{ url_for('tournament_register', tournament_id=tournament['Tournament Id']) }}" class="registration-button">
-                            <i class="fas fa-user-plus"></i>
-                            Single Registration
-                        </a>
-                        <a href="{{ url_for('tournament_bulk_register', tournament_id=tournament['Tournament Id']) }}" class="registration-button">
-                            <i class="fas fa-users"></i>
-                            Bulk Registration
-                        </a>
+                    
+                    {% if success %}
+                    <div class="success-message">
+                        {{ success }}
                     </div>
+                    {% endif %}
+
+                    {% if error %}
+                    <div class="error-message">
+                        {{ error }}
+                                    </div>
+                            {% endif %}
+
+                    <form class="registration-form" id="registrationForm" method="POST" action="{{ url_for('tournament_register', tournament_id=tournament['Tournament Id']) }}">
+                        <!-- Player Search -->
+                        <div class="form-group required player-search-container" style="position: relative;">
+                            <label for="playerSearch">Search Player</label>
+                            <input type="text" id="playerSearch" class="form-control" placeholder="Type player name to search...">
+                            <div id="searchResults" class="search-results"></div>
+                        </div>
+
+                        <!-- Selected Player Info -->
+                        <div id="selectedPlayer" class="selected-player">
+                            <div class="form-group">
+                                <label>Player Details</label>
+                                <div id="playerDetails"></div>
+                    </div>
+                </div>
+
+                        <!-- New Player Form (shown when no player is selected) -->
+                        <div id="newPlayerForm" style="display: none;">
+                            <div class="form-group required">
+                                <label for="player_name">Player Name</label>
+                                <input type="text" id="player_name" name="player_name" class="form-control" required>
+            </div>
+
+                            <div class="form-group required">
+                                <label for="dob">Date of Birth</label>
+                                <input type="date" id="dob" name="dob" class="form-control" required>
+                    </div>
+
+                            <div class="form-group required">
+                                <label for="gender">Gender</label>
+                                <select id="gender" name="gender" class="form-control" required>
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group required">
+                                <label for="phone">Phone Number</label>
+                                <input type="tel" id="phone" name="phone" class="form-control" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <input type="email" id="email" name="email" class="form-control">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="address">Address</label>
+                                <textarea id="address" name="address" class="form-control"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="state">State</label>
+                                <input type="text" id="state" name="state" class="form-control">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="ttfi_id">TTFI ID</label>
+                                <input type="text" id="ttfi_id" name="ttfi_id" class="form-control">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="dstta_id">DSTTA ID</label>
+                                <input type="text" id="dstta_id" name="dstta_id" class="form-control">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="institution">School/Institution</label>
+                                <input type="text" id="institution" name="institution" class="form-control">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="academy">Academy</label>
+                                <input type="text" id="academy" name="academy" class="form-control">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="upi_id">UPI ID</label>
+                                <input type="text" id="upi_id" name="upi_id" class="form-control">
+                            </div>
+                        </div>
+
+                        <!-- Category Selection -->
+                        <div class="form-group required">
+                            <label>Select Categories</label>
+                            <div id="categoryCheckboxes">
+                                {% for category in categories %}
+                                <div class="category-checkbox">
+                                    <input type="checkbox" id="category_{{ loop.index }}" name="categories[]" value="{{ category.Category }}" data-fee="{{ category.Fee }}" data-first-prize="{{ category['First Prize'] }}" data-second-prize="{{ category['Second Prize'] }}" data-third-prize="{{ category['Third Prize'] }}" data-format="{{ category.Format }}">
+                                    <label for="category_{{ loop.index }}">{{ category.Category }} (₹{{ category.Fee }})</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Fee Summary -->
+                        <div class="fee-summary">
+                            <h3>Fee Summary</h3>
+                            <div id="feeDetails"></div>
+                            <div class="fee-row fee-total">
+                                <span>Total Fee:</span>
+                                <span id="totalFee">₹0</span>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="submit-button" id="submitButton" disabled>
+                            Pay Fee and Add Entry
+                        </button>
+                    </form>
                 </div>
             </div>
 
@@ -772,9 +1158,9 @@
                                 <div class="category-box">
                                     <h4>{{ category }} ({{ entries|length }})</h4>
                                     <ul class="player-list">
-                                        {% for entry in entries %}
+                                            {% for entry in entries %}
                                         <li>{{ entry.Name }}</li>
-                                        {% endfor %}
+                                            {% endfor %}
                                     </ul>
                                 </div>
                                 {% endfor %}
@@ -789,9 +1175,9 @@
                                 <div class="category-box">
                                     <h4>{{ category }} ({{ entries|length }})</h4>
                                     <ul class="player-list">
-                                        {% for entry in entries %}
+                                            {% for entry in entries %}
                                         <li>{{ entry.Name }}</li>
-                                        {% endfor %}
+                                            {% endfor %}
                                     </ul>
                                 </div>
                                 {% endfor %}
@@ -948,6 +1334,254 @@
 
         document.getElementById('drawCategoryFilter')?.addEventListener('change', function() {
             loadDraws(this.value);
+        });
+    </script>
+
+    <script>
+        $(document).ready(function() {
+            let selectedPlayer = null;
+            let searchTimeout;
+
+            // Initialize Select2 for categories
+            $('#categories').select2({
+                placeholder: 'Select categories',
+                allowClear: true,
+                width: '100%'
+            });
+
+            // Player search functionality
+            $('#playerSearch').on('keyup', function() {
+                const searchTerm = $(this).val().trim();
+                const searchResults = $('#searchResults');
+                
+                if (searchTerm.length < 2) {
+                    searchResults.hide();
+                    return;
+                }
+
+                // Clear previous timeout
+                if (searchTimeout) {
+                    clearTimeout(searchTimeout);
+                }
+
+                // Set new timeout
+                searchTimeout = setTimeout(function() {
+                    $.ajax({
+                        url: '/get-players',
+                        method: 'GET',
+                        data: { name: searchTerm },
+                        success: function(players) {
+                            searchResults.empty();
+                            
+                            if (players.length === 0) {
+                                searchResults.append('<div class="search-result-item">No players found</div>');
+                            } else {
+                                players.forEach(function(player) {
+                                    const item = $('<div>')
+                                        .addClass('search-result-item')
+                                        .text(`${player.Name} (${player['Player ID']})`)
+                                        .data('player', player)
+                                        .on('click', function() {
+                                            selectPlayer($(this).data('player'));
+                                        });
+                                    searchResults.append(item);
+                                });
+                            }
+                            
+                            searchResults.show();
+                        },
+                        error: function(error) {
+                            console.error('Error searching players:', error);
+                            searchResults.hide();
+                        }
+                    });
+                }, 300); // 300ms delay
+            });
+
+            // Handle player selection
+            function selectPlayer(player) {
+                selectedPlayer = player;
+                $('#playerSearch').val(player.Name);
+                $('#searchResults').hide();
+                
+                // Format DOB to dd-mm-yyyy
+                function formatDate(dob) {
+                    if (!dob) return '';
+                    const parts = dob.split('-');
+                    if (parts.length === 3) {
+                        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    }
+                    return dob;
+                }
+
+                // Show player details
+                const details = $('#playerDetails');
+                details.html(`
+                    <p><strong>Name:</strong> ${player.Name}</p>
+                    <p><strong>ID:</strong> ${player['Player ID']}</p>
+                    <p><strong>Date of Birth:</strong> ${formatDate(player['Date of Birth'])}</p>
+                    <p><strong>Gender:</strong> ${player.Gender}</p>
+                `);
+                $('#selectedPlayer').show();
+                
+                // Add hidden input for player ID
+                if (!$('#player_id').length) {
+                    $('<input>').attr({
+                        type: 'hidden',
+                        id: 'player_id',
+                        name: 'player_id',
+                        value: player['Player ID']
+                    }).appendTo('#registrationForm');
+                } else {
+                    $('#player_id').val(player['Player ID']);
+                }
+
+                // Filter categories based on player's age and gender
+                filterCategories(player);
+                
+                updateSubmitButton();
+            }
+
+            // Filter categories based on player's age and gender
+            function filterCategories(player) {
+                const dob = new Date(player['Date of Birth']);
+                const currentYear = new Date().getFullYear();
+                const referenceDate = new Date(currentYear, 11, 31); // December 31st of current year
+                
+                // Calculate age as of December 31st
+                let age = referenceDate.getFullYear() - dob.getFullYear();
+                const monthDiff = referenceDate.getMonth() - dob.getMonth();
+                if (monthDiff < 0 || (monthDiff === 0 && referenceDate.getDate() < dob.getDate())) {
+                    age--;
+                }
+                
+                const gender = player.Gender;
+
+                // Hide all category checkboxes first
+                $('.category-checkbox').hide();
+
+                // Show only eligible categories
+                $('#categoryCheckboxes input[type="checkbox"]').each(function() {
+                    const checkbox = $(this);
+                    const categoryName = checkbox.val().toLowerCase();
+                    
+                    // Determine age eligibility based on category name
+                    let minAge = 0;
+                    let maxAge = 99;
+                    let categoryGender = 'Any';
+
+                    if (categoryName.includes('u9')) {
+                        maxAge = 8; // Under 9 means 8 years or younger
+                    } else if (categoryName.includes('u11')) {
+                        maxAge = 10; // Under 11 means 10 years or younger
+                    } else if (categoryName.includes('u13')) {
+                        maxAge = 12; // Under 13 means 12 years or younger
+                    } else if (categoryName.includes('u15')) {
+                        maxAge = 14; // Under 15 means 14 years or younger
+                    } else if (categoryName.includes('u17')) {
+                        maxAge = 16; // Under 17 means 16 years or younger
+                    } else if (categoryName.includes('u19')) {
+                        maxAge = 18; // Under 19 means 18 years or younger
+                    } else if (categoryName.includes('veterans')) {
+                        minAge = 39;
+                    }
+
+                    // Determine gender based on category name
+                    if (categoryName.includes('girls') || categoryName.includes('women')) {
+                        categoryGender = 'Female';
+                    } else if (categoryName.includes('boys') || categoryName.includes('men')) {
+                        categoryGender = 'Male';
+                    }
+
+                    // Show category if player meets age and gender requirements
+                    if (age >= minAge && age <= maxAge && 
+                        (categoryGender === 'Any' || categoryGender === gender)) {
+                        checkbox.closest('.category-checkbox').show();
+                    }
+                });
+
+                // Clear any previously selected categories
+                $('#categoryCheckboxes input[type="checkbox"]').prop('checked', false);
+                updateFeeSummary();
+
+                // Show message if no eligible categories
+                const eligibleCount = $('.category-checkbox:visible').length;
+                if (eligibleCount === 0) {
+                    $('#categoryCheckboxes').after(
+                        '<div class="error-message">No eligible categories found for this player</div>'
+                    );
+                } else {
+                    $('.error-message').remove();
+                }
+            }
+
+            // Handle category selection
+            $('#categoryCheckboxes input[type="checkbox"]').on('change', function() {
+                updateFeeSummary();
+                updateSubmitButton();
+            });
+
+            // Update fee summary
+            function updateFeeSummary() {
+                const selectedCheckboxes = $('#categoryCheckboxes input[type="checkbox"]:checked');
+                let totalFee = 0;
+                const feeDetails = $('#feeDetails');
+                feeDetails.empty();
+
+                selectedCheckboxes.each(function() {
+                    const fee = parseFloat($(this).data('fee')) || 0;
+                    totalFee += fee;
+                    feeDetails.append(`
+                        <div class="fee-row">
+                            <span>${$(this).next('label').text()}</span>
+                            <span>₹${fee}</span>
+                        </div>
+                    `);
+                });
+
+                $('#totalFee').text(`₹${totalFee}`);
+            }
+
+            // Update submit button state
+            function updateSubmitButton() {
+                const hasPlayer = selectedPlayer !== null;
+                const hasCategories = $('#categoryCheckboxes input[type="checkbox"]:checked').length > 0;
+                $('#submitButton').prop('disabled', !(hasPlayer && hasCategories));
+            }
+
+            // Handle form submission
+            $('#registrationForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                if (!selectedPlayer) {
+                    alert('Please select a player');
+                    return;
+                }
+
+                const selectedCategories = $('#categories').val();
+                if (!selectedCategories || selectedCategories.length === 0) {
+                    alert('Please select at least one category');
+                    return;
+                }
+
+                // Here you would typically show a payment confirmation dialog
+                if (confirm('Proceed with payment and registration?')) {
+                    this.submit();
+                }
+            });
+
+            // Close search results when clicking outside
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('#playerSearch, #searchResults').length) {
+                    $('#searchResults').hide();
+                }
+            });
+
+            // Debug logging
+            console.log('Search functionality initialized');
+            $('#playerSearch').on('focus', function() {
+                console.log('Search input focused');
+            });
         });
     </script>
 </body>
