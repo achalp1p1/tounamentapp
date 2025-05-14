@@ -19,7 +19,7 @@ Tournament Id,Tournament Name,Category,Fee,First Prize,Second Prize,Third Prize,
 250008,another one3,u11 Girls,,,,,Knockout
 250008,another one3,u11 Boys,,,,,Knockout
 250008,another one3,u13 Girls,,,2,2,Knockout
-250009,Final,u11 Boys,,,,,Knockout
-250009,Final,u13 Girls,,,,,Knockout
+250009,Final,u11 Boys,800,1000,1000,400,Knockout
+250009,Final,u13 Girls,500,,,,Knockout
 250009,Final,u9,1000,100,1000,100,Knockout
 250009,Final,u11 Girls,100,22,33,44,Knockout

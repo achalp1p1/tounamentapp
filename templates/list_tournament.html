@@ -393,6 +393,23 @@
                 width: 100%;
             }
         }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .status-indicator.upcoming {
+            background: #2196F3;
+        }
+        .status-indicator.in-progress {
+            background: #4CAF50;
+        }
+        .status-indicator.completed {
+            background: #9E9E9E;
+        }
     </style>
 </head>
 <body>
@@ -442,6 +459,7 @@
                         <td>
                             <a href="{{ url_for('tournament_info', tournament_id=tournament['Tournament Id']) }}" 
                                style="color: #1e3c72; text-decoration: none; font-weight: 500;">
+                                <span class="status-indicator {{ tournament.status }}"></span>
                                 {{ tournament['Tournament Name'] }}
                             </a>
                         </td>

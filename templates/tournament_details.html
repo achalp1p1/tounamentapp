@@ -112,16 +112,16 @@
             text-align: center;
             margin-left: 12px;
         }
-        .status-badge.active {
+        .status-badge.upcoming {
+            background: #2196F3;
+            color: white;
+        }
+        .status-badge.in-progress {
             background: #4CAF50;
             color: white;
         }
         .status-badge.completed {
-            background: #2196F3;
-            color: white;
-        }
-        .status-badge.cancelled {
-            background: #f44336;
+            background: #9E9E9E;
             color: white;
         }
 
@@ -652,9 +652,15 @@
                                 <div class="detail-label">Tournament Name</div>
                                 <div class="detail-value">
                                     {{ tournament['Tournament Name'] }}
-                                    <span class="status-badge {{ tournament['Status'].lower() }}">
-                                        {{ tournament['Status'] }}
-                                    </span>
+                                    {% if tournament_status == 'Upcoming' %}
+                                        <span class="status-badge upcoming">Upcoming</span>
+                                    {% elif tournament_status == 'In Progress' %}
+                                        <span class="status-badge in-progress">In Progress</span>
+                                    {% elif tournament_status == 'Completed' %}
+                                        <span class="status-badge completed">Completed</span>
+                                    {% else %}
+                                        <span class="status-badge">Unknown</span>
+                                    {% endif %}
                                 </div>
                             </div>
                             <div class="detail-item">

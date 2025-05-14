@@ -451,117 +451,59 @@ def create_tournament():
 
 @app.route('/list-tournament')
 def list_tournament():
+    search_query = request.args.get('search', '')
+    schedule_filter = request.args.get('schedule', 'all')
     try:
-        tournaments = []
-        tournament_categories = {}
-        categories_by_tid = {}
-        search_query = request.args.get('search', '').strip().lower()
-        schedule_filter = request.args.get('schedule', 'all').strip().lower()
-
-        # Get today's date for schedule filtering
-        today = datetime.now().date()
-
-        # Lists to hold different schedule categories
-        upcoming_tournaments = []
-        in_progress_tournaments = []
-        completed_tournaments = []
-        unfiltered_tournaments = []
-
         # Read tournament data
-        with open('tournaments.csv', 'r', newline='', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
+        tournaments = []
+        with open('tournaments.csv', 'r') as f:
+            reader = csv.DictReader(f)
             for row in reader:
-                # Skip inactive tournaments
-                if row.get('Status', '').lower() != 'active':
-                    continue
-                    
-                # Add tournament if it matches search query or if no search query
-                if search_query and search_query not in row['Tournament Name'].lower():
-                    continue
+                # Calculate tournament status
+                start_date = datetime.strptime(row['Start Date'], '%Y-%m-%d').date()
+                end_date = datetime.strptime(row['End Date'], '%Y-%m-%d').date()
+                today = datetime.now().date()
                 
-                # Create tournament object
-                tournament = {
-                    'Tournament Id': row['Tournament Id'],
-                    'Tournament Name': row['Tournament Name'],
-                    'Venue': row['Venue'],
-                    'Start Date': row.get('Start Date', row.get('Tournament Date', '')),
-                    'End Date': row.get('End Date', row.get('Tournament Date', '')),
-                    'Last Registration Date': row['Last Registration Date'],
-                    'Total Prize': row['Total Prize'],
-                    'Categories': row['Categories'],
-                    'Status': row['Status']
-                }
+                if today < start_date:
+                    row['status'] = 'upcoming'
+                elif today >= start_date and today <= end_date:
+                    row['status'] = 'in-progress'
+                else:
+                    row['status'] = 'completed'
                 
-                # Add to categories_by_tid for later use
-                categories_by_tid[row['Tournament Id']] = []
-                
-                # Get tournament dates for schedule filtering
-                try:
-                    start_date = datetime.strptime(tournament['Start Date'], '%Y-%m-%d').date()
-                    end_date = datetime.strptime(tournament['End Date'], '%Y-%m-%d').date()
-                    
-                    # Categorize by schedule
-                    if start_date > today:
-                        upcoming_tournaments.append(tournament)
-                    elif start_date <= today <= end_date:
-                        in_progress_tournaments.append(tournament)
-                    elif end_date < today:
-                        completed_tournaments.append(tournament)
-                    else:
-                        # Fallback
-                        unfiltered_tournaments.append(tournament)
-                except (ValueError, TypeError):
-                    # If dates can't be parsed, add to unfiltered
-                    unfiltered_tournaments.append(tournament)
-
-        # Read tournament categories (as before)
-        with open('tournament_categories.csv', 'r') as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                tournament_id = row.get('Tournament Id')
-                if tournament_id in categories_by_tid:
+                tournaments.append(row)
+        
+        # Filter tournaments based on search query
+        if search_query:
+            tournaments = [t for t in tournaments if search_query.lower() in t['Tournament Name'].lower()]
+        
+        # Filter tournaments based on schedule
+        if schedule_filter and schedule_filter != 'all':
+            tournaments = [t for t in tournaments if t['status'] == schedule_filter]
+        
+        # Read tournament categories
+        tournament_categories = {}
+        try:
+            with open('tournament_categories.csv', 'r') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    tournament_id = row['Tournament Id']
                     if tournament_id not in tournament_categories:
                         tournament_categories[tournament_id] = []
-                    tournament_categories[tournament_id].append({
-                        'Tournament Name': row['Tournament Name'],
-                        'Category': row['Category'],
-                        'Fee': row['Fee'],
-                        'First Prize': row['First Prize'],
-                        'Second Prize': row['Second Prize'],
-                        'Third Prize': row['Third Prize'],
-                        'Format': row['Format']
-                    })
-
-        # Sort each category with appropriate ordering
-        upcoming_tournaments.sort(key=lambda x: datetime.strptime(x['Start Date'], '%Y-%m-%d'))  # Ascending
-        in_progress_tournaments.sort(key=lambda x: datetime.strptime(x['Start Date'], '%Y-%m-%d'))  # Ascending
-        completed_tournaments.sort(key=lambda x: datetime.strptime(x['Start Date'], '%Y-%m-%d'), reverse=True)  # Descending
-        unfiltered_tournaments.sort(key=lambda x: datetime.strptime(x['Start Date'], '%Y-%m-%d'))  # Ascending
-
-        # Choose which tournaments to display based on filter
-        if schedule_filter == 'upcoming':
-            tournaments = upcoming_tournaments
-        elif schedule_filter == 'in-progress':
-            tournaments = in_progress_tournaments
-        elif schedule_filter == 'completed':
-            tournaments = completed_tournaments
-        else:
-            # For 'all', combine in order: upcoming, in-progress, completed
-            tournaments = upcoming_tournaments + in_progress_tournaments + completed_tournaments + unfiltered_tournaments
-
+                    tournament_categories[tournament_id].append(row)
+        except FileNotFoundError:
+            pass
+        
         return render_template('list_tournament.html', 
                              tournaments=tournaments,
                              tournament_categories=tournament_categories,
                              search_query=search_query,
                              schedule_filter=schedule_filter)
     except Exception as e:
-        print(f"Error in list_tournament: {e}")  # Log the error
         return render_template('list_tournament.html', 
                              error=str(e),
-                             tournaments=[],
-                             tournament_categories={},
-                             search_query='',
-                             schedule_filter='all')
+                             search_query=search_query,
+                             schedule_filter=schedule_filter)
 
 @app.route('/delete-tournament/<tournament_id>', methods=['POST'])
 def delete_tournament(tournament_id):
@@ -791,6 +733,8 @@ def list_tournament_last2():
 @app.route('/tournament/<tournament_id>/info')
 def tournament_info(tournament_id):
     try:
+        # Get current date
+        today = datetime.now().date()
         print(f"=== Starting tournament_info route ===")
         print(f"Tournament ID: {tournament_id}")
         
@@ -805,6 +749,20 @@ def tournament_info(tournament_id):
 
         if not tournament:
             return "Tournament not found", 404
+
+        # Calculate tournament status
+        try:
+            start_date = datetime.strptime(tournament['Start Date'], '%Y-%m-%d').date()
+            end_date = datetime.strptime(tournament['End Date'], '%Y-%m-%d').date()
+            if today < start_date:
+                tournament_status = 'Upcoming'
+            elif start_date <= today <= end_date:
+                tournament_status = 'In Progress'
+            else:
+                tournament_status = 'Completed'
+        except Exception as e:
+            print(f"Error parsing dates: {e}")
+            tournament_status = 'Unknown'
 
         # Get categories for this tournament
         tournament_categories = []
@@ -884,7 +842,9 @@ def tournament_info(tournament_id):
                              tournament=tournament, 
                              categories=category_details,  # Pass the complete category details
                              girls_entries=girls_entries,
-                             boys_entries=boys_entries)
+                             boys_entries=boys_entries,
+                             today=today,
+                             tournament_status=tournament_status)  # Pass today's date and status to the template
 
     except Exception as e:
         print(f"Error in tournament_info route: {str(e)}")

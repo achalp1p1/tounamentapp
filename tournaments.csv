@@ -7,4 +7,5 @@ Tournament Id,Tournament Name,Categories,Venue,Start Date,End Date,Last Registra
 250006,profession,"u9,u11 Girls,u11 Boys,u13 Girls",,2025-05-12,2025-05-24,2025-05-17,,,,active
 250007,profession,"u11 Girls,u9,u13 Girls,u11 Boys,u13 Boys",,2025-05-11,2025-05-24,2025-05-17,,,"static/tournaments/250007/logo_Coffee 2.jpeg,static/tournaments/250007/logo_Taxi 2.jpeg",active
 250008,another one3,"u11 Girls,u11 Boys,u13 Girls",,2025-05-20,2025-05-24,2025-05-17,,,,active
-250009,Final,"u11 Boys,u13 Girls,u9,u11 Girls",,2025-05-19,2025-05-12,2025-05-17,,,"static/tournaments/250009/logo_Coffee 2.jpeg,static/tournaments/250009/logo_Taxi 2.jpeg,static/tournaments/250009/logo_PHOTO6-scaled.jpg",active
+250009,Final,"u11 Boys,u13 Girls,u9,u11 Girls",Noida,2025-05-13,2025-05-12,2025-05-17,100000,,"static/tournaments/250009/logo_Coffee 2.jpeg,static/tournaments/250009/logo_Taxi 2.jpeg,static/tournaments/250009/logo_PHOTO6-scaled.jpg",active
+250010,test_wrong_date,,,2025-05-15,2025-05-24,2025-05-13,,,,active
