@@ -622,29 +622,29 @@
 
         <div class="content">
             <div class="tab-header">
-                <button class="tab-button active" onclick="showTab('info')">
+                <button class="tab-button active" onclick="showTab('info')" id="tab-info">
                     <i class="fas fa-info-circle"></i>Info
                 </button>
-                <button class="tab-button" onclick="showTab('register')">
-                    <i class="fas fa-user-plus"></i>Register
+                <button class="tab-button" onclick="showTab('register')" id="tab-register">
+                    <i class="fas fa-user-plus"></i>Add Player
                 </button>
-                <button class="tab-button" onclick="showTab('entries')">
+                <button class="tab-button" onclick="showTab('entries')" id="tab-entries">
                     <i class="fas fa-list"></i>Entries
                 </button>
-                <button class="tab-button" onclick="showTab('schedule')">
+                <button class="tab-button" onclick="showTab('schedule')" id="tab-schedule">
                     <i class="fas fa-calendar"></i>Schedule
                 </button>
-                <button class="tab-button" onclick="showTab('draws')">
+                <button class="tab-button" onclick="showTab('draws')" id="tab-draws">
                     <i class="fas fa-trophy"></i>Draws
                 </button>
-                <button class="tab-button" onclick="showTab('manage')">
+                <button class="tab-button" onclick="showTab('manage')" id="tab-manage">
                     <i class="fas fa-cog"></i>Manage
                 </button>
             </div>
 
             <!-- Info Tab -->
-            <div id="info" class="tab-content active">
-                <div class="detail-card">
+            <div id="info" class="tab-content">
+                <div id="section-info" class="detail-card">
                     <div class="detail-section">
                         <h2 class="section-title">Tournament Information</h2>
                         <div class="detail-grid">
@@ -683,6 +683,20 @@
                             <div class="detail-item">
                                 <div class="detail-label">Total Prize</div>
                                 <div class="detail-value">₹{{ tournament['Total Prize'] }}</div>
+                            </div>
+                            {% if tournament['General Information'] %}
+                            <div class="detail-item" style="grid-column: 1 / -1;">
+                                <div class="detail-label">Tournament Description</div>
+                                <div class="detail-value" style="white-space: pre-line;">{{ tournament['General Information'] }}</div>
+                            </div>
+                            {% endif %}
+                            <div class="detail-item" style="grid-column: 1 / -1; margin-top: 20px;">
+                                <a href="#register" 
+                                   class="registration-button" 
+                                   style="max-width: 180px; padding: 12px 24px; font-size: 0.95em; {% if tournament['Last Registration Date'] < current_date %}opacity: 0.5; pointer-events: none;{% endif %}">
+                                    <i class="fas fa-user-plus"></i>
+                                    Add Player
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -725,20 +739,13 @@
                             </tbody>
                         </table>
                     </div>
-
-                    {% if tournament.get('General Information') %}
-                    <div class="detail-section">
-                        <h2 class="section-title">General Information</h2>
-                        <div class="detail-value">{{ tournament['General Information'] }}</div>
-                    </div>
-                    {% endif %}
                 </div>
             </div>
 
             <!-- Register Tab -->
             <div id="register" class="tab-content">
-                <div class="detail-card">
-                    <h2 class="section-title">Tournament Registration</h2>
+                <div id="section-register" class="detail-card">
+                    <h2 class="section-title">Add Player</h2>
                     <div class="registration-options">
                         <a href="{{ url_for('tournament_register', tournament_id=tournament['Tournament Id']) }}" class="registration-button">
                             <i class="fas fa-user-plus"></i>
@@ -754,7 +761,7 @@
 
             <!-- Entries Tab -->
             <div id="entries" class="tab-content">
-                <div class="detail-card">
+                <div id="section-entries" class="detail-card">
                     <h2 class="section-title">Tournament Entries</h2>
                     <div class="entries-container">
                         <!-- Girls Categories -->
@@ -796,7 +803,7 @@
 
             <!-- Schedule Tab -->
             <div id="schedule" class="tab-content">
-                <div class="detail-card">
+                <div id="section-schedule" class="detail-card">
                     <h2 class="section-title">Tournament Schedule</h2>
                     <div class="schedule-container">
                         <div class="schedule-filters">
@@ -821,7 +828,7 @@
 
             <!-- Draws Tab -->
             <div id="draws" class="tab-content">
-                <div class="detail-card">
+                <div id="section-draws" class="detail-card">
                     <h2 class="section-title">Tournament Draws</h2>
                     <div class="draws-container">
                         <div class="draws-filters">
@@ -842,7 +849,7 @@
 
             <!-- Manage Tab -->
             <div id="manage" class="tab-content">
-                <div class="detail-card">
+                <div id="section-manage" class="detail-card">
                     <h2 class="section-title">Tournament Management</h2>
                     <div class="manage-options">
                         <a href="{{ url_for('tournament_update_seeding', tournament_id=tournament['Tournament Id']) }}" class="manage-button">
@@ -874,32 +881,46 @@
     {% include 'footer.html' %}
 
     <script>
-        function showTab(tabId) {
+        function showTab(tabName) {
             // Hide all tab contents
             document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
+                tab.style.display = 'none';
             });
             
-            // Deactivate all tab buttons
+            // Remove active class from all tab buttons
             document.querySelectorAll('.tab-button').forEach(button => {
                 button.classList.remove('active');
             });
             
             // Show selected tab content
-            document.getElementById(tabId).classList.add('active');
+            document.getElementById(tabName).style.display = 'block';
             
-            // Activate selected tab button
-            event.currentTarget.classList.add('active');
+            // Add active class to selected tab button
+            document.getElementById('tab-' + tabName).classList.add('active');
+            
+            // Update URL hash without scrolling
+            history.pushState(null, null, '#' + tabName);
         }
 
-        // Set active tab based on URL parameter
-        window.onload = function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const tab = urlParams.get('tab');
-            if (tab) {
-                showTab(tab);
+        // Handle initial tab based on URL hash
+        document.addEventListener('DOMContentLoaded', function() {
+            const hash = window.location.hash.substring(1);
+            if (hash) {
+                showTab(hash);
+            } else {
+                showTab('info'); // Default to info tab
             }
-        }
+        });
+
+        // Handle browser back/forward buttons
+        window.addEventListener('popstate', function() {
+            const hash = window.location.hash.substring(1);
+            if (hash) {
+                showTab(hash);
+            } else {
+                showTab('info');
+            }
+        });
 
         // Function to load entries for a category
         function loadEntries(category) {
