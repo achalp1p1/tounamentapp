@@ -806,7 +806,7 @@ def tournament_info(tournament_id):
                 for reg in reader:
                     if reg['TournamentId'] == tournament_id:
                         entry = {
-                            'Player Name': reg['Player Name'],
+                            'Name': reg['Player Name'],  # Changed from 'Player Name' to 'Name'
                             'School/Institution': reg['School/Institution'],
                             'Seeding': reg.get('Seeding', '')
                         }
@@ -825,9 +825,9 @@ def tournament_info(tournament_id):
         def sort_by_seeding(entry):
             seeding = entry.get('Seeding', '')
             try:
-                return (int(seeding) if seeding else 999999, entry['Player Name'])
+                return (int(seeding) if seeding else 999999, entry['Name'])  # Changed from 'Player Name' to 'Name'
             except ValueError:
-                return (999999, entry['Player Name'])
+                return (999999, entry['Name'])  # Changed from 'Player Name' to 'Name'
 
         # Sort each category's entries
         for category in girls_entries:
@@ -915,7 +915,7 @@ def tournament_register(tournament_id):
                         'Player Id': player_id,
                         'Registration Date': datetime.now().strftime('%Y-%m-%d'),
                         'Category': category,
-                        'Status': 'Registered'
+                        'Status': 'Active'  # Changed from 'Registered' to 'Active'
                     }
                     
                     with open('tournament_registrations.csv', 'a', newline='', encoding='utf-8') as file:
