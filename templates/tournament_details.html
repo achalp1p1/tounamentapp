@@ -1051,17 +1051,17 @@
                         <div id="newPlayerForm" style="display: none;">
                             <div class="form-group required">
                                 <label for="player_name">Player Name</label>
-                                <input type="text" id="player_name" name="player_name" class="form-control" required>
-            </div>
+                                <input type="text" id="player_name" name="player_name" class="form-control">
+                            </div>
 
                             <div class="form-group required">
                                 <label for="dob">Date of Birth</label>
-                                <input type="date" id="dob" name="dob" class="form-control" required>
-                    </div>
+                                <input type="date" id="dob" name="dob" class="form-control">
+                            </div>
 
                             <div class="form-group required">
                                 <label for="gender">Gender</label>
-                                <select id="gender" name="gender" class="form-control" required>
+                                <select id="gender" name="gender" class="form-control">
                                     <option value="">Select Gender</option>
                                     <option value="Male">Male</option>
                                     <option value="Female">Female</option>
@@ -1070,7 +1070,7 @@
 
                             <div class="form-group required">
                                 <label for="phone">Phone Number</label>
-                                <input type="tel" id="phone" name="phone" class="form-control" required>
+                                <input type="tel" id="phone" name="phone" class="form-control">
                             </div>
 
                             <div class="form-group">
@@ -1120,7 +1120,7 @@
                             <div id="categoryCheckboxes">
                                 {% for category in categories %}
                                 <div class="category-checkbox">
-                                    <input type="checkbox" id="category_{{ loop.index }}" name="categories[]" value="{{ category.Category }}" data-fee="{{ category.Fee }}" data-first-prize="{{ category['First Prize'] }}" data-second-prize="{{ category['Second Prize'] }}" data-third-prize="{{ category['Third Prize'] }}" data-format="{{ category.Format }}">
+                                    <input type="checkbox" id="category_{{ loop.index }}" name="category" value="{{ category.Category }}" data-fee="{{ category.Fee }}" data-first-prize="{{ category['First Prize'] }}" data-second-prize="{{ category['Second Prize'] }}" data-third-prize="{{ category['Third Prize'] }}" data-format="{{ category.Format }}">
                                     <label for="category_{{ loop.index }}">{{ category.Category }} (₹{{ category.Fee }})</label>
                                 </div>
                                 {% endfor %}
@@ -1436,6 +1436,9 @@
                     $('#player_id').val(player['Player ID']);
                 }
 
+                // Remove required attributes from new player form fields
+                $('#newPlayerForm input, #newPlayerForm select').removeAttr('required');
+                
                 // Filter categories based on player's age and gender
                 filterCategories(player);
                 
@@ -1517,6 +1520,7 @@
 
             // Handle category selection
             $('#categoryCheckboxes input[type="checkbox"]').on('change', function() {
+                console.log('Category selection changed'); // Debug log
                 updateFeeSummary();
                 updateSubmitButton();
             });
@@ -1546,6 +1550,7 @@
             function updateSubmitButton() {
                 const hasPlayer = selectedPlayer !== null;
                 const hasCategories = $('#categoryCheckboxes input[type="checkbox"]:checked').length > 0;
+                console.log('Button state:', { hasPlayer, hasCategories }); // Debug log
                 $('#submitButton').prop('disabled', !(hasPlayer && hasCategories));
             }
 
@@ -1558,16 +1563,14 @@
                     return;
                 }
 
-                const selectedCategories = $('#categories').val();
-                if (!selectedCategories || selectedCategories.length === 0) {
+                const selectedCategories = $('#categoryCheckboxes input[type="checkbox"]:checked');
+                if (selectedCategories.length === 0) {
                     alert('Please select at least one category');
                     return;
                 }
 
-                // Here you would typically show a payment confirmation dialog
-                if (confirm('Proceed with payment and registration?')) {
-                    this.submit();
-                }
+                // Submit the form directly without confirmation
+                this.submit();
             });
 
             // Close search results when clicking outside
@@ -1575,12 +1578,6 @@
                 if (!$(e.target).closest('#playerSearch, #searchResults').length) {
                     $('#searchResults').hide();
                 }
-            });
-
-            // Debug logging
-            console.log('Search functionality initialized');
-            $('#playerSearch').on('focus', function() {
-                console.log('Search input focused');
             });
         });
     </script>
