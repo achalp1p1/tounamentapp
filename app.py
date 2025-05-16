@@ -766,6 +766,8 @@ def tournament_info(tournament_id):
                 
             # Check if registration is still open
             registration_open = today <= last_reg_date
+            print(f"Registration open: {registration_open}")  # Debug print
+            print(f"Today: {today}, Last registration date: {last_reg_date}")  # Debug print
         except Exception as e:
             print(f"Error parsing dates: {e}")
             tournament_status = 'Unknown'
@@ -806,7 +808,7 @@ def tournament_info(tournament_id):
                 for reg in reader:
                     if reg['TournamentId'] == tournament_id:
                         entry = {
-                            'Name': reg['Player Name'],  # Changed from 'Player Name' to 'Name'
+                            'Name': reg['Player Name'],
                             'School/Institution': reg['School/Institution'],
                             'Seeding': reg.get('Seeding', '')
                         }
@@ -825,9 +827,9 @@ def tournament_info(tournament_id):
         def sort_by_seeding(entry):
             seeding = entry.get('Seeding', '')
             try:
-                return (int(seeding) if seeding else 999999, entry['Name'])  # Changed from 'Player Name' to 'Name'
+                return (int(seeding) if seeding else 999999, entry['Name'])
             except ValueError:
-                return (999999, entry['Name'])  # Changed from 'Player Name' to 'Name'
+                return (999999, entry['Name'])
 
         # Sort each category's entries
         for category in girls_entries:
@@ -925,7 +927,7 @@ def register_player(tournament_id):
         return redirect(url_for('tournament_info', 
                               tournament_id=tournament_id, 
                               tab='entries', 
-                              message='Player entry has been added successfully'))
+                              message='Player has been successfully added to the tournament'))
 
     except Exception as e:
         print(f"Error in register_player route: {str(e)}")

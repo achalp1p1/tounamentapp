@@ -723,11 +723,14 @@
         }
 
         .success-message {
-            background: #d4edda;
+            background-color: #d4edda;
             color: #155724;
-            padding: 12px;
-            border-radius: 4px;
+            padding: 15px;
             margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            font-size: 16px;
+            text-align: center;
         }
 
         .error-message {
@@ -866,6 +869,35 @@
         .registration-button-container .submit-button i {
             font-size: 18px;
         }
+
+        .tab-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: #f1f1f1 !important;
+            color: #999 !important;
+            pointer-events: none;
+        }
+
+        .tab-button:disabled:hover {
+            background: #f1f1f1 !important;
+            color: #999 !important;
+            transform: none !important;
+        }
+
+        .error-message i {
+            margin-right: 8px;
+        }
+
+        .registration-closed-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            font-size: 16px;
+            border: 1px solid #f5c6cb;
+        }
     </style>
 </head>
 <body>
@@ -894,7 +926,7 @@
                 <button class="tab-button active" onclick="showTab('info')" id="tab-info">
                     <i class="fas fa-info-circle"></i>Info
                 </button>
-                <button class="tab-button" onclick="showTab('register')" id="tab-register">
+                <button class="tab-button" onclick="{% if registration_open %}showTab('register'){% else %}void(0){% endif %}" id="tab-register" {% if not registration_open %}disabled{% endif %}>
                     <i class="fas fa-user-plus"></i>Add Player
                 </button>
                 <button class="tab-button" onclick="showTab('entries')" id="tab-entries">
@@ -1019,19 +1051,20 @@
                 <div id="section-register" class="detail-card">
                     <h2 class="section-title">Add Player</h2>
                     
-                    {% if success %}
-                    <div class="success-message">
-                        {{ success }}
+                    {% if not registration_open %}
+                    <div class="registration-closed-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        Entries have now closed for this tournament. The last registration date was {{ tournament['Last Registration Date']|datetime }}.
+                    </div>
+                    {% else %}
+                    <!-- Error Message -->
+                    {% if request.args.get('error') %}
+                    <div class="error-message">
+                        {{ request.args.get('error') }}
                     </div>
                     {% endif %}
 
-                    {% if error %}
-                    <div class="error-message">
-                        {{ error }}
-                                    </div>
-                            {% endif %}
-
-                    <form class="registration-form" id="registrationForm" method="POST" action="{{ url_for('tournament_register', tournament_id=tournament['Tournament Id']) }}">
+                    <form class="registration-form" id="registrationForm" method="POST" action="{{ url_for('register_player', tournament_id=tournament['Tournament Id']) }}">
                         <!-- Player Search -->
                         <div class="form-group required player-search-container" style="position: relative;">
                             <label for="playerSearch">Search Player</label>
@@ -1120,7 +1153,7 @@
                             <div id="categoryCheckboxes">
                                 {% for category in categories %}
                                 <div class="category-checkbox">
-                                    <input type="checkbox" id="category_{{ loop.index }}" name="category" value="{{ category.Category }}" data-fee="{{ category.Fee }}" data-first-prize="{{ category['First Prize'] }}" data-second-prize="{{ category['Second Prize'] }}" data-third-prize="{{ category['Third Prize'] }}" data-format="{{ category.Format }}">
+                                    <input type="checkbox" id="category_{{ loop.index }}" name="categories" value="{{ category.Category }}" data-fee="{{ category.Fee }}" data-first-prize="{{ category['First Prize'] }}" data-second-prize="{{ category['Second Prize'] }}" data-third-prize="{{ category['Third Prize'] }}" data-format="{{ category.Format }}">
                                     <label for="category_{{ loop.index }}">{{ category.Category }} (₹{{ category.Fee }})</label>
                                 </div>
                                 {% endfor %}
@@ -1142,6 +1175,7 @@
                             Pay Fee and Add Entry
                         </button>
                     </form>
+                    {% endif %}
                 </div>
             </div>
 
@@ -1149,6 +1183,14 @@
             <div id="entries" class="tab-content">
                 <div id="section-entries" class="detail-card">
                     <h2 class="section-title">Tournament Entries</h2>
+                    
+                    <!-- Success Message -->
+                    {% if request.args.get('message') %}
+                    <div class="success-message">
+                        {{ request.args.get('message') }}
+                    </div>
+                    {% endif %}
+
                     <div class="entries-container">
                         <!-- Girls Categories -->
                         <div class="category-section">
@@ -1288,13 +1330,20 @@
             history.pushState(null, null, '#' + tabName);
         }
 
-        // Handle initial tab based on URL hash
+        // Handle initial tab based on URL hash or parameters
         document.addEventListener('DOMContentLoaded', function() {
-            const hash = window.location.hash.substring(1);
-            if (hash) {
-                showTab(hash);
+            const urlParams = new URLSearchParams(window.location.search);
+            const tabParam = urlParams.get('tab');
+            
+            if (tabParam) {
+                showTab(tabParam);
             } else {
-                showTab('info'); // Default to info tab
+                const hash = window.location.hash.substring(1);
+                if (hash) {
+                    showTab(hash);
+                } else {
+                    showTab('info'); // Default to info tab
+                }
             }
         });
 
