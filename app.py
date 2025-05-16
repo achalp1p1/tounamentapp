@@ -1778,6 +1778,90 @@ def get_full_tournament_categories(tournament_id):
 # Make the function available to templates
 app.jinja_env.globals.update(get_full_tournament_categories=get_full_tournament_categories)
 
+@app.route('/edit-player/<player_id>', methods=['GET', 'POST'])
+def edit_player(player_id):
+    if request.method == 'POST':
+        try:
+            # Get form data
+            player_data = {
+                'Player ID': player_id,
+                'Name': request.form.get('player_name'),
+                'Date of Birth': request.form.get('date_of_birth'),
+                'Gender': request.form.get('gender'),
+                'Phone Number': request.form.get('phone'),
+                'Email ID': request.form.get('email'),
+                'State': request.form.get('state'),
+                'School/Institution': request.form.get('institution'),
+                'Academy': request.form.get('academy'),
+                'Address': request.form.get('address'),
+                'TTFI ID': request.form.get('ttfi_id'),
+                'DSTTA ID': request.form.get('dstta_id'),
+                'UPI ID': request.form.get('upi_id')
+            }
+
+            # Read all players
+            players = []
+            with open(PLAYERS_CSV, 'r', newline='', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                fieldnames = reader.fieldnames
+                for row in reader:
+                    if row['Player ID'] == player_id:
+                        players.append(player_data)
+                    else:
+                        players.append(row)
+
+            # Write back to CSV
+            with open(PLAYERS_CSV, 'w', newline='', encoding='utf-8') as file:
+                writer = csv.DictWriter(file, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerows(players)
+
+            flash('Player updated successfully!', 'success')
+            return redirect(url_for('list_players'))
+
+        except Exception as e:
+            flash(f'Error updating player: {str(e)}', 'error')
+            return redirect(url_for('edit_player', player_id=player_id))
+
+    else:
+        # Get player data
+        player = None
+        with open(PLAYERS_CSV, 'r', newline='', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if row['Player ID'] == player_id:
+                    player = row
+                    break
+
+        if not player:
+            flash('Player not found', 'error')
+            return redirect(url_for('list_players'))
+
+        return render_template('edit_player.html', player=player)
+
+@app.route('/delete-player/<player_id>', methods=['POST'])
+def delete_player(player_id):
+    try:
+        # Read all players
+        players = []
+        with open(PLAYERS_CSV, 'r', newline='', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            fieldnames = reader.fieldnames
+            for row in reader:
+                if row['Player ID'] != player_id:
+                    players.append(row)
+
+        # Write back to CSV
+        with open(PLAYERS_CSV, 'w', newline='', encoding='utf-8') as file:
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(players)
+
+        return jsonify({'success': True})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
 if __name__ == '__main__':
     # Initialize CSV files if they don't exist
     initialize_tournament_registrations_csv()

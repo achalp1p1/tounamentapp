@@ -2,6 +2,8 @@
 <html>
 <head>
     <title>Players List - Tournament App</title>
+    <!-- Font Awesome for icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -94,6 +96,44 @@
             color: #1e3c72;
             font-size: 1.1em;
         }
+        .action-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            margin-right: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 6px;
+            border-radius: 8px;
+            text-decoration: none;
+            vertical-align: middle;
+        }
+        
+        .edit-link {
+            color: #1e3c72;
+        }
+        
+        .edit-link:hover {
+            background: #e8f0fe;
+            color: #2a5298;
+            transform: translateY(-1px);
+        }
+        
+        .delete-link {
+            color: #dc2626;
+        }
+        
+        .delete-link:hover {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .action-link i {
+            margin-right: 4px;
+        }
     </style>
 </head>
 <body>
@@ -121,6 +161,7 @@
                         <th>Date of Birth</th>
                         <th>Gender</th>
                         <th>State</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -131,6 +172,16 @@
                         <td>{{ player['Date of Birth'].split('-')[2] }}-{{ player['Date of Birth'].split('-')[1] }}-{{ player['Date of Birth'].split('-')[0] }}</td>
                         <td>{{ player['Gender'] }}</td>
                         <td>{{ player['State'] }}</td>
+                        <td>
+                            <a href="{{ url_for('edit_player', player_id=player['Player ID']) }}" class="action-link edit-link" title="Edit Player">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="#" class="action-link delete-link" 
+                               onclick="deletePlayer('{{ player['Player ID'] }}', '{{ player['Name'] }}')" 
+                               title="Delete Player">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -172,6 +223,30 @@
                 totalPlayersElement.textContent = visibleCount;
             });
         });
+
+        function deletePlayer(playerId, playerName) {
+            if (confirm(`Are you sure you want to delete player "${playerName}"?`)) {
+                fetch(`/delete-player/${playerId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Player deleted successfully');
+                        location.reload();
+                    } else {
+                        alert('Error deleting player: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error deleting player');
+                });
+            }
+        }
     </script>
 </body>
 </html> 

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Player - Tournament App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1e3c72;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #1e3c72;
+            box-shadow: 0 0 0 2px rgba(30,60,114,0.1);
+        }
+        .required {
+            color: #d32f2f;
+            margin-left: 4px;
+        }
+        .button-group {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary {
+            background: #1e3c72;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #2a5298;
+        }
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        .error {
+            color: #d32f2f;
+            padding: 10px;
+            background: #ffebee;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .success {
+            color: #155724;
+            padding: 10px;
+            background: #d4edda;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    {% include 'menu.html' %}
+    <div class="container">
+        <h1>Edit Player</h1>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <div class="form-group">
+                <label for="player_name">Name <span class="required">*</span></label>
+                <input type="text" id="player_name" name="player_name" value="{{ player['Name'] }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="date_of_birth">Date of Birth <span class="required">*</span></label>
+                <input type="date" id="date_of_birth" name="date_of_birth" value="{{ player['Date of Birth'] }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="gender">Gender <span class="required">*</span></label>
+                <select id="gender" name="gender" required>
+                    <option value="Male" {% if player['Gender'] == 'Male' %}selected{% endif %}>Male</option>
+                    <option value="Female" {% if player['Gender'] == 'Female' %}selected{% endif %}>Female</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone Number <span class="required">*</span></label>
+                <input type="tel" id="phone" name="phone" value="{{ player['Phone Number'] }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email ID</label>
+                <input type="email" id="email" name="email" value="{{ player['Email ID'] }}">
+            </div>
+
+            <div class="form-group">
+                <label for="state">State <span class="required">*</span></label>
+                <input type="text" id="state" name="state" value="{{ player['State'] }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="institution">School/Institution</label>
+                <input type="text" id="institution" name="institution" value="{{ player['School/Institution'] }}">
+            </div>
+
+            <div class="form-group">
+                <label for="academy">Academy</label>
+                <input type="text" id="academy" name="academy" value="{{ player['Academy'] }}">
+            </div>
+
+            <div class="form-group">
+                <label for="address">Address</label>
+                <input type="text" id="address" name="address" value="{{ player['Address'] }}">
+            </div>
+
+            <div class="form-group">
+                <label for="ttfi_id">TTFI ID</label>
+                <input type="text" id="ttfi_id" name="ttfi_id" value="{{ player['TTFI ID'] }}">
+            </div>
+
+            <div class="form-group">
+                <label for="dstta_id">DSTTA ID</label>
+                <input type="text" id="dstta_id" name="dstta_id" value="{{ player['DSTTA ID'] }}">
+            </div>
+
+            <div class="form-group">
+                <label for="upi_id">UPI ID</label>
+                <input type="text" id="upi_id" name="upi_id" value="{{ player['UPI ID'] }}">
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a href="{{ url_for('list_players') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html> 
