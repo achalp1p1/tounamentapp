@@ -898,6 +898,45 @@
             font-size: 16px;
             border: 1px solid #f5c6cb;
         }
+
+        /* Countdown Timer Styles */
+        .countdown-container {
+            max-width: 300px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .countdown-item {
+            text-align: center;
+            background: white;
+            padding: 0.25rem;
+            border-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            min-width: 45px;
+        }
+
+        .countdown-separator {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #2563eb;
+            margin-top: -0.25rem;
+        }
+
+        .countdown-value {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #2563eb;
+            margin-bottom: 0.1rem;
+        }
+
+        .countdown-label {
+            font-size: 0.65rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
     </style>
 </head>
 <body>
@@ -948,52 +987,82 @@
                 <div id="section-info" class="detail-card">
                     <div class="detail-section">
                         <h2 class="section-title">Tournament Information</h2>
-                        <div class="detail-grid">
-                            <div class="detail-item">
-                                <div class="detail-label">Tournament Name</div>
-                                <div class="detail-value">
-                                    {{ tournament['Tournament Name'] }}
-                                    {% if tournament_status == 'Upcoming' %}
-                                        <span class="status-badge upcoming">Upcoming</span>
-                                    {% elif tournament_status == 'In Progress' %}
-                                        <span class="status-badge in-progress">In Progress</span>
-                                    {% elif tournament_status == 'Completed' %}
-                                        <span class="status-badge completed">Completed</span>
-                                    {% else %}
-                                        <span class="status-badge">Unknown</span>
-                                    {% endif %}
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <div class="detail-label">Tournament Name</div>
+                                    <div class="detail-value">
+                                        {{ tournament['Tournament Name'] }}
+                                        {% if tournament_status == 'Upcoming' %}
+                                            <span class="status-badge upcoming">Upcoming</span>
+                                        {% elif tournament_status == 'In Progress' %}
+                                            <span class="status-badge in-progress">In Progress</span>
+                                        {% elif tournament_status == 'Completed' %}
+                                            <span class="status-badge completed">Completed</span>
+                                        {% else %}
+                                            <span class="status-badge">Unknown</span>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Venue</div>
-                                <div class="detail-value">{{ tournament['Venue'] }}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Tournament Dates</div>
-                                <div class="detail-value">
-                                    {% set start_date = tournament['Start Date'].split('-') %}
-                                    {% set end_date = tournament['End Date'].split('-') %}
-                                    {{ start_date[2] }} {{ ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][start_date[1]|int - 1] }} {{ start_date[0] }} - 
-                                    {{ end_date[2] }} {{ ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][end_date[1]|int - 1] }} {{ end_date[0] }}
+                                <div class="detail-item">
+                                    <div class="detail-label">Venue</div>
+                                    <div class="detail-value">{{ tournament['Venue'] }}</div>
                                 </div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Last Registration Date</div>
-                                <div class="detail-value">
-                                    {% set reg_date = tournament['Last Registration Date'].split('-') %}
-                                    {{ reg_date[2] }} {{ ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][reg_date[1]|int - 1] }} {{ reg_date[0] }}
+                                <div class="detail-item">
+                                    <div class="detail-label">Tournament Dates</div>
+                                    <div class="detail-value">
+                                        {% set start_date = tournament['Start Date'].split('-') %}
+                                        {% set end_date = tournament['End Date'].split('-') %}
+                                        {{ start_date[2] }} {{ ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][start_date[1]|int - 1] }} {{ start_date[0] }} - 
+                                        {{ end_date[2] }} {{ ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][end_date[1]|int - 1] }} {{ end_date[0] }}
+                                    </div>
                                 </div>
+                                {% if tournament_status == 'Upcoming' %}
+                                <div class="detail-item">
+                                    <div class="detail-label">Time Until Start</div>
+                                    <div class="detail-value">
+                                        <div class="countdown-container flex items-center gap-1">
+                                            <div class="countdown-item">
+                                                <div class="countdown-value" id="days">00</div>
+                                                <div class="countdown-label">Days</div>
+                                            </div>
+                                            <div class="countdown-separator">:</div>
+                                            <div class="countdown-item">
+                                                <div class="countdown-value" id="hours">00</div>
+                                                <div class="countdown-label">Hours</div>
+                                            </div>
+                                            <div class="countdown-separator">:</div>
+                                            <div class="countdown-item">
+                                                <div class="countdown-value" id="minutes">00</div>
+                                                <div class="countdown-label">Mins</div>
+                                            </div>
+                                            <div class="countdown-separator">:</div>
+                                            <div class="countdown-item">
+                                                <div class="countdown-value" id="seconds">00</div>
+                                                <div class="countdown-label">Secs</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                <div class="detail-item">
+                                    <div class="detail-label">Last Registration Date</div>
+                                    <div class="detail-value">
+                                        {% set reg_date = tournament['Last Registration Date'].split('-') %}
+                                        {{ reg_date[2] }} {{ ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][reg_date[1]|int - 1] }} {{ reg_date[0] }}
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Total Prize</div>
+                                    <div class="detail-value">₹{{ tournament['Total Prize'] }}</div>
+                                </div>
+                                {% if tournament['General Information'] %}
+                                <div class="detail-item" style="grid-column: 1 / -1;">
+                                    <div class="detail-label">Tournament Description</div>
+                                    <div class="detail-value" style="white-space: pre-line;">{{ tournament['General Information'] }}</div>
+                                </div>
+                                {% endif %}
                             </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Total Prize</div>
-                                <div class="detail-value">₹{{ tournament['Total Prize'] }}</div>
-                            </div>
-                            {% if tournament['General Information'] %}
-                            <div class="detail-item" style="grid-column: 1 / -1;">
-                                <div class="detail-label">Tournament Description</div>
-                                <div class="detail-value" style="white-space: pre-line;">{{ tournament['General Information'] }}</div>
-                        </div>
-                            {% endif %}
                         </div>
                     </div>
 
@@ -1629,6 +1698,37 @@
                 }
             });
         });
+    </script>
+
+    <script>
+        // Countdown Timer Function
+        function updateCountdown() {
+            const startDate = new Date("{{ tournament['Start Date'] }}").getTime();
+            const now = new Date().getTime();
+            const distance = startDate - now;
+
+            if (distance < 0) {
+                document.getElementById("days").innerHTML = "00";
+                document.getElementById("hours").innerHTML = "00";
+                document.getElementById("minutes").innerHTML = "00";
+                document.getElementById("seconds").innerHTML = "00";
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            document.getElementById("days").innerHTML = days.toString().padStart(2, '0');
+            document.getElementById("hours").innerHTML = hours.toString().padStart(2, '0');
+            document.getElementById("minutes").innerHTML = minutes.toString().padStart(2, '0');
+            document.getElementById("seconds").innerHTML = seconds.toString().padStart(2, '0');
+        }
+
+        // Update countdown every second
+        setInterval(updateCountdown, 1000);
+        updateCountdown(); // Initial call
     </script>
 </body>
 </html>
