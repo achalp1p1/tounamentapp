@@ -1,10 +1,6 @@
 Tournament Id,Tournament Name,Category,Fee,First Prize,Second Prize,Third Prize,Format
 250003,Badminton 1,u11 Boys,100,100,1000,10,Knockout
 250003,Badminton 1,u13 Girls,,,,,Knockout
-250001,T1,Veterans 39+ Men,,,,,Knockout
-250001,T1,u19 Boys,,,,,Knockout
-250001,T1,u11 Girls,,,,,Knockout
-250001,T1,u9,,,,,Knockout
 250005,another one2,u11 Boys,100,100,1000,10,Knockout
 250005,another one2,Women,100,,,,Knockout
 250007,profession,u11 Girls,,,,,Knockout
@@ -37,3 +33,13 @@ Tournament Id,Tournament Name,Category,Fee,First Prize,Second Prize,Third Prize,
 250011,NewMay14Tournament,u11 Girls,600,,,,Knockout
 250011,NewMay14Tournament,u9,600,,,,Knockout
 250011,NewMay14Tournament,u11 Boys,600,,,,Knockout
+250012,T1,u11 Girls,100,,,,Knockout
+250013,profession,u11 Girls,100,,,,Knockout
+250014,jjjj,u11 Girls,1000,,,,Knockout
+250014,jjjj,u11 Boys,10,,,,Knockout
+250015,profession,u11 Girls,10000,,,,Knockout
+250015,profession,u13 Girls,1000,,,,Knockout
+250001,T1,Veterans 39+ Men,,,,,Knockout
+250001,T1,u19 Boys,,,,,Knockout
+250001,T1,u11 Girls,,,,,Knockout
+250001,T1,u9,,,,,Knockout

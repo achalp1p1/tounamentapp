@@ -543,20 +543,27 @@
                             </span>
                         </td>
                         <td>
+                            <!-- Info Icon - First -->
                             <a href="{{ url_for('tournament_info', tournament_id=tournament['Tournament Id']) }}" class="icon-btn info-icon" title="Info">
                                 <i class="fas fa-info-circle"></i>
                             </a>
-                            <a href="{{ url_for('edit_tournament', tournament_id=tournament['Tournament Id']) }}" class="icon-btn edit-icon" title="Edit">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <a href="#" onclick="deleteTournament('{{ tournament['Tournament Id'] }}')" class="icon-btn delete-icon" title="Delete">
-                                <i class="fas fa-trash-alt"></i>
-                            </a>
+                            
+                            <!-- Add Player Icon - Second -->
                             {% if tournament['Last Registration Date'] >= current_date %}
                             <a href="{{ url_for('tournament_info', tournament_id=tournament['Tournament Id']) }}#register" class="icon-btn add-player-icon" title="Add Player">
                                 <i class="fas fa-user-plus"></i>
                             </a>
                             {% endif %}
+                            
+                            <!-- Edit Icon - Third -->
+                            <a href="{{ url_for('edit_tournament', tournament_id=tournament['Tournament Id']) }}" class="icon-btn edit-icon" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            
+                            <!-- Delete Icon - Fourth -->
+                            <a href="#" onclick="deleteTournament('{{ tournament['Tournament Id'] }}')" class="icon-btn delete-icon" title="Delete">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
                         </td>
                     </tr>
                     {% endfor %}

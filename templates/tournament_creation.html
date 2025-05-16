@@ -625,6 +625,63 @@
         .form-group.error .error-message {
             display: block;
         }
+
+        /* Add these styles to the existing <style> section */
+        .fee-field {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .fee-label {
+            margin-bottom: 5px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .required-marker {
+            color: var(--error-color);
+            font-weight: bold;
+        }
+
+        .fee-error {
+            display: none;
+            color: var(--error-color);
+            font-size: 0.8rem;
+            margin-top: 4px;
+        }
+
+        input[name="fees[]"] {
+            border: 1px solid var(--border-color);
+        }
+
+        input[name="fees[]"].error {
+            border-color: var(--error-color);
+        }
+
+        input[name="fees[]"].error + .fee-error {
+            display: block;
+        }
+
+        .fee-input-container {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .fee-input-container input {
+            width: 100%;
+            padding-right: 20px;
+        }
+
+        .required-asterisk {
+            color: var(--error-color);
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -786,7 +843,10 @@
                             <option value="Knockout">Knockout</option>
                             <option value="Two Stage">Two Stage</option>
                         </select>
-                        <input type="text" name="fees[]" placeholder="Fee">
+                        <div class="fee-input-container">
+                            <input type="text" name="fees[]" placeholder="Fee" required>
+                            <span class="required-asterisk">*</span>
+                        </div>
                         <div class="prize-section">
                             <div>Prizes</div>
                             <input type="text" name="first_prizes[]" placeholder="First Prize">
@@ -797,6 +857,16 @@
                             <i class="material-icons">delete</i>
                         </button>
                     `;
+                    
+                    // Add event listener for fee validation
+                    const feeInput = newRow.querySelector('input[name="fees[]"]');
+                    feeInput.addEventListener('input', function() {
+                        validateFeeField(this);
+                    });
+                    
+                    feeInput.addEventListener('blur', function() {
+                        validateFeeField(this);
+                    });
                     
                     // Add click handler for remove button
                     newRow.querySelector('.remove-category').addEventListener('click', function() {
@@ -1024,6 +1094,17 @@
                     }
                 });
             });
+
+            // Add this validation function
+            function validateFeeField(input) {
+                if (!input.value.trim()) {
+                    input.classList.add('error');
+                    return false;
+                } else {
+                    input.classList.remove('error');
+                    return true;
+                }
+            }
         });
     </script>
 </body>

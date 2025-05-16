@@ -352,6 +352,17 @@ def generate_tournament_id():
 def create_tournament():
     if request.method == 'POST':
         try:
+            # Get category information first
+            categories = request.form.getlist('categories[]')
+            fees = request.form.getlist('fees[]')
+            
+            # Validate fees
+            for i, fee in enumerate(fees):
+                if not fee.strip():
+                    category_name = categories[i] if i < len(categories) else f"Category #{i+1}"
+                    flash(f'Fee is required for {category_name}', 'error')
+                    return redirect(url_for('create_tournament'))
+            
             # Generate tournament ID in the format YYXXXX
             tournament_id = generate_tournament_id()
             
