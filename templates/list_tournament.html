@@ -87,6 +87,7 @@
             border-radius: 16px;
             overflow: hidden;
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            table-layout: fixed;
         }
         th, td { 
             padding: 16px 20px; 
@@ -106,6 +107,44 @@
         }
         tr:hover { 
             background: #f8fafc; 
+        }
+
+        /* Adjust table column widths */
+        table th:nth-child(1), 
+        table td:nth-child(1) { /* Tournament Name column */
+            width: 20%; /* Reduced width for Tournament Name column */
+            min-width: 150px;
+        }
+
+        table th:nth-child(2), 
+        table td:nth-child(2) { /* Venue column */
+            width: 8%;
+            min-width: 100px;
+        }
+
+        table th:nth-child(3), 
+        table td:nth-child(3) { /* Tournament Dates column */
+            width: 20%;
+            min-width: 160px;
+        }
+
+        table th:nth-child(4), 
+        table td:nth-child(4) { /* Last Date of Entry column */
+            width: 15%;
+            min-width: 120px;
+        }
+
+        table th:nth-child(5), 
+        table td:nth-child(5) { /* Categories column */
+            width: 15%;
+            min-width: 120px;
+        }
+
+        table th:nth-child(6), 
+        table td:nth-child(6) { /* Actions column */
+            width: 20%; /* Further increased width for Actions column */
+            min-width: 200px;
+            white-space: nowrap; /* Prevent icons from wrapping */
         }
 
         /* Modern Links and Buttons */
@@ -133,10 +172,10 @@
             border: none;
             color: #1e3c72;
             font-size: 1.2em;
-            margin-right: 12px;
+            margin-right: 8px; /* Reduce space between icons */
             cursor: pointer;
             transition: all 0.2s;
-            padding: 8px;
+            padding: 6px; /* Make icons slightly smaller */
             border-radius: 8px;
             text-decoration: none;
             vertical-align: middle;
@@ -419,6 +458,27 @@
             background-color: #1e3c72;
             color: white;
         }
+
+        .info-icon {
+            color: #2196F3;
+        }
+
+        .info-icon:hover {
+            background: #e3f2fd;
+            color: #1976D2;
+            transform: translateY(-1px);
+        }
+
+        /* Add horizontal scroll for small screens */
+        @media (max-width: 1200px) {
+            .content {
+                overflow-x: auto;
+            }
+            
+            table {
+                min-width: 1000px; /* Ensure minimum width to prevent squishing */
+            }
+        }
     </style>
 </head>
 <body>
@@ -483,6 +543,9 @@
                             </span>
                         </td>
                         <td>
+                            <a href="{{ url_for('tournament_info', tournament_id=tournament['Tournament Id']) }}" class="icon-btn info-icon" title="Info">
+                                <i class="fas fa-info-circle"></i>
+                            </a>
                             <a href="{{ url_for('edit_tournament', tournament_id=tournament['Tournament Id']) }}" class="icon-btn edit-icon" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </a>
