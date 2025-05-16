@@ -849,133 +849,88 @@ def tournament_info(tournament_id):
         print(traceback.format_exc())
         return "Error loading tournament details", 500
 
-@app.route('/tournament/<tournament_id>/register', methods=['GET', 'POST'])
-def tournament_register(tournament_id):
+@app.route('/tournament/<tournament_id>/register', methods=['POST'])
+def register_player(tournament_id):
     try:
-        # Read tournament data
-        with open('tournaments.csv', 'r', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
-            tournament = next((row for row in reader if row['Tournament Id'] == tournament_id), None)
+        print(f"=== Starting register_player route ===")
+        print(f"Tournament ID: {tournament_id}")
+        print(f"Form data: {request.form}")
         
-        if not tournament:
-            return redirect(url_for('list_tournament'))
+        player_id = request.form.get('player_id')
+        categories = request.form.getlist('categories')
+        
+        if not player_id or not categories:
+            return "Missing required fields", 400
 
-        # Read tournament categories
-        with open('tournament_categories.csv', 'r', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
-            categories = [row for row in reader if row['Tournament Id'] == tournament_id]
-
-        if request.method == 'POST':
-            try:
-                # Get form data
-                player_id = request.form.get('player_id')
-                categories = request.form.getlist('category')  # Changed to getlist to get multiple categories
-
-                if not categories:
-                    return render_template('tournament_details.html', 
-                                        tournament=tournament,
-                                        categories=categories,
-                                        error='Please select at least one category')
-
-                # If no player_id, create new player
-                if not player_id:
-                    # Get player data from form
-                    player_data = {
-                        'Player_Name': request.form.get('player_name'),
-                        'Date_of_Birth': request.form.get('dob'),
-                        'Gender': request.form.get('gender'),
-                        'Phone': request.form.get('phone'),
-                        'Email': request.form.get('email'),
-                        'Address': request.form.get('address'),
-                        'State': request.form.get('state'),
-                        'TTFI_ID': request.form.get('ttfi_id'),
-                        'DSTTA_ID': request.form.get('dstta_id'),
-                        'Institution': request.form.get('institution'),
-                        'Academy': request.form.get('academy'),
-                        'UPI_ID': request.form.get('upi_id')
-                    }
-
-                    # Generate new player ID
-                    with open('players_data.csv', 'r', encoding='utf-8') as file:
-                        reader = csv.DictReader(file)
-                        existing_ids = [row['Player_Id'] for row in reader]
+        # Get player details from players_data.csv
+        player_details = None
+        with open('players_data.csv', 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if row['Player ID'] == player_id:
+                    player_details = row
+                    break
                     
-                    player_id = f"P{len(existing_ids) + 1:04d}"
-                    player_data['Player_Id'] = player_id
+        if not player_details:
+            return "Player not found", 404
 
-                    # Add new player to players_data.csv
-                    with open('players_data.csv', 'a', newline='', encoding='utf-8') as file:
-                        writer = csv.DictWriter(file, fieldnames=player_data.keys())
-                        writer.writerow(player_data)
+        # Check for existing registrations in the same categories
+        existing_registrations = []
+        if os.path.exists('tournament_registrations.csv'):
+            with open('tournament_registrations.csv', 'r', newline='', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    if (row['Tournament Id'] == tournament_id and 
+                        row['Player ID'] == player_id and 
+                        row['Category'] in categories and
+                        row['Status'].lower() == 'active'):
+                        existing_registrations.append(row['Category'])
 
-                # Add registrations for each category
-                for category in categories:
-                    registration_data = {
-                        'Tournament Id': tournament_id,
-                        'Player Id': player_id,
-                        'Registration Date': datetime.now().strftime('%Y-%m-%d'),
-                        'Category': category,
-                        'Status': 'Active'  # Changed from 'Registered' to 'Active'
-                    }
-                    
-                    with open('tournament_registrations.csv', 'a', newline='', encoding='utf-8') as file:
-                        writer = csv.DictWriter(file, fieldnames=registration_data.keys())
-                        writer.writerow(registration_data)
+        if existing_registrations:
+            error_message = f"Player is already registered in the following categories: {', '.join(existing_registrations)}"
+            return redirect(url_for('tournament_info', 
+                                  tournament_id=tournament_id, 
+                                  tab='register', 
+                                  error=error_message))
 
-                    # Get player details for tournament_draw.csv
-                    player_details = None
-                    with open('players_data.csv', 'r', encoding='utf-8') as file:
-                        reader = csv.DictReader(file)
-                        for row in reader:
-                            if row['Player ID'] == player_id:
-                                player_details = row
-                                break
+        # Add registrations for each category
+        for category in categories:
+            registration_data = {
+                'Tournament Id': tournament_id,
+                'Player ID': player_id,
+                'Registration Date': datetime.now().strftime('%Y-%m-%d'),
+                'Category': category,
+                'Status': 'Active'
+            }
+            
+            with open('tournament_registrations.csv', 'a', newline='', encoding='utf-8') as file:
+                writer = csv.DictWriter(file, fieldnames=registration_data.keys())
+                writer.writerow(registration_data)
 
-                    if player_details:
-                        # Add entry to tournament_draw.csv
-                        draw_data = {
-                            'Rank': '',  # Empty initially, will be filled during draw creation
-                            'Seeding': '',  # Empty initially, will be filled during seeding
-                            'TournamentId': tournament_id,
-                            'Player Name': player_details['Name'],
-                            'School/Institution': player_details.get('School/Institution', ''),
-                            'Category': category
-                        }
+            # Add entry to tournament_draw.csv
+            draw_entry = {
+                'Rank': '',
+                'Seeding': '',
+                'TournamentId': tournament_id,
+                'Player Name': player_details['Name'],
+                'School/Institution': player_details['School/Institution'],
+                'Category': category
+            }
+            
+            with open('Tournament_draw.csv', 'a', newline='', encoding='utf-8') as file:
+                writer = csv.DictWriter(file, fieldnames=draw_entry.keys())
+                writer.writerow(draw_entry)
 
-                        # Check if tournament_draw.csv exists
-                        file_exists = os.path.exists('Tournament_draw.csv')
-                        
-                        with open('Tournament_draw.csv', 'a', newline='', encoding='utf-8') as file:
-                            fieldnames = ['Rank', 'Seeding', 'TournamentId', 'Player Name', 'School/Institution', 'Category']
-                            writer = csv.DictWriter(file, fieldnames=fieldnames)
-                            
-                            # Write header if file doesn't exist
-                            if not file_exists:
-                                writer.writeheader()
-                            
-                            writer.writerow(draw_data)
-
-                return render_template('tournament_details.html',
-                                    tournament=tournament,
-                                    categories=categories,
-                                    success='Player registered successfully!')
-
-            except Exception as e:
-                print(f"Error in registration: {str(e)}")
-                print(traceback.format_exc())
-                return render_template('tournament_details.html',
-                                    tournament=tournament,
-                                    categories=categories,
-                                    error='Error registering player. Please try again.')
-
-        return render_template('tournament_details.html',
-                            tournament=tournament,
-                            categories=categories)
+        # Redirect to the Entries tab with success message
+        return redirect(url_for('tournament_info', 
+                              tournament_id=tournament_id, 
+                              tab='entries', 
+                              message='Player entry has been added successfully'))
 
     except Exception as e:
-        print(f"Error in tournament_register: {str(e)}")
+        print(f"Error in register_player route: {str(e)}")
         print(traceback.format_exc())
-        return redirect(url_for('list_tournament'))
+        return "Error registering player", 500
 
 def get_tournament_categories(tournament_id):
     """Get categories specific to a tournament from the tournament_categories.csv file"""
