@@ -489,7 +489,12 @@ def list_tournament():
         
         # Filter tournaments based on search query
         if search_query:
-            tournaments = [t for t in tournaments if search_query.lower() in t['Tournament Name'].lower()]
+            search_query = search_query.lower()
+            tournaments = [t for t in tournaments if (
+                search_query in t['Tournament Name'].lower() or
+                search_query in t['Venue'].lower() or
+                search_query in t['Categories'].lower()
+            )]
         
         # Filter tournaments based on schedule
         if schedule_filter and schedule_filter != 'all':
