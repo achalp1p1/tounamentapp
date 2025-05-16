@@ -2,79 +2,171 @@
 <html>
 <head>
     <title>Edit Player - Tournament App</title>
+    <!-- Font Awesome for icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        * {
             margin: 0;
-            padding: 20px;
-            background: #f5f5f5;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
         }
+
+        body {
+            min-height: 100vh;
+            background: #f8f9fa;
+        }
+
         .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 2vh;
+            text-align: center;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        h1 {
+
+        .header h1 {
+            font-size: min(32px, 4vh);
+            margin-bottom: 1vh;
+            color: white;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .content {
+            flex: 1;
+            padding: 3vh 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .registration-form {
+            background: white;
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .form-container {
+            display: flex;
+            gap: 32px;
+            margin-top: 20px;
+        }
+
+        .mandatory-fields,
+        .additional-fields {
+            flex: 1;
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease;
+        }
+
+        .mandatory-fields:hover,
+        .additional-fields:hover {
+            transform: translateY(-2px);
+        }
+
+        .section-title {
             color: #1e3c72;
-            margin-bottom: 20px;
+            font-size: 1.2em;
+            font-weight: 500;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e0e0e0;
         }
+
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 1.5rem;
         }
+
         label {
             display: block;
-            margin-bottom: 5px;
-            color: #333;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
             font-weight: 500;
+            font-size: 0.95rem;
         }
-        input, select {
+
+        .required::after {
+            content: " *";
+            color: #dc3545;
+        }
+
+        input, select, textarea {
             width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
+            padding: 12px;
+            border: 1px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            background: #f8f9fa;
         }
-        input:focus, select:focus {
+
+        input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: #1e3c72;
-            box-shadow: 0 0 0 2px rgba(30,60,114,0.1);
+            box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+            background: white;
         }
-        .required {
-            color: #d32f2f;
-            margin-left: 4px;
-        }
+
         .button-group {
-            margin-top: 20px;
+            margin-top: 2rem;
             display: flex;
-            gap: 10px;
+            gap: 1rem;
+            justify-content: flex-end;
         }
+
         .btn {
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 4px;
-            cursor: pointer;
+            border-radius: 8px;
             font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
             text-decoration: none;
             display: inline-block;
         }
+
         .btn-primary {
             background: #1e3c72;
             color: white;
         }
+
         .btn-primary:hover {
             background: #2a5298;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+
         .btn-secondary {
-            background: #f5f5f5;
-            color: #333;
-            border: 1px solid #ddd;
-        }
-        .btn-secondary:hover {
             background: #e0e0e0;
+            color: #333;
         }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
         .error {
             color: #d32f2f;
             padding: 10px;
@@ -82,6 +174,7 @@
             border-radius: 4px;
             margin-bottom: 20px;
         }
+
         .success {
             color: #155724;
             padding: 10px;
@@ -89,90 +182,207 @@
             border-radius: 4px;
             margin-bottom: 20px;
         }
+
+        @media (max-width: 768px) {
+            .form-container {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .mandatory-fields,
+            .additional-fields {
+                width: 100%;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
     </style>
 </head>
 <body>
     {% include 'menu.html' %}
     <div class="container">
-        <h1>Edit Player</h1>
-        
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="{{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+        <div class="header">
+            <h1>Edit Player</h1>
+        </div>
 
-        <form method="POST">
-            <div class="form-group">
-                <label for="player_name">Name <span class="required">*</span></label>
-                <input type="text" id="player_name" name="player_name" value="{{ player['Name'] }}" required>
-            </div>
+        <div class="content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
 
-            <div class="form-group">
-                <label for="date_of_birth">Date of Birth <span class="required">*</span></label>
-                <input type="date" id="date_of_birth" name="date_of_birth" value="{{ player['Date of Birth'] }}" required>
-            </div>
+            <form method="POST" class="registration-form">
+                <div class="form-container">
+                    <!-- Left Column - Required Fields -->
+                    <div class="mandatory-fields">
+                        <div class="section-title">Basic Information</div>
+                        
+                        <div class="form-group">
+                            <label for="player_name" class="required">Name</label>
+                            <input type="text" id="player_name" name="player_name" value="{{ player['Name'] }}" 
+                                   readonly
+                                   style="background-color: #f8f9fa; cursor: not-allowed;"
+                                   title="Player name cannot be modified">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="date_of_birth" class="required">Date of Birth</label>
+                            <input type="date" id="date_of_birth" name="date_of_birth" value="{{ player['Date of Birth'] }}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="gender" class="required">Gender</label>
+                            <select id="gender" name="gender" required>
+                                <option value="">Select Gender</option>
+                                <option value="Male" {% if player['Gender'] == 'Male' %}selected{% endif %}>Male</option>
+                                <option value="Female" {% if player['Gender'] == 'Female' %}selected{% endif %}>Female</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phone" class="required">Phone Number</label>
+                            <input type="tel" id="phone" name="phone" value="{{ player['Phone Number'] }}" required
+                                   placeholder="Enter 10-digit mobile number"
+                                   pattern="[0-9]{10}"
+                                   title="Please enter a valid 10-digit phone number">
+                        </div>
 
-            <div class="form-group">
-                <label for="gender">Gender <span class="required">*</span></label>
-                <select id="gender" name="gender" required>
-                    <option value="Male" {% if player['Gender'] == 'Male' %}selected{% endif %}>Male</option>
-                    <option value="Female" {% if player['Gender'] == 'Female' %}selected{% endif %}>Female</option>
-                </select>
-            </div>
+                        <div class="form-group">
+                            <label for="email">Email ID</label>
+                            <input type="email" id="email" name="email" value="{{ player['Email ID'] }}"
+                                   placeholder="Enter email address">
+                        </div>
+                    </div>
 
-            <div class="form-group">
-                <label for="phone">Phone Number <span class="required">*</span></label>
-                <input type="tel" id="phone" name="phone" value="{{ player['Phone Number'] }}" required>
-            </div>
+                    <!-- Right Column - Additional Fields -->
+                    <div class="additional-fields">
+                        <div class="section-title">Additional Information</div>
 
-            <div class="form-group">
-                <label for="email">Email ID</label>
-                <input type="email" id="email" name="email" value="{{ player['Email ID'] }}">
-            </div>
+                        <div class="form-group">
+                            <label for="state" class="required">State</label>
+                            <select id="state" name="state" required>
+                                <option value="">Select State</option>
+                                <option value="Andhra Pradesh" {% if player['State'] == 'Andhra Pradesh' %}selected{% endif %}>Andhra Pradesh</option>
+                                <option value="Arunachal Pradesh" {% if player['State'] == 'Arunachal Pradesh' %}selected{% endif %}>Arunachal Pradesh</option>
+                                <option value="Assam" {% if player['State'] == 'Assam' %}selected{% endif %}>Assam</option>
+                                <option value="Bihar" {% if player['State'] == 'Bihar' %}selected{% endif %}>Bihar</option>
+                                <option value="Chhattisgarh" {% if player['State'] == 'Chhattisgarh' %}selected{% endif %}>Chhattisgarh</option>
+                                <option value="Goa" {% if player['State'] == 'Goa' %}selected{% endif %}>Goa</option>
+                                <option value="Gujarat" {% if player['State'] == 'Gujarat' %}selected{% endif %}>Gujarat</option>
+                                <option value="Haryana" {% if player['State'] == 'Haryana' %}selected{% endif %}>Haryana</option>
+                                <option value="Himachal Pradesh" {% if player['State'] == 'Himachal Pradesh' %}selected{% endif %}>Himachal Pradesh</option>
+                                <option value="Jharkhand" {% if player['State'] == 'Jharkhand' %}selected{% endif %}>Jharkhand</option>
+                                <option value="Karnataka" {% if player['State'] == 'Karnataka' %}selected{% endif %}>Karnataka</option>
+                                <option value="Kerala" {% if player['State'] == 'Kerala' %}selected{% endif %}>Kerala</option>
+                                <option value="Madhya Pradesh" {% if player['State'] == 'Madhya Pradesh' %}selected{% endif %}>Madhya Pradesh</option>
+                                <option value="Maharashtra" {% if player['State'] == 'Maharashtra' %}selected{% endif %}>Maharashtra</option>
+                                <option value="Manipur" {% if player['State'] == 'Manipur' %}selected{% endif %}>Manipur</option>
+                                <option value="Meghalaya" {% if player['State'] == 'Meghalaya' %}selected{% endif %}>Meghalaya</option>
+                                <option value="Mizoram" {% if player['State'] == 'Mizoram' %}selected{% endif %}>Mizoram</option>
+                                <option value="Nagaland" {% if player['State'] == 'Nagaland' %}selected{% endif %}>Nagaland</option>
+                                <option value="Odisha" {% if player['State'] == 'Odisha' %}selected{% endif %}>Odisha</option>
+                                <option value="Punjab" {% if player['State'] == 'Punjab' %}selected{% endif %}>Punjab</option>
+                                <option value="Rajasthan" {% if player['State'] == 'Rajasthan' %}selected{% endif %}>Rajasthan</option>
+                                <option value="Sikkim" {% if player['State'] == 'Sikkim' %}selected{% endif %}>Sikkim</option>
+                                <option value="Tamil Nadu" {% if player['State'] == 'Tamil Nadu' %}selected{% endif %}>Tamil Nadu</option>
+                                <option value="Telangana" {% if player['State'] == 'Telangana' %}selected{% endif %}>Telangana</option>
+                                <option value="Tripura" {% if player['State'] == 'Tripura' %}selected{% endif %}>Tripura</option>
+                                <option value="Uttar Pradesh" {% if player['State'] == 'Uttar Pradesh' %}selected{% endif %}>Uttar Pradesh</option>
+                                <option value="Uttarakhand" {% if player['State'] == 'Uttarakhand' %}selected{% endif %}>Uttarakhand</option>
+                                <option value="West Bengal" {% if player['State'] == 'West Bengal' %}selected{% endif %}>West Bengal</option>
+                                <option value="Delhi" {% if player['State'] == 'Delhi' %}selected{% endif %}>Delhi</option>
+                            </select>
+                        </div>
 
-            <div class="form-group">
-                <label for="state">State <span class="required">*</span></label>
-                <input type="text" id="state" name="state" value="{{ player['State'] }}" required>
-            </div>
+                        <div class="form-group">
+                            <label for="institution">School/Institution</label>
+                            <input type="text" id="institution" name="institution" value="{{ player['School/Institution'] }}"
+                                   placeholder="Enter school or institution name">
+                        </div>
 
-            <div class="form-group">
-                <label for="institution">School/Institution</label>
-                <input type="text" id="institution" name="institution" value="{{ player['School/Institution'] }}">
-            </div>
+                        <div class="form-group">
+                            <label for="academy">Academy</label>
+                            <input type="text" id="academy" name="academy" value="{{ player['Academy'] }}"
+                                   placeholder="Enter academy name">
+                        </div>
 
-            <div class="form-group">
-                <label for="academy">Academy</label>
-                <input type="text" id="academy" name="academy" value="{{ player['Academy'] }}">
-            </div>
+                        <div class="form-group">
+                            <label for="address">Address</label>
+                            <textarea id="address" name="address" placeholder="Enter complete address">{{ player['Address'] }}</textarea>
+                        </div>
 
-            <div class="form-group">
-                <label for="address">Address</label>
-                <input type="text" id="address" name="address" value="{{ player['Address'] }}">
-            </div>
+                        <div class="form-group">
+                            <label for="ttfi_id">TTFI ID</label>
+                            <input type="text" id="ttfi_id" name="ttfi_id" value="{{ player['TTFI ID'] }}"
+                                   placeholder="Enter TTFI ID">
+                        </div>
 
-            <div class="form-group">
-                <label for="ttfi_id">TTFI ID</label>
-                <input type="text" id="ttfi_id" name="ttfi_id" value="{{ player['TTFI ID'] }}">
-            </div>
+                        <div class="form-group" id="dstta_id_container" {% if player['State'] != 'Delhi' %}style="display: none;"{% endif %}>
+                            <label for="dstta_id">DSTTA ID</label>
+                            <input type="text" id="dstta_id" name="dstta_id" value="{{ player['DSTTA ID'] }}"
+                                   placeholder="Enter DSTTA ID">
+                        </div>
 
-            <div class="form-group">
-                <label for="dstta_id">DSTTA ID</label>
-                <input type="text" id="dstta_id" name="dstta_id" value="{{ player['DSTTA ID'] }}">
-            </div>
+                        <div class="form-group">
+                            <label for="upi_id">UPI ID</label>
+                            <input type="text" id="upi_id" name="upi_id" value="{{ player['UPI ID'] }}"
+                                   placeholder="Enter UPI ID">
+                        </div>
+                    </div>
+                </div>
 
-            <div class="form-group">
-                <label for="upi_id">UPI ID</label>
-                <input type="text" id="upi_id" name="upi_id" value="{{ player['UPI ID'] }}">
-            </div>
+                <div style="margin-top: 2rem; padding: 1rem; background-color: #fff3cd; border: 1px solid #ffeeba; border-radius: 8px; color: #856404;">
+                    <strong>Important Note:</strong> Please fill in all information carefully and accurately. This information will be used for printing digital certificates for players. Any errors in the information may affect the certificate generation process.
+                </div>
 
-            <div class="button-group">
-                <button type="submit" class="btn btn-primary">Save Changes</button>
-                <a href="{{ url_for('list_players') }}" class="btn btn-secondary">Cancel</a>
-            </div>
-        </form>
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a href="{{ url_for('list_players') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
     </div>
+
+    <script>
+        document.getElementById('phone').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
+        });
+
+        document.getElementById('email').addEventListener('input', function() {
+            if (this.value && !this.value.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+                this.setCustomValidity('Please enter a valid email address');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+
+        document.getElementById('upi_id').addEventListener('input', function() {
+            if (this.value && !this.value.includes('@')) {
+                this.setCustomValidity('Please enter a valid UPI ID');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+
+        document.getElementById('state').addEventListener('change', function() {
+            const dsttaContainer = document.getElementById('dstta_id_container');
+            if (this.value === 'Delhi') {
+                dsttaContainer.style.display = 'block';
+            } else {
+                dsttaContainer.style.display = 'none';
+                document.getElementById('dstta_id').value = '';
+            }
+        });
+    </script>
 </body>
 </html> 
