@@ -458,6 +458,10 @@ def list_tournament():
         with open('tournaments.csv', 'r') as f:
             reader = csv.DictReader(f)
             for row in reader:
+                # Skip only if status is explicitly "inactive"
+                if row.get('Status', '').lower() == 'inactive':
+                    continue
+                
                 # Calculate tournament status
                 start_date = datetime.strptime(row['Start Date'], '%Y-%m-%d').date()
                 end_date = datetime.strptime(row['End Date'], '%Y-%m-%d').date()
