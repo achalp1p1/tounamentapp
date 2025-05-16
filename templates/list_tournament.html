@@ -172,10 +172,10 @@
             border: none;
             color: #1e3c72;
             font-size: 1.2em;
-            margin-right: 8px; /* Reduce space between icons */
+            margin-right: 12px;
             cursor: pointer;
             transition: all 0.2s;
-            padding: 6px; /* Make icons slightly smaller */
+            padding: 8px;
             border-radius: 8px;
             text-decoration: none;
             vertical-align: middle;
@@ -190,6 +190,19 @@
         }
         .delete-icon:hover {
             background-color: #dc3545;
+            color: white;
+        }
+        .info-icon:hover {
+            background: #e8f0fe;
+            color: #2a5298;
+            transform: translateY(-1px);
+        }
+        .add-player-icon {
+            background-color: #f8f9fa;
+            color: #1e3c72;
+        }
+        .add-player-icon:hover {
+            background-color: #1e3c72;
             color: white;
         }
 
@@ -449,26 +462,6 @@
             background: #9E9E9E;
         }
 
-        .add-player-icon {
-            background-color: #f8f9fa;
-            color: #1e3c72;
-        }
-
-        .add-player-icon:hover {
-            background-color: #1e3c72;
-            color: white;
-        }
-
-        .info-icon {
-            color: #2196F3;
-        }
-
-        .info-icon:hover {
-            background: #e3f2fd;
-            color: #1976D2;
-            transform: translateY(-1px);
-        }
-
         /* Add horizontal scroll for small screens */
         @media (max-width: 1200px) {
             .content {
@@ -543,27 +536,20 @@
                             </span>
                         </td>
                         <td>
-                            <!-- Info Icon - First -->
-                            <a href="{{ url_for('tournament_info', tournament_id=tournament['Tournament Id']) }}" class="icon-btn info-icon" title="Info">
+                            <a href="{{ url_for('tournament_info', tournament_id=tournament['Tournament Id']) }}" class="icon-btn info-icon" title="View Details">
                                 <i class="fas fa-info-circle"></i>
                             </a>
-                            
-                            <!-- Add Player Icon - Second -->
+                            <a href="{{ url_for('edit_tournament', tournament_id=tournament['Tournament Id']) }}" class="icon-btn edit-icon" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="#" onclick="deleteTournament('{{ tournament['Tournament Id'] }}')" class="icon-btn delete-icon" title="Delete">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
                             {% if tournament['Last Registration Date'] >= current_date %}
                             <a href="{{ url_for('tournament_info', tournament_id=tournament['Tournament Id']) }}#register" class="icon-btn add-player-icon" title="Add Player">
                                 <i class="fas fa-user-plus"></i>
                             </a>
                             {% endif %}
-                            
-                            <!-- Edit Icon - Third -->
-                            <a href="{{ url_for('edit_tournament', tournament_id=tournament['Tournament Id']) }}" class="icon-btn edit-icon" title="Edit">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            
-                            <!-- Delete Icon - Fourth -->
-                            <a href="#" onclick="deleteTournament('{{ tournament['Tournament Id'] }}')" class="icon-btn delete-icon" title="Delete">
-                                <i class="fas fa-trash-alt"></i>
-                            </a>
                         </td>
                     </tr>
                     {% endfor %}
