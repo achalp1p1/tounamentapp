@@ -39,7 +39,7 @@ Tournament Id,Tournament Name,Category,Fee,First Prize,Second Prize,Third Prize,
 250014,jjjj,u11 Boys,10,,,,Knockout
 250015,profession,u11 Girls,10000,,,,Knockout
 250015,profession,u13 Girls,1000,,,,Knockout
-250001,T1,Veterans 39+ Men,,,,,Knockout
-250001,T1,u19 Boys,,,,,Knockout
-250001,T1,u11 Girls,,,,,Knockout
-250001,T1,u9,,,,,Knockout
+250001,T1,u13 Girls,22,,,,Knockout
+250001,T1,Veterans 39+ Men,100,,,,Knockout
+250001,T1,u19 Boys,200,,,,Knockout
+250001,T1,u11 Girls,200,,,,Knockout

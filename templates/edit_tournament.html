@@ -486,6 +486,25 @@
             font-size: 1.2rem;
             line-height: 1;
         }
+
+        .fee-input-container {
+            position: relative;
+        }
+
+        .required-asterisk {
+            position: absolute;
+            top: 0;
+            right: 0;
+            color: var(--error-color);
+            font-size: 0.8rem;
+        }
+
+        .fee-error {
+            display: none;
+            color: var(--error-color);
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
     </style>
 </head>
 <body>
@@ -560,7 +579,11 @@
                             <option value="Knockout" {% if category_info.Format == 'Knockout' %}selected{% endif %}>Knockout</option>
                             <option value="Two Stage" {% if category_info.Format == 'Two Stage' %}selected{% endif %}>Two Stage</option>
                         </select>
-                        <input type="text" name="fees[]" value="{{ category_info.Fee }}" placeholder="Fee">
+                        <div class="fee-input-container">
+                            <input type="text" name="fees[]" value="{{ category_info.Fee }}" placeholder="Fee" required>
+                            <span class="required-asterisk">*</span>
+                            <div class="fee-error">Fee is required for this category</div>
+                        </div>
                         <div class="prize-section">
                             <div>Prizes</div>
                             <input type="text" name="first_prizes[]" value="{{ category_info['First Prize'] }}" placeholder="First Prize">
@@ -652,7 +675,7 @@
 
             // Function to add category row
             function addCategoryRow(category) {
-                console.log("Adding category row for:", category); // Debug log
+                console.log("Adding category row for:", category);
                 
                 // Check if row already exists
                 const existingRows = Array.from(categoriesContainer.querySelectorAll('select[name="categories[]"]'))
@@ -672,7 +695,11 @@
                             <option value="Knockout">Knockout</option>
                             <option value="Two Stage">Two Stage</option>
                         </select>
-                        <input type="text" name="fees[]" placeholder="Fee">
+                        <div class="fee-input-container">
+                            <input type="text" name="fees[]" placeholder="Fee" required>
+                            <span class="required-asterisk">*</span>
+                            <div class="fee-error">Fee is required for this category</div>
+                        </div>
                         <div class="prize-section">
                             <div>Prizes</div>
                             <input type="text" name="first_prizes[]" placeholder="First Prize">
@@ -684,9 +711,20 @@
                         </button>
                     `;
                     
+                    // Add event listener for fee validation
+                    const feeInput = newRow.querySelector('input[name="fees[]"]');
+                    const feeError = newRow.querySelector('.fee-error');
+                    
+                    feeInput.addEventListener('input', function() {
+                        validateFeeField(this, feeError);
+                    });
+                    
+                    feeInput.addEventListener('blur', function() {
+                        validateFeeField(this, feeError);
+                    });
+                    
                     // Add click handler for remove button
                     newRow.querySelector('.remove-category').addEventListener('click', function() {
-                        // Uncheck the corresponding checkbox
                         const checkbox = document.querySelector(`input[value="${category}"]`);
                         if (checkbox) {
                             checkbox.checked = false;
@@ -701,7 +739,7 @@
                     } else {
                         categoriesContainer.appendChild(newRow);
                     }
-                    console.log("Row added successfully"); // Debug log
+                    console.log("Row added successfully");
                 }
             }
             
@@ -824,6 +862,19 @@
             
             // Remove the preview item
             previewItem.remove();
+        }
+
+        // Add validation function for fee field
+        function validateFeeField(input, errorElement) {
+            if (!input.value.trim()) {
+                input.classList.add('error');
+                errorElement.style.display = 'block';
+                return false;
+            } else {
+                input.classList.remove('error');
+                errorElement.style.display = 'none';
+                return true;
+            }
         }
     </script>
 </body>
