@@ -195,6 +195,43 @@
             .registration-form {
                 padding: 20px;
             }
+
+            /* Make bank details grid single column on mobile */
+            .bank-details-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            /* Adjust header for mobile */
+            .header {
+                padding: 1vh;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .logo {
+                height: 32px;
+                left: 12px;
+            }
+
+            /* Adjust form spacing for mobile */
+            .form-group {
+                margin-bottom: 1rem;
+            }
+
+            /* Make inputs more touch-friendly */
+            input, select, textarea {
+                font-size: 16px; /* Prevents zoom on iOS */
+                padding: 10px;
+            }
+
+            /* Adjust button size for mobile */
+            button {
+                width: 100%;
+                padding: 14px 20px;
+                font-size: 16px;
+            }
         }
 
         #dstta_id_container {
@@ -351,11 +388,52 @@
                                           placeholder="Enter complete address"></textarea>
                             </div>
 
-                            <div class="form-group">
-                                <label for="upi_id">UPI ID or Bank A/C Details</label>
-                                <input type="text" id="upi_id" name="upi_id" 
-                                       placeholder="Enter UPI ID or bank account details">
-                                <small style="display: block; margin-top: 4px; color: #666; font-size: 0.85em;">This information will be used for prize money distribution</small>
+                            <div class="section-title" style="margin-top: 2rem;">Bank Account Details (For Prize Money Transfer)</div>
+                            
+                            <div class="bank-details-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="account_holder_name">Account Holder Name</label>
+                                    <input type="text" id="account_holder_name" name="account_holder_name" 
+                                           placeholder="Enter account holder name"
+                                           class="form-control">
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="account_number">Account Number</label>
+                                    <input type="text" id="account_number" name="account_number" 
+                                           placeholder="Enter bank account number"
+                                           class="form-control">
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="bank_name">Bank Name</label>
+                                    <input type="text" id="bank_name" name="bank_name" 
+                                           placeholder="Enter bank name"
+                                           class="form-control">
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="branch_name">Branch Name</label>
+                                    <input type="text" id="branch_name" name="branch_name" 
+                                           placeholder="Enter branch name"
+                                           class="form-control">
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="ifsc_code">IFSC Code</label>
+                                    <input type="text" id="ifsc_code" name="ifsc_code" 
+                                           placeholder="Enter IFSC code"
+                                           class="form-control"
+                                           pattern="^[A-Z]{4}0[A-Z0-9]{6}$"
+                                           title="Please enter a valid IFSC code (e.g., SBIN0001234)">
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="upi_id">UPI ID</label>
+                                    <input type="text" id="upi_id" name="upi_id" 
+                                           placeholder="Enter UPI ID"
+                                           class="form-control">
+                                </div>
                             </div>
                             
                             <div id="dstta_id_container" class="form-group" style="display: none;">
