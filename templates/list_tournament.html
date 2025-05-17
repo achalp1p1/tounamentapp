@@ -483,19 +483,12 @@
         </div>
         <div class="content">
             <div class="search-container">
-                <form action="{{ url_for('list_tournament') }}" method="get" class="search-form" id="search-form">
-                    <div class="search-controls">
-                        <div class="search-input-group">
-                            <input type="text" name="search" id="search-input" placeholder="Search tournaments..." value="{{ search_query }}">
-                        </div>
-                        <div class="filter-container">
-                            <select name="schedule" id="schedule-filter" class="filter-select">
-                                <option value="upcoming" {% if schedule_filter == 'upcoming' %}selected{% endif %}>Upcoming</option>
-                                <option value="in-progress" {% if schedule_filter == 'in-progress' %}selected{% endif %}>In Progress</option>
-                                <option value="completed" {% if schedule_filter == 'completed' %}selected{% endif %}>Completed</option>
-                                <option value="all" {% if schedule_filter == 'all' %}selected{% endif %}>All</option>
-                            </select>
-                        </div>
+                <form id="search-form" method="get" style="margin-bottom: 16px; display: flex; align-items: center; gap: 16px;">
+                    <input type="text" name="search" class="search-input" placeholder="Search tournaments..." value="{{ search_query }}" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+                    <div class="status-filter-group" style="display: flex; gap: 8px; align-items: center;">
+                        <label><input type="checkbox" name="status" value="upcoming" {% if 'upcoming' in statuses %}checked{% endif %}> Upcoming</label>
+                        <label><input type="checkbox" name="status" value="in-progress" {% if 'in-progress' in statuses %}checked{% endif %}> In Progress</label>
+                        <label><input type="checkbox" name="status" value="completed" {% if 'completed' in statuses %}checked{% endif %}> Completed</label>
                     </div>
                 </form>
             </div>
@@ -691,20 +684,11 @@
             });
         });
 
-        // Auto-submit when schedule filter changes
-        document.getElementById('schedule-filter').addEventListener('change', function() {
-            document.getElementById('search-form').submit();
-        });
-        
-        // Auto-submit when user types in search box (with debounce)
-        const searchInput = document.getElementById('search-input');
-        let debounceTimer;
-        
-        searchInput.addEventListener('input', function() {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(function() {
+        // Auto-submit when a status checkbox changes
+        document.querySelectorAll('.status-filter-group input[type="checkbox"]').forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
                 document.getElementById('search-form').submit();
-            }, 500); // 500ms delay before submitting
+            });
         });
     </script>
 </body>

@@ -462,7 +462,10 @@ def create_tournament():
 @app.route('/list-tournament')
 def list_tournament():
     search_query = request.args.get('search', '')
-    schedule_filter = request.args.get('schedule', 'all')
+    statuses = request.args.getlist('status')
+    # Set default filter if none selected
+    if not statuses:
+        statuses = ['upcoming', 'in-progress']
     try:
         # Read tournament data
         tournaments = []
@@ -497,8 +500,8 @@ def list_tournament():
             )]
         
         # Filter tournaments based on schedule
-        if schedule_filter and schedule_filter != 'all':
-            tournaments = [t for t in tournaments if t['status'] == schedule_filter]
+        if statuses:
+            tournaments = [t for t in tournaments if t['status'] in statuses]
 
         # Read tournament categories
         tournament_categories = {}
@@ -517,13 +520,13 @@ def list_tournament():
                              tournaments=tournaments,
                              tournament_categories=tournament_categories,
                              search_query=search_query,
-                             schedule_filter=schedule_filter,
+                             statuses=statuses,
                              current_date=datetime.now().strftime('%Y-%m-%d'))
     except Exception as e:
         return render_template('list_tournament.html', 
                              error=str(e),
                              search_query=search_query,
-                             schedule_filter=schedule_filter,
+                             statuses=statuses,
                              current_date=datetime.now().strftime('%Y-%m-%d'))
 
 @app.route('/delete-tournament/<tournament_id>', methods=['POST'])
