@@ -472,6 +472,30 @@
                 min-width: 1000px; /* Ensure minimum width to prevent squishing */
             }
         }
+
+        /* Sorting styles */
+        .sortable {
+            cursor: pointer;
+            position: relative;
+            padding-right: 30px !important;
+        }
+        .sortable i {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #fff;
+            opacity: 0.5;
+        }
+        .sortable:hover i {
+            opacity: 1;
+        }
+        .sortable.asc i:before {
+            content: "\f0de";  /* fa-sort-up */
+        }
+        .sortable.desc i:before {
+            content: "\f0dd";  /* fa-sort-down */
+        }
     </style>
 </head>
 <body>
@@ -500,10 +524,22 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Tournament Name</th>
-                        <th>Venue</th>
-                        <th>Tournament Dates</th>
-                        <th>Last Date of Entry</th>
+                        <th class="sortable" data-sort="name">
+                            Tournament Name
+                            <i class="fas fa-sort"></i>
+                        </th>
+                        <th class="sortable" data-sort="venue">
+                            Venue
+                            <i class="fas fa-sort"></i>
+                        </th>
+                        <th class="sortable" data-sort="dates">
+                            Tournament Dates
+                            <i class="fas fa-sort"></i>
+                        </th>
+                        <th class="sortable" data-sort="last_date">
+                            Last Date of Entry
+                            <i class="fas fa-sort"></i>
+                        </th>
                         <th>Categories</th>
                         <th>Actions</th>
                     </tr>
@@ -688,6 +724,59 @@
         document.querySelectorAll('.status-filter-group input[type="checkbox"]').forEach(function(checkbox) {
             checkbox.addEventListener('change', function() {
                 document.getElementById('search-form').submit();
+            });
+        });
+
+        // Add sorting functionality
+        document.querySelectorAll('.sortable').forEach(header => {
+            header.addEventListener('click', function() {
+                const sortField = this.dataset.sort;
+                const currentDirection = this.classList.contains('asc') ? 'desc' : 'asc';
+                
+                // Remove sort classes from all headers
+                document.querySelectorAll('.sortable').forEach(h => {
+                    h.classList.remove('asc', 'desc');
+                });
+                
+                // Add sort class to clicked header
+                this.classList.add(currentDirection);
+                
+                // Get all rows except header
+                const tbody = document.querySelector('table tbody');
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                
+                // Sort rows
+                rows.sort((a, b) => {
+                    let aVal, bVal;
+                    
+                    switch(sortField) {
+                        case 'name':
+                            aVal = a.cells[0].textContent.trim();
+                            bVal = b.cells[0].textContent.trim();
+                            break;
+                        case 'venue':
+                            aVal = a.cells[1].textContent.trim();
+                            bVal = b.cells[1].textContent.trim();
+                            break;
+                        case 'dates':
+                            aVal = a.cells[2].textContent.trim();
+                            bVal = b.cells[2].textContent.trim();
+                            break;
+                        case 'last_date':
+                            aVal = a.cells[3].textContent.trim();
+                            bVal = b.cells[3].textContent.trim();
+                            break;
+                    }
+                    
+                    if (currentDirection === 'asc') {
+                        return aVal.localeCompare(bVal);
+                    } else {
+                        return bVal.localeCompare(aVal);
+                    }
+                });
+                
+                // Reorder rows in the table
+                rows.forEach(row => tbody.appendChild(row));
             });
         });
     </script>
