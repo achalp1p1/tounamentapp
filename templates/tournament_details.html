@@ -1134,6 +1134,15 @@
                     {% endif %}
 
                     <form class="registration-form" id="registrationForm" method="POST" action="{{ url_for('register_player', tournament_id=tournament['Tournament Id']) }}">
+                        <!-- Selected Players List -->
+                        <div id="selectedPlayersList" class="selected-players-list" style="margin-bottom: 20px; display: none;">
+                            <h3 style="color: #1e3c72; margin-bottom: 15px;">Selected Players</h3>
+                            <div id="selectedPlayersContainer"></div>
+                            <button type="button" id="addAnotherPlayer" class="submit-button" style="background: #4CAF50; margin-top: 10px;">
+                                <i class="fas fa-plus"></i> Add Another Player
+                            </button>
+                        </div>
+
                         <!-- Player Search -->
                         <div class="form-group required player-search-container" style="position: relative;">
                             <label for="playerSearch">Search Player</label>
@@ -1149,73 +1158,6 @@
                             </div>
                         </div>
 
-                        <!-- New Player Form (shown when no player is selected) -->
-                        <div id="newPlayerForm" style="display: none;">
-                            <div class="form-group required">
-                                <label for="player_name">Player Name</label>
-                                <input type="text" id="player_name" name="player_name" class="form-control">
-                            </div>
-
-                            <div class="form-group required">
-                                <label for="dob">Date of Birth</label>
-                                <input type="date" id="dob" name="dob" class="form-control">
-                            </div>
-
-                            <div class="form-group required">
-                                <label for="gender">Gender</label>
-                                <select id="gender" name="gender" class="form-control">
-                                    <option value="">Select Gender</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group required">
-                                <label for="phone">Phone Number</label>
-                                <input type="tel" id="phone" name="phone" class="form-control">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="email">Email</label>
-                                <input type="email" id="email" name="email" class="form-control">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="address">Address</label>
-                                <textarea id="address" name="address" class="form-control"></textarea>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="state">State</label>
-                                <input type="text" id="state" name="state" class="form-control">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="ttfi_id">TTFI ID</label>
-                                <input type="text" id="ttfi_id" name="ttfi_id" class="form-control">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="dstta_id">DSTTA ID</label>
-                                <input type="text" id="dstta_id" name="dstta_id" class="form-control">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="institution">School/Institution</label>
-                                <input type="text" id="institution" name="institution" class="form-control">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="academy">Academy</label>
-                                <input type="text" id="academy" name="academy" class="form-control">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="upi_id">UPI ID</label>
-                                <input type="text" id="upi_id" name="upi_id" class="form-control">
-                            </div>
-                        </div>
-
                         <!-- Category Selection -->
                         <div class="form-group required" id="categorySelection" style="display: none;">
                             <label>Select Categories</label>
@@ -1227,6 +1169,9 @@
                                 </div>
                                 {% endfor %}
                             </div>
+                            <button type="button" id="addPlayerToSelection" class="submit-button" style="background: #4CAF50; margin-top: 10px; display: none;">
+                                <i class="fas fa-plus"></i> Add Player with Selected Categories
+                            </button>
                         </div>
 
                         <!-- Fee Summary -->
@@ -1514,15 +1459,10 @@
 
     <script>
         $(document).ready(function() {
-            let selectedPlayer = null;
+            let selectedPlayers = [];
+            let currentPlayer = null;
             let searchTimeout;
-
-            // Initialize Select2 for categories
-            $('#categories').select2({
-                placeholder: 'Select categories',
-                allowClear: true,
-                width: '100%'
-            });
+            let editingIndex = -1;
 
             // Player search functionality
             $('#playerSearch').on('keyup', function() {
@@ -1531,12 +1471,6 @@
                 
                 if (searchTerm.length < 2) {
                     searchResults.hide();
-                    // Hide category selection and fee summary when search is cleared
-                    $('#categorySelection').hide();
-                    $('#feeSummary').hide();
-                    $('#selectedPlayer').hide();
-                    selectedPlayer = null;
-                    updateSubmitButton();
                     return;
                 }
 
@@ -1579,62 +1513,228 @@
                 }, 300); // 300ms delay
             });
 
-            // Handle player selection
+            // Function to format date
+            function formatDate(dob) {
+                if (!dob) return '';
+                const parts = dob.split('-');
+                if (parts.length === 3) {
+                    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    const day = parts[2].padStart(2, '0');
+                    const month = months[parseInt(parts[1]) - 1];
+                    const year = parts[0];
+                    return `${day} ${month} ${year}`;
+                }
+                return dob;
+            }
+
+            // Handle category selection
+            $('#categoryCheckboxes input[type="checkbox"]').on('change', function() {
+                if (currentPlayer) {
+                    const selectedCategories = $('#categoryCheckboxes input[type="checkbox"]:checked');
+                    
+                    // Show/hide the Add Player button based on category selection
+                    if (selectedCategories.length > 0) {
+                        $('#addPlayerToSelection').show();
+                    } else {
+                        $('#addPlayerToSelection').hide();
+                    }
+                }
+            });
+
+            // Add Player to Selection button click handler
+            $('#addPlayerToSelection').on('click', function() {
+                if (!currentPlayer) {
+                    alert('Please select a player first');
+                    return;
+                }
+
+                const selectedCategories = $('#categoryCheckboxes input[type="checkbox"]:checked');
+                if (selectedCategories.length === 0) {
+                    alert('Please select at least one category');
+                    return;
+                }
+
+                // Check for duplicate player
+                if (editingIndex === -1) {
+                    const isDuplicate = selectedPlayers.some(data => data.player['Player ID'] === currentPlayer['Player ID']);
+                    if (isDuplicate) {
+                        alert('This player has already been added. Please select a different player.');
+                        return;
+                    }
+                }
+
+                const playerData = {
+                    player: currentPlayer,
+                    categories: selectedCategories.map(function() {
+                        return {
+                            name: $(this).val(),
+                            fee: $(this).data('fee')
+                        };
+                    }).get()
+                };
+
+                if (editingIndex === -1) {
+                    selectedPlayers.push(playerData);
+                } else {
+                    selectedPlayers[editingIndex] = playerData;
+                    editingIndex = -1;
+                }
+
+                updateSelectedPlayersList();
+                updateFeeSummary();
+                clearPlayerSelection();
+            });
+
+            // Add Another Player button click handler
+            $('#addAnotherPlayer').on('click', function() {
+                resetPlayerSelection();
+                $('#playerSearch').focus();
+            });
+
+            function clearPlayerSelection() {
+                currentPlayer = null;
+                editingIndex = -1;
+                $('#playerSearch').val('');
+                $('#searchResults').hide();
+                $('#selectedPlayer').hide();
+                $('#categorySelection').hide();
+                $('#categoryCheckboxes input[type="checkbox"]').prop('checked', false);
+                $('#addPlayerToSelection').hide();
+                $('.player-search-container').hide(); // Hide the entire search container
+                updateFeeSummary();
+                updateSubmitButton();
+            }
+
+            function updateSelectedPlayersList() {
+                const container = $('#selectedPlayersContainer');
+                container.empty();
+
+                selectedPlayers.forEach((data, index) => {
+                    const player = data.player;
+                    const categories = data.categories;
+                    
+                    const playerDiv = $('<div>')
+                        .addClass('selected-player-item')
+                        .css({
+                            'background': '#f8f9fa',
+                            'padding': '15px',
+                            'margin-bottom': '10px',
+                            'border-radius': '8px',
+                            'border': '1px solid #e9ecef'
+                        });
+
+                    const playerInfo = $('<div>')
+                        .addClass('player-info')
+                        .html(`
+                            <strong>${player.Name}</strong>
+                            <span style="float: right;">
+                                <button type="button" class="edit-player" data-index="${index}" style="background: none; border: none; color: #1e3c72; cursor: pointer; margin-right: 10px;">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="remove-player" data-index="${index}" style="background: none; border: none; color: #dc3545; cursor: pointer;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </span>
+                            <br>
+                            <small>DOB: ${player['Date of Birth']} - State: ${player.State}</small>
+                        `);
+
+                    const categoriesList = $('<div>')
+                        .addClass('categories-list')
+                        .css('margin-top', '10px');
+
+                    categories.forEach(category => {
+                        categoriesList.append(`
+                            <div style="background: #e9ecef; padding: 5px 10px; border-radius: 4px; display: inline-block; margin: 2px;">
+                                ${category.name} (₹${category.fee})
+                            </div>
+                        `);
+                    });
+
+                    playerDiv.append(playerInfo).append(categoriesList);
+                    container.append(playerDiv);
+                });
+
+                // Show/hide the selected players list
+                $('#selectedPlayersList').toggle(selectedPlayers.length > 0);
+
+                // Add remove player handler
+                $('.remove-player').on('click', function() {
+                    const index = $(this).data('index');
+                    selectedPlayers.splice(index, 1);
+                    updateSelectedPlayersList();
+                    updateFeeSummary();
+                });
+
+                // Add edit player handler
+                $('.edit-player').on('click', function() {
+                    const index = $(this).data('index');
+                    const playerData = selectedPlayers[index];
+                    
+                    // Set current player and categories
+                    currentPlayer = playerData.player;
+                    editingIndex = index;
+                    
+                    // Update UI
+                    $('#playerSearch').val(playerData.player.Name);
+                    $('#selectedPlayer').show();
+                    $('#categorySelection').show();
+                    
+                    // Show player details
+                    const details = $('#playerDetails');
+                    details.html(`
+                        <p><strong>Name:</strong> ${playerData.player.Name}</p>
+                        <p><strong>Date of Birth:</strong> ${formatDate(playerData.player['Date of Birth'])}</p>
+                        <p><strong>Gender:</strong> ${playerData.player.Gender}</p>
+                    `);
+                    
+                    // Check the previously selected categories
+                    $('#categoryCheckboxes input[type="checkbox"]').each(function() {
+                        const categoryName = $(this).val();
+                        const wasSelected = playerData.categories.some(cat => cat.name === categoryName);
+                        $(this).prop('checked', wasSelected);
+                    });
+                    
+                    // Update button text
+                    $('#addPlayerToSelection').text('Update Player Selection');
+                    
+                    // Scroll to category selection
+                    $('#categorySelection')[0].scrollIntoView({ behavior: 'smooth' });
+                });
+            }
+
+            function resetPlayerSelection() {
+                clearPlayerSelection();
+                // Show the player search section
+                $('.player-search-container').show();
+            }
+
+            // Function to select a player
             function selectPlayer(player) {
-                selectedPlayer = player;
+                currentPlayer = player;
                 $('#playerSearch').val(player.Name);
                 $('#searchResults').hide();
                 
-                // Format DOB to dd mmm yyyy
-                function formatDate(dob) {
-                    if (!dob) return '';
-                    const parts = dob.split('-');
-                    if (parts.length === 3) {
-                        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                        const day = parts[2].padStart(2, '0');
-                        const month = months[parseInt(parts[1]) - 1];
-                        const year = parts[0];
-                        return `${day} ${month} ${year}`;
-                    }
-                    return dob;
-                }
-
                 // Show player details
                 const details = $('#playerDetails');
                 details.html(`
                     <p><strong>Name:</strong> ${player.Name}</p>
-                    <p><strong>ID:</strong> ${player['Player ID']}</p>
                     <p><strong>Date of Birth:</strong> ${formatDate(player['Date of Birth'])}</p>
                     <p><strong>Gender:</strong> ${player.Gender}</p>
                 `);
                 $('#selectedPlayer').show();
                 
-                // Show category selection and fee summary
+                // Show category selection
                 $('#categorySelection').show();
-                $('#feeSummary').show();
                 
-                // Add hidden input for player ID
-                if (!$('#player_id').length) {
-                    $('<input>').attr({
-                        type: 'hidden',
-                        id: 'player_id',
-                        name: 'player_id',
-                        value: player['Player ID']
-                    }).appendTo('#registrationForm');
-                } else {
-                    $('#player_id').val(player['Player ID']);
-                }
-
-                // Remove required attributes from new player form fields
-                $('#newPlayerForm input, #newPlayerForm select').removeAttr('required');
+                // Hide the Add Player button initially
+                $('#addPlayerToSelection').hide();
                 
                 // Filter categories based on player's age and gender
                 filterCategories(player);
-                
-                updateSubmitButton();
             }
 
-            // Filter categories based on player's age and gender
+            // Function to filter categories based on player's age and gender
             function filterCategories(player) {
                 const dob = new Date(player['Date of Birth']);
                 const currentYear = new Date().getFullYear();
@@ -1663,17 +1763,17 @@
                     let categoryGender = 'Any';
 
                     if (categoryName.includes('u9')) {
-                        maxAge = 8; // Under 9 means 8 years or younger
+                        maxAge = 8;
                     } else if (categoryName.includes('u11')) {
-                        maxAge = 10; // Under 11 means 10 years or younger
+                        maxAge = 10;
                     } else if (categoryName.includes('u13')) {
-                        maxAge = 12; // Under 13 means 12 years or younger
+                        maxAge = 12;
                     } else if (categoryName.includes('u15')) {
-                        maxAge = 14; // Under 15 means 14 years or younger
+                        maxAge = 14;
                     } else if (categoryName.includes('u17')) {
-                        maxAge = 16; // Under 17 means 16 years or younger
+                        maxAge = 16;
                     } else if (categoryName.includes('u19')) {
-                        maxAge = 18; // Under 19 means 18 years or younger
+                        maxAge = 18;
                     } else if (categoryName.includes('veterans')) {
                         minAge = 39;
                     }
@@ -1707,66 +1807,194 @@
                 }
             }
 
-            // Handle category selection
-            $('#categoryCheckboxes input[type="checkbox"]').on('change', function() {
-                console.log('Category selection changed'); // Debug log
-                updateFeeSummary();
-                updateSubmitButton();
-            });
-
             // Update fee summary
             function updateFeeSummary() {
-                const selectedCheckboxes = $('#categoryCheckboxes input[type="checkbox"]:checked');
                 let totalFee = 0;
                 const feeDetails = $('#feeDetails');
                 feeDetails.empty();
 
-                selectedCheckboxes.each(function() {
-                    const fee = parseFloat($(this).data('fee')) || 0;
-                    totalFee += fee;
+                // Show fee summary if there are selected players
+                if (selectedPlayers.length > 0) {
+                    $('#feeSummary').show();
+                    $('.payment-details-section').show();
+                } else {
+                    $('#feeSummary').hide();
+                    $('.payment-details-section').hide();
+                }
+
+                // Calculate fees for all selected players and their categories
+                selectedPlayers.forEach(data => {
+                    const player = data.player;
+                    const categories = data.categories;
+                    
+                    const playerFee = categories.reduce((sum, cat) => sum + parseFloat(cat.fee), 0);
+                    totalFee += playerFee;
+
+                    // Add player's fee details
                     feeDetails.append(`
-                        <div class="fee-row">
-                            <span>${$(this).next('label').text()}</span>
-                            <span>₹${fee}</span>
+                        <div class="fee-row" style="margin-bottom: 15px;">
+                            <div style="font-weight: 500; color: #1e3c72;">${player.Name}</div>
+                            <div style="margin-left: 20px;">
+                                ${categories.map(cat => `
+                                    <div style="color: #666; margin: 5px 0;">
+                                        ${cat.name} - ₹${cat.fee}
+                                    </div>
+                                `).join('')}
+                                <div style="font-weight: 500; color: #1e3c72; margin-top: 5px;">
+                                    Subtotal: ₹${playerFee}
+                                </div>
+                            </div>
                         </div>
                     `);
                 });
 
+                // Add total fee
+                feeDetails.append(`
+                    <div class="fee-row fee-total" style="margin-top: 20px; padding-top: 15px; border-top: 2px solid #e0e0e0;">
+                        <span style="font-weight: 600; color: #1e3c72;">Total Fee:</span>
+                        <span style="font-weight: 600; color: #1e3c72;">₹${totalFee}</span>
+                    </div>
+                `);
+
                 $('#totalFee').text(`₹${totalFee}`);
+                updateSubmitButton();
             }
 
             // Update submit button state
             function updateSubmitButton() {
-                const hasPlayer = selectedPlayer !== null;
-                const hasCategories = $('#categoryCheckboxes input[type="checkbox"]:checked').length > 0;
-                console.log('Button state:', { hasPlayer, hasCategories }); // Debug log
-                $('#submitButton').prop('disabled', !(hasPlayer && hasCategories));
+                const hasPlayers = selectedPlayers.length > 0;
+                const hasPaymentDetails = $('#payment_id').val() && $('#payment_snapshot').val();
+                
+                // Enable/disable submit button
+                $('#submitButton').prop('disabled', !(hasPlayers && hasPaymentDetails));
             }
 
-            // Handle form submission
+            // Add payment validation handlers
+            $('#payment_id, #payment_snapshot').on('change input', function() {
+                updateSubmitButton();
+            });
+
+            // Modify the form submission
             $('#registrationForm').on('submit', function(e) {
                 e.preventDefault();
                 
-                if (!selectedPlayer) {
-                    alert('Please select a player');
+                if (selectedPlayers.length === 0) {
+                    alert('Please add at least one player');
                     return;
                 }
 
-                const selectedCategories = $('#categoryCheckboxes input[type="checkbox"]:checked');
-                if (selectedCategories.length === 0) {
-                    alert('Please select at least one category');
+                // Validate payment details
+                const paymentId = $('#payment_id').val();
+                const paymentSnapshot = $('#payment_snapshot')[0].files[0];
+
+                if (!paymentId) {
+                    alert('Please enter the payment ID/reference number');
                     return;
                 }
 
-                // Submit the form directly without confirmation
-                this.submit();
-            });
-
-            // Close search results when clicking outside
-            $(document).on('click', function(e) {
-                if (!$(e.target).closest('#playerSearch, #searchResults').length) {
-                    $('#searchResults').hide();
+                if (!paymentSnapshot) {
+                    alert('Please upload the payment screenshot');
+                    return;
                 }
+
+                // Show confirmation dialog
+                const totalFee = selectedPlayers.reduce((sum, data) => 
+                    sum + data.categories.reduce((catSum, cat) => catSum + parseFloat(cat.fee), 0), 0);
+
+                if (!confirm(`Are you sure you want to register ${selectedPlayers.length} player(s) with a total fee of ₹${totalFee}?`)) {
+                    return;
+                }
+
+                // Function to submit a single player registration
+                function submitPlayerRegistration(playerData, index) {
+                    return new Promise((resolve, reject) => {
+                        const formData = new FormData();
+                        
+                        // Add tournament ID
+                        formData.append('tournament_id', '{{ tournament["Tournament Id"] }}');
+                        
+                        // Add player ID
+                        formData.append('player_id', playerData.player['Player ID']);
+                        
+                        // Add categories for this player
+                        playerData.categories.forEach((category) => {
+                            formData.append('categories', category.name);
+                        });
+
+                        // Add payment details
+                        formData.append('payment_id', paymentId);
+                        formData.append('payment_snapshot', paymentSnapshot);
+
+                        // Log the form data
+                        console.log(`Form data for player ${index + 1}:`);
+                        for (let pair of formData.entries()) {
+                            console.log(pair[0] + ': ' + pair[1]);
+                        }
+
+                        // Submit the form
+                        $.ajax({
+                            url: $('#registrationForm').attr('action'),
+                            method: 'POST',
+                            data: formData,
+                            processData: false,
+                            contentType: false,
+                            success: function(response) {
+                                console.log(`Success response for player ${index + 1}:`, response);
+                                resolve(response);
+                            },
+                            error: function(error) {
+                                console.error(`Error details for player ${index + 1}:`, error);
+                                console.error('Response:', error.responseText);
+                                console.error('Status:', error.status);
+                                console.error('Status Text:', error.statusText);
+                                
+                                // Log the form data that was sent
+                                console.log(`Form data that was sent for player ${index + 1}:`);
+                                for (let pair of formData.entries()) {
+                                    console.log(pair[0] + ': ' + pair[1]);
+                                }
+
+                                // Try to parse error response if it's JSON
+                                let errorMessage = 'Please try again';
+                                try {
+                                    const errorResponse = JSON.parse(error.responseText);
+                                    errorMessage = errorResponse.error || errorResponse.message || errorMessage;
+                                } catch (e) {
+                                    errorMessage = error.responseText || errorMessage;
+                                }
+                                
+                                reject(new Error(`Error registering player ${index + 1}: ${errorMessage}`));
+                            }
+                        });
+                    });
+                }
+
+                // Submit all players sequentially
+                async function submitAllPlayers() {
+                    try {
+                        for (let i = 0; i < selectedPlayers.length; i++) {
+                            await submitPlayerRegistration(selectedPlayers[i], i);
+                        }
+                        
+                        // All registrations successful
+                        alert('All registrations successful!');
+                        // Reset the form
+                        selectedPlayers = [];
+                        updateSelectedPlayersList();
+                        updateFeeSummary();
+                        resetPlayerSelection();
+                        // Clear payment fields
+                        $('#payment_id').val('');
+                        $('#payment_snapshot').val('');
+                        // Reload the page after a short delay
+                        setTimeout(() => window.location.reload(), 1000);
+                    } catch (error) {
+                        alert(error.message);
+                    }
+                }
+
+                // Start the submission process
+                submitAllPlayers();
             });
         });
     </script>
