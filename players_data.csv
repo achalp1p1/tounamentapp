@@ -1,12 +1,12 @@
 Player ID,Name,Date of Birth,Gender,Phone Number,Email ID,Address,State,TTFI ID,DSTTA ID,School/Institution,Academy,UPI ID
-25-20-0001,Achal,2020-01-01,Male,9999999901,john.doe@email.com,123 Main Street,Mizoram,TTFI123456,,ABC1 School,XYZ Academy,upi@bank
-25-20-0002,Amit,2020-01-01,Male,9999999901,john.doe@email.com,123 Main Street,Delhi,TTFI123456,DSTTA789,ABC1 School,XYZ Academy,upi@bank
+25-20-0001,Achal,2012-01-01,Male,9999999901,john.doe@email.com,123 Main Street,Mizoram,TTFI123456,,ABC1 School,XYZ Academy,upi@bank
+25-20-0002,Amit,2010-01-01,Male,9999999901,john.doe@email.com,123 Main Street,Delhi,TTFI123456,DSTTA789,ABC1 School,XYZ Academy,upi@bank
 25-20-0003,Ankit,2020-01-01,Male,9999999902,john.doe@email.com,123 Main Street,Delhi,TTFI123456,DSTTA789,ABC2 School,XYZ Academy,upi@bank
 25-20-0004,Deepak,2020-01-01,Male,9999999903,john.doe@email.com,123 Main Street,Delhi,TTFI123456,DSTTA789,ABC2 School,XYZ Academy,upi@bank
 25-20-0005,Sonar,2020-01-01,Male,9999999904,john.doe@email.com,123 Main Street,Delhi,TTFI123456,DSTTA789,ABC2 School,XYZ Academy,upi@bank
 25-20-0006,Arka,2020-01-01,Male,9999999905,john.doe@email.com,123 Main Street,Delhi,TTFI123456,DSTTA789,ABC3 School,XYZ Academy,upi@bank
 25-20-0007,Svara,2020-01-01,Male,9999999906,john.doe@email.com,123 Main Street,Delhi,TTFI123456,DSTTA789,ABC3 School,XYZ Academy,upi@bank
-25-20-0008,Ayushi,2020-01-01,Male,9999999907,john.doe@email.com,123 Main Street,Delhi,TTFI123456,DSTTA789,ABC3 School,XYZ Academy,upi@bank
+25-20-0008,Ayushi,2010-01-01,Male,9999999907,john.doe@email.com,123 Main Street,Delhi,TTFI123456,DSTTA789,ABC3 School,XYZ Academy,upi@bank
 25-20-0011,Ankur,2020-01-01,Male,9999999910,john.doe@email.com,123 Main Street,Delhi,TTFI123456,DSTTA789,ABC4 School,XYZ Academy,upi@bank
 25-20-0012,sumit,2020-01-01,Male,9999999911,john.doe@email.com,123 Main Street,Delhi,TTFI123456,DSTTA789,ABC4 School,XYZ Academy,upi@bank
 25-20-0013,Saket,2020-01-01,Male,9999999912,john.doe@email.com,123 Main Street,Delhi,TTFI123456,DSTTA789,ABC5 School,XYZ Academy,upi@bank

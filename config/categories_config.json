@@ -74,11 +74,6 @@
             "id": "vetw",
             "name": "Veterans 39+ Women",
             "type": "veteran"
-        },
-        {
-            "id": "UX",
-            "name": "UX",
-            "type": "age"
         }
     ]
 }
