@@ -1560,7 +1560,7 @@
                                 players.forEach(function(player) {
                                     const item = $('<div>')
                                         .addClass('search-result-item')
-                                        .text(`${player.Name} (${player['Player ID']})`)
+                                        .html(`<div>${player.Name} - DOB: ${player['Date of Birth']} - State: ${player.State}</div>`)
                                         .data('player', player)
                                         .on('click', function() {
                                             selectPlayer($(this).data('player'));
