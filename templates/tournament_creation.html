@@ -776,6 +776,31 @@
                 <textarea id="general_info" name="general_info" rows="4"></textarea>
             </div>
 
+            <!-- Bank Details section -->
+            <div class="form-section">
+                <label>Bank Details for Payment Collection</label>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="bank_account">Bank Account Details</label>
+                        <textarea id="bank_account" name="bank_account" rows="3" placeholder="Enter bank account number, IFSC code, account holder name, etc."></textarea>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="upi_link">UPI Link (if available)</label>
+                        <input type="text" id="upi_link" name="upi_link" placeholder="Enter UPI payment link">
+                    </div>
+                    <div class="form-group">
+                        <label for="payment_qr">Payment QR Code (if available)</label>
+                        <input type="file" id="payment_qr" name="payment_qr" accept="image/*">
+                        <div id="qr-preview" class="qr-preview" style="display: none;">
+                            <img src="" alt="QR Code Preview" style="max-width: 200px; margin-top: 10px;">
+                            <button type="button" class="remove-qr-btn" onclick="removeQR()">Remove</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <button type="submit" class="submit-btn">Create Tournament</button>
         </form>
 
@@ -1104,6 +1129,25 @@
                     input.classList.remove('error');
                     return true;
                 }
+            }
+
+            // QR Code preview functionality
+            document.getElementById('payment_qr').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const preview = document.getElementById('qr-preview');
+                        preview.querySelector('img').src = e.target.result;
+                        preview.style.display = 'block';
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            function removeQR() {
+                document.getElementById('payment_qr').value = '';
+                document.getElementById('qr-preview').style.display = 'none';
             }
         });
     </script>

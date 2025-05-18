@@ -632,6 +632,36 @@
                 <textarea id="general_info" name="general_info" rows="4">{{ tournament['General Information'] }}</textarea>
             </div>
 
+            <!-- Bank Details section -->
+            <div class="form-section">
+                <label>Bank Details for Payment Collection</label>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="bank_account">Bank Account Details</label>
+                        <textarea id="bank_account" name="bank_account" rows="3" placeholder="Enter bank account number, IFSC code, account holder name, etc.">{{ tournament['Bank Account'] }}</textarea>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="upi_link">UPI Link (if available)</label>
+                        <input type="text" id="upi_link" name="upi_link" placeholder="Enter UPI payment link" value="{{ tournament['UPI Link'] }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="payment_qr">Payment QR Code (if available)</label>
+                        <input type="file" id="payment_qr" name="payment_qr" accept="image/*">
+                        <div id="qr-preview" class="qr-preview" {% if not tournament['Payment QR'] %}style="display: none;"{% endif %}>
+                            {% if tournament['Payment QR'] %}
+                            <img src="{{ url_for('static', filename=tournament['Payment QR'].replace('static/', '')) }}" alt="QR Code Preview" style="max-width: 200px; margin-top: 10px;">
+                            <input type="hidden" name="existing_qr" value="{{ tournament['Payment QR'] }}">
+                            {% else %}
+                            <img src="" alt="QR Code Preview" style="max-width: 200px; margin-top: 10px;">
+                            {% endif %}
+                            <button type="button" class="remove-qr-btn" onclick="removeQR()">Remove</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <button type="submit" class="submit-btn">Save Changes</button>
         </form>
     </div>
@@ -874,6 +904,34 @@
                 input.classList.remove('error');
                 errorElement.style.display = 'none';
                 return true;
+            }
+        }
+
+        // QR Code preview functionality
+        document.getElementById('payment_qr').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('qr-preview');
+                    preview.querySelector('img').src = e.target.result;
+                    preview.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function removeQR() {
+            document.getElementById('payment_qr').value = '';
+            document.getElementById('qr-preview').style.display = 'none';
+            // Add a hidden input to indicate QR should be removed
+            if (!document.getElementById('remove_qr')) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.id = 'remove_qr';
+                input.name = 'remove_qr';
+                input.value = 'true';
+                document.querySelector('form').appendChild(input);
             }
         }
     </script>
