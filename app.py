@@ -1159,7 +1159,8 @@ def get_players():
                         'Name': row['Name'],
                         'Player ID': row['Player ID'],
                         'Date of Birth': row['Date of Birth'],
-                        'Gender': row['Gender']
+                        'Gender': row['Gender'],
+                        'State': row['State']
                     })
                     if len(players) >= 10:  # Limit results to 10 players
                         break

@@ -16,13 +16,6 @@ Tournament Id,Tournament Name,Category,Fee,First Prize,Second Prize,Third Prize,
 250006,profession,u11 Girls,800,,,,Knockout
 250006,profession,u11 Boys,700,,,,Knockout
 250006,profession,u13 Girls,600,,,,Knockout
-250008,another one3,Veterans 39+ Men,,,,,Knockout
-250008,another one3,Men,,,,,Knockout
-250008,another one3,u17 Boys,,,,,Knockout
-250008,another one3,u19 Boys,400,,,,Knockout
-250008,another one3,u11 Girls,300,,,,Knockout
-250008,another one3,u11 Boys,600,,,,Knockout
-250008,another one3,u13 Girls,800,,2,2,Knockout
 250012,T1,u11 Girls,100,,,,Knockout
 250013,profession,u11 Girls,100,,,,Knockout
 250014,jjjj,u11 Girls,1000,,,,Knockout
@@ -52,3 +45,10 @@ Tournament Id,Tournament Name,Category,Fee,First Prize,Second Prize,Third Prize,
 250011,Delhi State May,Men,400,,,,Knockout
 250011,Delhi State May,Veterans 39+ Men,300,,,,Knockout
 250011,Delhi State May,Veterans 39+ Women,200,,,,Knockout
+250008,another one3,Veterans 39+ Men,1000,,,,Knockout
+250008,another one3,Men,1000,,,,Knockout
+250008,another one3,u17 Boys,1000,,,,Knockout
+250008,another one3,u19 Boys,400,,,,Knockout
+250008,another one3,u11 Girls,300,,,,Knockout
+250008,another one3,u11 Boys,600,,,,Knockout
+250008,another one3,u13 Girls,800,,2,2,Knockout
