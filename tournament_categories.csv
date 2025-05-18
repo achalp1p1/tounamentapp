@@ -23,16 +23,6 @@ Tournament Id,Tournament Name,Category,Fee,First Prize,Second Prize,Third Prize,
 250008,another one3,u11 Girls,300,,,,Knockout
 250008,another one3,u11 Boys,600,,,,Knockout
 250008,another one3,u13 Girls,800,,2,2,Knockout
-250011,NewMay14Tournament,Veterans 39+ Women,,,,,Knockout
-250011,NewMay14Tournament,Veterans 39+ Men,,,,,Knockout
-250011,NewMay14Tournament,Men,600,,,,Knockout
-250011,NewMay14Tournament,u15 Girls,600,,,,Knockout
-250011,NewMay14Tournament,u13 Boys,600,,,,Knockout
-250011,NewMay14Tournament,u15 Boys,600,,,,Knockout
-250011,NewMay14Tournament,u13 Girls,600,,,,Knockout
-250011,NewMay14Tournament,u11 Girls,600,,,,Knockout
-250011,NewMay14Tournament,u9,600,,,,Knockout
-250011,NewMay14Tournament,u11 Boys,600,,,,Knockout
 250012,T1,u11 Girls,100,,,,Knockout
 250013,profession,u11 Girls,100,,,,Knockout
 250014,jjjj,u11 Girls,1000,,,,Knockout
@@ -44,3 +34,21 @@ Tournament Id,Tournament Name,Category,Fee,First Prize,Second Prize,Third Prize,
 250001,T1,u19 Boys,200,,,,Knockout
 250001,T1,u11 Girls,200,,,,Knockout
 250016,TT Tounament,u13 Girls,200,,,,Knockout
+250011,Delhi State May,Veterans 39+ Women,1000,,,,Knockout
+250011,Delhi State May,Veterans 39+ Men,1000,,,,Knockout
+250011,Delhi State May,Men,600,,,,Knockout
+250011,Delhi State May,u15 Girls,600,,,,Knockout
+250011,Delhi State May,u13 Boys,600,,,,Knockout
+250011,Delhi State May,u15 Boys,600,,,,Knockout
+250011,Delhi State May,u13 Girls,600,,,,Knockout
+250011,Delhi State May,u11 Girls,600,,,,Knockout
+250011,Delhi State May,u9,600,,,,Knockout
+250011,Delhi State May,u11 Boys,600,,,,Knockout
+250011,Delhi State May,u9,1999,,,,Knockout
+250011,Delhi State May,u13 Boys,800,,,,Knockout
+250011,Delhi State May,u13 Girls,700,,,,Knockout
+250011,Delhi State May,u19 Girls,600,,,,Knockout
+250011,Delhi State May,u19 Boys,500,,,,Knockout
+250011,Delhi State May,Men,400,,,,Knockout
+250011,Delhi State May,Veterans 39+ Men,300,,,,Knockout
+250011,Delhi State May,Veterans 39+ Women,200,,,,Knockout

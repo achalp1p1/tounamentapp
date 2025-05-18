@@ -1237,6 +1237,63 @@
                                 <span>Total Fee:</span>
                                 <span id="totalFee">₹0</span>
                             </div>
+
+                            <!-- Payment Details Section -->
+                            <div class="payment-details-section" style="margin-top: 24px; padding-top: 24px; border-top: 2px solid #e0e0e0;">
+                                <h3 style="color: #1e3c72; margin-bottom: 20px; font-size: 1.2em;">Payment Instructions</h3>
+                                
+                                {% if tournament['Bank Account'] %}
+                                <div class="form-group" style="margin-bottom: 20px;">
+                                    <label style="font-weight: 600; color: #1e3c72;">Bank Account Details</label>
+                                    <div class="bank-details-box" style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0; margin-top: 8px;">
+                                        <pre style="margin: 0; font-size: 15px; white-space: pre-wrap; font-family: 'Roboto', sans-serif;">{{ tournament['Bank Account'] }}</pre>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                {% if tournament['UPI Link'] %}
+                                <div class="form-group" style="margin-bottom: 20px;">
+                                    <label style="font-weight: 600; color: #1e3c72;">UPI Payment Link</label>
+                                    <div class="upi-link-box" style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0; margin-top: 8px;">
+                                        <a href="{{ tournament['UPI Link'] }}" target="_blank" style="color: #1e3c72; text-decoration: none; font-size: 15px; word-break: break-all;">
+                                            <i class="fas fa-external-link-alt" style="margin-right: 5px;"></i>
+                                            {{ tournament['UPI Link'] }}
+                                        </a>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                {% if tournament['Payment QR'] %}
+                                <div class="form-group" style="margin-bottom: 20px;">
+                                    <label style="font-weight: 600; color: #1e3c72;">Scan QR Code to Pay</label>
+                                    <div class="qr-box" style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0; margin-top: 8px; display: flex; align-items: center; justify-content: center;">
+                                        <img src="{{ url_for('static', filename=tournament['Payment QR'].replace('static/', '')) }}" 
+                                             alt="Payment QR Code" 
+                                             style="max-width: 200px; max-height: 200px; border-radius: 4px;">
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <div class="payment-verification" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                                    <h4 style="color: #1e3c72; margin-bottom: 15px;">Payment Verification</h4>
+                                    <div class="form-group required">
+                                        <label for="payment_id" style="font-weight: 600;">Payment ID / Reference Number</label>
+                                        <input type="text" id="payment_id" name="payment_id" class="form-control" 
+                                               placeholder="Enter payment transaction/reference ID" required>
+                                        <small style="color: #666; margin-top: 5px; display: block;">
+                                            Enter the transaction ID or reference number from your payment
+                                        </small>
+                                    </div>
+                                    <div class="form-group required">
+                                        <label for="payment_snapshot" style="font-weight: 600;">Payment Screenshot</label>
+                                        <input type="file" id="payment_snapshot" name="payment_snapshot" 
+                                               class="form-control" accept="image/*" required>
+                                        <small style="color: #666; margin-top: 5px; display: block;">
+                                            Upload a screenshot of your payment confirmation
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Submit Button -->

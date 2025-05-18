@@ -76,7 +76,8 @@ def initialize_csv():
             fieldnames = [
                 'Tournament Id', 'Tournament Name', 'Categories', 'Venue',
                 'Start Date', 'End Date', 'Last Registration Date', 'Total Prize',
-                'General Information', 'Tournament Logo Link', 'Status'
+                'General Information', 'Tournament Logo Link', 'Status',
+                'Bank Account', 'UPI Link', 'Payment QR'
             ]
             writer = csv.DictWriter(file, fieldnames=fieldnames)
             writer.writeheader()
@@ -374,7 +375,10 @@ def create_tournament():
             last_registration_date = request.form.get('last_registration_date')
             total_prize = request.form.get('total_prize')
             general_info = request.form.get('general_info')
-            
+            bank_account = request.form.get('bank_account', '')
+            upi_link = request.form.get('upi_link', '')
+            payment_qr = ''  # Handle file upload if needed
+
             # Create tournament directory structure
             tournament_folder = os.path.join('static', 'tournaments', tournament_id)
             if not os.path.exists(tournament_folder):
@@ -422,7 +426,10 @@ def create_tournament():
                 'Total Prize': total_prize,
                 'General Information': general_info,
                 'Tournament Logo Link': tournament_logo_links_str,
-                'Status': 'active'
+                'Status': 'active',
+                'Bank Account': bank_account,
+                'UPI Link': upi_link,
+                'Payment QR': payment_qr
             }
             
             # Save tournament data
@@ -573,8 +580,10 @@ def edit_tournament(tournament_id):
             last_registration_date = request.form.get('last_registration_date')
             total_prize = request.form.get('total_prize')
             general_info = request.form.get('general_info')
-            
-            # Get the old tournament data for existing logo links
+            bank_account = request.form.get('bank_account', '')
+            upi_link = request.form.get('upi_link', '')
+
+            # Get the old tournament data for existing logo links and QR
             old_tournament = None
             with open('tournaments.csv', 'r', newline='', encoding='utf-8') as file:
                 reader = csv.DictReader(file)
@@ -582,7 +591,7 @@ def edit_tournament(tournament_id):
                     if row['Tournament Id'] == tournament_id:
                         old_tournament = row
                         break
-            
+
             # Create tournament directory if it doesn't exist
             tournament_folder = os.path.join('static', 'tournaments', tournament_id)
             if not os.path.exists(tournament_folder):
@@ -634,6 +643,19 @@ def edit_tournament(tournament_id):
             third_prizes = request.form.getlist('third_prizes[]')
             formats = request.form.getlist('formats[]')
             
+            # Handle QR code upload and removal
+            payment_qr = old_tournament.get('Payment QR', '') if old_tournament else ''
+            if 'payment_qr' in request.files:
+                qr_file = request.files['payment_qr']
+                if qr_file and qr_file.filename:
+                    qr_filename = secure_filename(qr_file.filename)
+                    qr_path = os.path.join(tournament_folder, qr_filename)
+                    qr_file.save(qr_path)
+                    payment_qr = f'static/tournaments/{tournament_id}/{qr_filename}'
+            # If user removed QR, handle that as well
+            if request.form.get('remove_qr') == 'true':
+                payment_qr = ''
+
             # Update tournaments.csv
             tournaments = []
             with open('tournaments.csv', 'r', newline='', encoding='utf-8') as file:
@@ -652,7 +674,10 @@ def edit_tournament(tournament_id):
                             'Total Prize': total_prize,
                             'General Information': general_info,
                             'Tournament Logo Link': tournament_logo_links_str,
-                            'Status': 'active'
+                            'Status': 'active',
+                            'Bank Account': bank_account,
+                            'UPI Link': upi_link,
+                            'Payment QR': payment_qr
                         })
                     tournaments.append(row)
             
@@ -1111,7 +1136,10 @@ def get_tournament(tournament_id):
                     'Total Prize': row['Total Prize'],
                     'General Information': row['General Information'],
                     'Tournament Logo Link': row.get('Tournament Logo Link', ''),
-                    'Status': row['Status']
+                    'Status': row['Status'],
+                    'Bank Account': row.get('Bank Account', ''),
+                    'UPI Link': row.get('UPI Link', ''),
+                    'Payment QR': row.get('Payment QR', '')
                 }
     return None
 
@@ -1864,6 +1892,35 @@ def delete_player(player_id):
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/update-tournaments-csv')
+def update_tournaments_csv():
+    try:
+        # Read existing tournaments
+        tournaments = []
+        with open('tournaments.csv', 'r', newline='', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            fieldnames = reader.fieldnames
+            tournaments = list(reader)
+
+        # Ensure all tournaments have the new fields
+        for tournament in tournaments:
+            if 'Bank Account' not in tournament:
+                tournament['Bank Account'] = ''
+            if 'UPI Link' not in tournament:
+                tournament['UPI Link'] = ''
+            if 'Payment QR' not in tournament:
+                tournament['Payment QR'] = ''
+
+        # Write back to tournaments.csv
+        with open('tournaments.csv', 'w', newline='', encoding='utf-8') as file:
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(tournaments)
+
+        return "Tournaments CSV updated successfully!"
+    except Exception as e:
+        return f"Error updating tournaments CSV: {str(e)}"
 
 if __name__ == '__main__':
     # Initialize CSV files if they don't exist
