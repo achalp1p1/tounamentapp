@@ -351,6 +351,15 @@
                         </div>
 
                         <div class="form-group">
+                            <label for="official_state_id">Official State ID</label>
+                            <input type="text" id="official_state_id" name="official_state_id" 
+                                   value="{{ player['Official State ID'] }}"
+                                   placeholder="Enter official state ID if issued"
+                                   pattern="[A-Za-z0-9]+" 
+                                   title="Please enter a valid state ID">
+                        </div>
+
+                        <div class="form-group">
                             <label for="district">District</label>
                             <input type="text" id="district" name="district" value="{{ player['District'] }}"
                                    placeholder="Enter district name"

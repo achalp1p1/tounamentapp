@@ -129,11 +129,11 @@ def player_registration():
             print("\n=== Starting Player Registration Process ===")
             print(f"Current working directory: {os.getcwd()}")
             print(f"Players CSV path: {PLAYERS_CSV}")
-            
+
             # Get form data
             form_data = request.form.to_dict()
             print(f"Received form data: {form_data}")
-            
+
             player_name = form_data.get('player_name', '').strip()
             date_of_birth = form_data.get('date_of_birth', '').strip()
             gender = form_data.get('gender', '').strip()
@@ -142,16 +142,16 @@ def player_registration():
             address = form_data.get('address', '').strip()
             state = form_data.get('state', '').strip()
             ttfi_id = form_data.get('ttfi_id', '').strip()
+            official_state_id = form_data.get('official_state_id', '').strip()
             dstta_id = form_data.get('dstta_id', '').strip() if state == 'Delhi' else ''
             institution = form_data.get('institution', '').strip()
             academy = form_data.get('academy', '').strip()
             upi_id = form_data.get('upi_id', '').strip()
 
-            print(f"Processed form data:")
-            print(f"Name: {player_name}")
-            print(f"DOB: {date_of_birth}")
-            print(f"Gender: {gender}")
-            print(f"Phone: {phone}")
+            # Handle file uploads
+            photo = request.files.get('photo')
+            birth_certificate = request.files.get('birth_certificate')
+            address_proof = request.files.get('address_proof')
 
             # Basic validation
             if not all([player_name, date_of_birth, gender, phone]):
@@ -165,43 +165,32 @@ def player_registration():
 
             # Generate Player ID
             current_year = str(datetime.now().year)[-2:]
-            birth_year = str(datetime.strptime(date_of_birth, '%Y-%m-%d').year)[-2:]
-            
-            # Get the next sequence number
-            sequence = 1
-            id_prefix = f"{current_year}-{birth_year}-"
-            
-            if os.path.exists(PLAYERS_CSV):
-                print("Reading existing players file for sequence number")
-                with open(PLAYERS_CSV, 'r', newline='', encoding='utf-8') as file:
-                    reader = csv.DictReader(file)
-                    for row in reader:
-                        if row.get('Player ID', '').startswith(id_prefix):
-                            try:
-                                current_sequence = int(row['Player ID'].split('-')[2])
-                                sequence = max(sequence, current_sequence + 1)
-                            except (IndexError, ValueError) as e:
-                                print(f"Error parsing sequence number: {e}")
-                                continue
-            
-            player_id = f"{current_year}-{birth_year}-{sequence:04d}"
-            print(f"Generated Player ID: {player_id}")
+            player_id = generate_new_player_id(date_of_birth)
 
-            # Prepare player data
-            fieldnames = [
-                'Player ID',
-                'Name',
-                'Date of Birth',
-                'Gender',
-                'Phone Number',
-                'Email ID',
-                'State',
-                'School/Institution',
-                'Academy',
-                'Address',
-                'DSTTA ID',
-                'UPI ID'
-            ]
+            # Create uploads directory if it doesn't exist
+            uploads_dir = os.path.join('static', 'uploads', 'players', player_id)
+            os.makedirs(uploads_dir, exist_ok=True)
+
+            # Initialize file paths
+            photo_path = ''
+            birth_cert_path = ''
+            address_proof_path = ''
+
+            # Save uploaded files if provided
+            if photo and photo.filename:
+                photo_path = os.path.join(uploads_dir, 'photo' + os.path.splitext(photo.filename)[1])
+                photo.save(photo_path)
+                photo_path = os.path.join('uploads', 'players', player_id, 'photo' + os.path.splitext(photo.filename)[1])
+
+            if birth_certificate and birth_certificate.filename:
+                birth_cert_path = os.path.join(uploads_dir, 'birth_certificate' + os.path.splitext(birth_certificate.filename)[1])
+                birth_certificate.save(birth_cert_path)
+                birth_cert_path = os.path.join('uploads', 'players', player_id, 'birth_certificate' + os.path.splitext(birth_certificate.filename)[1])
+
+            if address_proof and address_proof.filename:
+                address_proof_path = os.path.join(uploads_dir, 'address_proof' + os.path.splitext(address_proof.filename)[1])
+                address_proof.save(address_proof_path)
+                address_proof_path = os.path.join('uploads', 'players', player_id, 'address_proof' + os.path.splitext(address_proof.filename)[1])
 
             player_data = {
                 'Player ID': player_id,
@@ -215,7 +204,12 @@ def player_registration():
                 'Academy': academy,
                 'Address': address,
                 'DSTTA ID': dstta_id,
-                'UPI ID': upi_id
+                'TTFI ID': ttfi_id,
+                'Official State ID': official_state_id,
+                'UPI ID': upi_id,
+                'Photo Path': photo_path,
+                'Birth Certificate Path': birth_cert_path,
+                'Address Proof Path': address_proof_path
             }
 
             # Check if file exists and if player already exists
@@ -225,8 +219,7 @@ def player_registration():
                 with open(PLAYERS_CSV, 'r', newline='', encoding='utf-8') as file:
                     reader = csv.DictReader(file)
                     for row in reader:
-                        if (row['Name'].lower() == player_name.lower() and 
-                            row['Phone Number'] == phone):
+                        if (row['Name'].lower() == player_name.lower() and row['Phone Number'] == phone):
                             player_exists = True
                             player_data['Player ID'] = row['Player ID']
                             print(f"Found existing player with ID: {row['Player ID']}")
@@ -237,12 +230,12 @@ def player_registration():
                     # Write to CSV file
                     file_exists = os.path.exists(PLAYERS_CSV)
                     print(f"Writing new player to CSV. File exists: {file_exists}")
-                    
+
                     mode = 'a' if file_exists else 'w'
                     print(f"Opening file in mode: {mode}")
-                    
+
                     with open(PLAYERS_CSV, mode, newline='', encoding='utf-8') as file:
-                        writer = csv.DictWriter(file, fieldnames=fieldnames)
+                        writer = csv.DictWriter(file, fieldnames=player_data.keys())
                         if not file_exists:
                             print("Writing CSV headers")
                             writer.writeheader()
@@ -258,9 +251,7 @@ def player_registration():
 
         except Exception as e:
             print(f"Error in player registration: {str(e)}")
-            return render_template('players.html', 
-                                 error=str(e),
-                                 today_date=datetime.now().strftime('%Y-%m-%d'))
+            return render_template('players.html', error=str(e), today_date=datetime.now().strftime('%Y-%m-%d'))
 
     # For GET request
     return render_template('players.html', today_date=datetime.now().strftime('%Y-%m-%d'))
@@ -1435,10 +1426,11 @@ def submit_bulk_registration(tournament_id):
             address = player_data[6].strip() if len(player_data) > 6 else ''
             state = player_data[7].strip() if len(player_data) > 7 else ''
             ttfi_id = player_data[8].strip() if len(player_data) > 8 else ''
-            dstta_id = player_data[9].strip() if len(player_data) > 9 else ''
-            institution = player_data[10].strip() if len(player_data) > 10 else ''
-            academy = player_data[11].strip() if len(player_data) > 11 else ''
-            upi_id = player_data[12].strip() if len(player_data) > 12 else ''
+            official_state_id = player_data[9].strip() if len(player_data) > 9 else ''
+            dstta_id = player_data[10].strip() if len(player_data) > 10 else ''
+            institution = player_data[11].strip() if len(player_data) > 11 else ''
+            academy = player_data[12].strip() if len(player_data) > 12 else ''
+            upi_id = player_data[13].strip() if len(player_data) > 13 else ''
 
             player_id = get_player_id_from_players_data(name, dob, phone)
             if not player_id:
@@ -1451,8 +1443,8 @@ def submit_bulk_registration(tournament_id):
                     writer = csv.writer(file)
                     writer.writerow([
                         player_id, name, dob, gender, phone, email, 
-                        address, state, ttfi_id, dstta_id, institution, 
-                        academy, upi_id
+                        address, state, ttfi_id, official_state_id, dstta_id, 
+                        institution, academy, upi_id
                     ])
 
             # Check if player is already registered for this tournament/category
@@ -1827,9 +1819,35 @@ def edit_player(player_id):
                 'Academy': request.form.get('academy'),
                 'Address': request.form.get('address'),
                 'TTFI ID': request.form.get('ttfi_id'),
+                'Official State ID': request.form.get('official_state_id'),
                 'DSTTA ID': request.form.get('dstta_id'),
                 'UPI ID': request.form.get('upi_id')
             }
+
+            # Handle file uploads
+            uploads_dir = os.path.join('static', 'uploads', 'players', player_id)
+            os.makedirs(uploads_dir, exist_ok=True)
+
+            # Handle photo upload
+            photo = request.files.get('photo')
+            if photo and photo.filename:
+                photo_path = os.path.join(uploads_dir, 'photo' + os.path.splitext(photo.filename)[1])
+                photo.save(photo_path)
+                player_data['Photo Path'] = os.path.join('uploads', 'players', player_id, 'photo' + os.path.splitext(photo.filename)[1])
+
+            # Handle birth certificate upload
+            birth_certificate = request.files.get('birth_certificate')
+            if birth_certificate and birth_certificate.filename:
+                birth_cert_path = os.path.join(uploads_dir, 'birth_certificate' + os.path.splitext(birth_certificate.filename)[1])
+                birth_certificate.save(birth_cert_path)
+                player_data['Birth Certificate Path'] = os.path.join('uploads', 'players', player_id, 'birth_certificate' + os.path.splitext(birth_certificate.filename)[1])
+
+            # Handle address proof upload
+            address_proof = request.files.get('address_proof')
+            if address_proof and address_proof.filename:
+                address_proof_path = os.path.join(uploads_dir, 'address_proof' + os.path.splitext(address_proof.filename)[1])
+                address_proof.save(address_proof_path)
+                player_data['Address Proof Path'] = os.path.join('uploads', 'players', player_id, 'address_proof' + os.path.splitext(address_proof.filename)[1])
 
             # Read all players
             players = []
@@ -1838,6 +1856,13 @@ def edit_player(player_id):
                 fieldnames = reader.fieldnames
                 for row in reader:
                     if row['Player ID'] == player_id:
+                        # Preserve existing file paths if no new files were uploaded
+                        if 'Photo Path' not in player_data and 'Photo Path' in row:
+                            player_data['Photo Path'] = row['Photo Path']
+                        if 'Birth Certificate Path' not in player_data and 'Birth Certificate Path' in row:
+                            player_data['Birth Certificate Path'] = row['Birth Certificate Path']
+                        if 'Address Proof Path' not in player_data and 'Address Proof Path' in row:
+                            player_data['Address Proof Path'] = row['Address Proof Path']
                         players.append(player_data)
                     else:
                         players.append(row)
