@@ -252,6 +252,41 @@
             color: #2c3e50;
             font-weight: 500;
         }
+
+        .help-text {
+            display: block;
+            margin-top: 4px;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        input[type="file"] {
+            padding: 8px;
+            background: #f8f9fa;
+            border: 1px dashed #ccc;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        input[type="file"]:hover {
+            border-color: #1e3c72;
+            background: #f0f4f8;
+        }
+
+        input[type="file"]::file-selector-button {
+            background: #1e3c72;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 16px;
+            font-weight: 500;
+        }
+
+        input[type="file"]::file-selector-button:hover {
+            background: #2a5298;
+        }
     </style>
 </head>
 <body>
@@ -314,12 +349,43 @@
                                 <input type="email" id="email" name="email" 
                                        placeholder="Enter email address">
                             </div>
+
+                            <div class="section-title" style="margin-top: 2rem;">Upload Documents</div>
+
+                            <div class="form-group">
+                                <label for="photo">Photo (150x150 pixel)</label>
+                                <input type="file" id="photo" name="photo" accept="image/*"
+                                       title="Please upload a photo in 150x150 pixel format">
+                                <small class="help-text">Upload a square photo in 150x150 pixel format</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="birth_certificate">Birth Certificate Copy</label>
+                                <input type="file" id="birth_certificate" name="birth_certificate" accept=".pdf,.jpg,.jpeg,.png"
+                                       title="Please upload a copy of birth certificate">
+                                <small class="help-text">Upload a copy of birth certificate (PDF, JPG, or PNG)</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="address_proof">Address Proof</label>
+                                <input type="file" id="address_proof" name="address_proof" accept=".pdf,.jpg,.jpeg,.png"
+                                       title="Please upload address proof">
+                                <small class="help-text">Upload address proof document (PDF, JPG, or PNG)</small>
+                            </div>
                         </div>
 
                         <!-- Right Column - Additional Fields -->
                         <div class="additional-fields">
                             <div class="section-title">Additional Information</div>
                             
+                            <div class="form-group">
+                                <label for="ttfi_id">TTFI ID</label>
+                                <input type="text" id="ttfi_id" name="ttfi_id" 
+                                       placeholder="Enter TTFI ID if issued"
+                                       pattern="[A-Za-z0-9]+" 
+                                       title="Please enter a valid TTFI ID">
+                            </div>
+
                             <div class="form-group">
                                 <label for="state">State</label>
                                 <select id="state" name="state" class="form-control">
