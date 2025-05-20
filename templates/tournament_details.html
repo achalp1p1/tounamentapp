@@ -2901,7 +2901,10 @@
                 if (data.success) {
                     showStatusMessage('Draw saved successfully!', 'success');
                     // Enable next step
-                    document.getElementById('createBracketsBtn').disabled = false;
+                    const createBracketsBtn = document.getElementById('createBracketsBtn');
+                    if (createBracketsBtn) {
+                        createBracketsBtn.disabled = false;
+                    }
                 } else {
                     showStatusMessage('Error: ' + data.message, 'error');
                 }
