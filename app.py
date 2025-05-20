@@ -186,6 +186,13 @@ def player_registration():
             current_year = str(datetime.now().year)[-2:]
             player_id = generate_new_player_id(date_of_birth)
 
+            # Generate Official State ID only if state registration is checked
+            official_state_id = ''
+            if do_state_registration:
+                official_state_id = player_id.replace('-', '')
+                if state == 'Delhi':
+                    official_state_id = 'DL' + official_state_id
+
             # Create uploads directory if it doesn't exist
             uploads_dir = os.path.join('static', 'uploads', 'players', player_id)
             os.makedirs(uploads_dir, exist_ok=True)
@@ -225,7 +232,7 @@ def player_registration():
 
             # If state registration is checked and payment details are provided, generate official state ID
             if do_state_registration and state == 'Delhi' and payment_snapshot and transaction_id:
-                official_state_id = 'DL' + player_id.replace('-', '')
+                official_state_id = 'DL' + official_state_id
 
             player_data = {
                 'Player ID': player_id,
@@ -1309,76 +1316,80 @@ def tournament_bulk_register(tournament_id):
                 
                 # Validate each row
                 for idx, row in enumerate(rows, start=1):
-                    # Pad row with empty strings if it's shorter than headers
-                    row = row + [''] * (len(headers) - len(row))
-                    
-                    row_data = {
-                        'index': idx,
-                        'data': row,
-                        'errors': [],
-                        'invalid_fields': set(),  # Add this to track which fields are invalid
-                        'is_valid': True,
-                        'registration_status': 'New',
-                        'player_id': None
-                    }
-
-                    name = row[0].strip()
-                    dob = row[1].strip()
-                    phone = row[3].strip()
-
-                    # Check if player exists based on name, DOB, and phone
-                    if name and dob and phone:  # If all required fields are present
-                        print(f"\nChecking for existing player:")
-                        print(f"Name: '{name}'")
-                        print(f"DOB: '{dob}'")
-                        print(f"Phone: '{phone}'")
-                        
-                        player_id = get_player_id_from_players_data(name, dob, phone)
-                        if player_id:
-                            print(f"Found existing player with ID: {player_id}")
-                            row_data['registration_status'] = 'Registered'
-                            row_data['player_id'] = player_id
-                        else:
-                            print("No matching player found - will be registered as new")
-
-                    # Validate mandatory fields
-                    if not name:
-                        row_data['errors'].append('Name is required')
-                        row_data['invalid_fields'].add(0)  # 0 is the index for Name
-                        row_data['is_valid'] = False
-
-                    # Validate Date of Birth
                     try:
-                        if not dob:
-                            row_data['errors'].append('Date of Birth is required')
-                            row_data['invalid_fields'].add(1)  # 1 is the index for DOB
+                        # Pad row with empty strings if it's shorter than headers
+                        row = row + [''] * (len(headers) - len(row))
+                        
+                        row_data = {
+                            'index': idx,
+                            'data': row,
+                            'errors': [],
+                            'invalid_fields': set(),  # Add this to track which fields are invalid
+                            'is_valid': True,
+                            'registration_status': 'New',
+                            'player_id': None
+                        }
+
+                        name = row[0].strip()
+                        dob = row[1].strip()
+                        phone = row[3].strip()
+
+                        # Check if player exists based on name, DOB, and phone
+                        if name and dob and phone:  # If all required fields are present
+                            print(f"\nChecking for existing player:")
+                            print(f"Name: '{name}'")
+                            print(f"DOB: '{dob}'")
+                            print(f"Phone: '{phone}'")
+                            
+                            player_id = get_player_id_from_players_data(name, dob, phone)
+                            if player_id:
+                                print(f"Found existing player with ID: {player_id}")
+                                row_data['registration_status'] = 'Registered'
+                                row_data['player_id'] = player_id
+                            else:
+                                print("No matching player found - will be registered as new")
+
+                        # Validate mandatory fields
+                        if not name:
+                            row_data['errors'].append('Name is required')
+                            row_data['invalid_fields'].add(0)  # 0 is the index for Name
                             row_data['is_valid'] = False
-                        else:
-                            datetime.strptime(dob, '%Y-%m-%d')
-                    except ValueError:
-                        row_data['errors'].append('Invalid date format (use YYYY-MM-DD)')
-                        row_data['invalid_fields'].add(1)
-                        row_data['is_valid'] = False
 
-                    # Validate Gender
-                    if not row[2].strip() or row[2].lower() not in ['male', 'female']:
-                        row_data['errors'].append('Gender must be Male or Female')
-                        row_data['invalid_fields'].add(2)  # 2 is the index for Gender
-                        row_data['is_valid'] = False
+                        # Validate Date of Birth
+                        try:
+                            if not dob:
+                                row_data['errors'].append('Date of Birth is required')
+                                row_data['invalid_fields'].add(1)  # 1 is the index for DOB
+                                row_data['is_valid'] = False
+                            else:
+                                datetime.strptime(dob, '%Y-%m-%d')
+                        except ValueError:
+                            row_data['errors'].append('Invalid date format (use YYYY-MM-DD)')
+                            row_data['invalid_fields'].add(1)
+                            row_data['is_valid'] = False
 
-                    # Validate Phone Number
-                    if not phone or not phone.isdigit():
-                        row_data['errors'].append('Phone number must be numeric')
-                        row_data['invalid_fields'].add(3)  # 3 is the index for Phone
-                        row_data['is_valid'] = False
+                        # Validate Gender
+                        if not row[2].strip() or row[2].lower() not in ['male', 'female']:
+                            row_data['errors'].append('Gender must be Male or Female')
+                            row_data['invalid_fields'].add(2)  # 2 is the index for Gender
+                            row_data['is_valid'] = False
 
-                    # Validate Category
-                    if not row[4].strip():
-                        row_data['errors'].append('Category is required')
-                        row_data['invalid_fields'].add(4)  # 4 is the index for Category
-                        row_data['is_valid'] = False
+                        # Validate Phone Number
+                        if not phone or not phone.isdigit():
+                            row_data['errors'].append('Phone number must be numeric')
+                            row_data['invalid_fields'].add(3)  # 3 is the index for Phone
+                            row_data['is_valid'] = False
 
-                    validated_data.append(row_data)
+                        # Validate Category
+                        if not row[4].strip():
+                            row_data['errors'].append('Category is required')
+                            row_data['invalid_fields'].add(4)  # 4 is the index for Category
+                            row_data['is_valid'] = False
+
+                        validated_data.append(row_data)
+                    except Exception as e:
+                        print(f"Error processing row {idx}: {str(e)}")
+                        continue
 
                 for row_data in validated_data:
                     row_data['invalid_fields'] = list(row_data['invalid_fields'])  # Convert set to list

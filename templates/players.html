@@ -683,17 +683,18 @@
             // Function to generate Official State ID
             function generateOfficialStateId(playerId) {
                 if (!playerId) return '';
-                // Remove any dashes and add DL prefix
-                return 'DL' + playerId.replace(/-/g, '');
+                // Remove any dashes
+                return playerId.replace(/-/g, '');
             }
 
             // Function to check if payment details are provided
             function checkPaymentDetails() {
                 if (paymentSnapshot.files.length > 0 && transactionId.value.trim() !== '') {
-                    // Get the player ID from the form (you'll need to add this field to your form)
+                    // Get the player ID from the form
                     const playerId = document.getElementById('player_id').value;
                     if (playerId) {
-                        officialStateId.value = generateOfficialStateId(playerId);
+                        const stateId = generateOfficialStateId(playerId);
+                        officialStateId.value = stateSelect.value === 'Delhi' ? 'DL' + stateId : stateId;
                     }
                 } else {
                     officialStateId.value = '';

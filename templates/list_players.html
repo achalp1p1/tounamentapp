@@ -157,7 +157,7 @@
                 <thead>
                     <tr>
                         <th>Name</th>
-                        <th>Player ID</th>
+                        <th>Official State ID</th>
                         <th>Date of Birth</th>
                         <th>Gender</th>
                         <th>State</th>
@@ -168,7 +168,7 @@
                     {% for player in players %}
                     <tr>
                         <td>{{ player['Name'] }}</td>
-                        <td>{{ player['Player ID'] }}</td>
+                        <td>{{ player['Official State ID'] if player['Official State ID'] else player['Player ID'] }}</td>
                         <td>{{ player['Date of Birth'].split('-')[2] }}-{{ player['Date of Birth'].split('-')[1] }}-{{ player['Date of Birth'].split('-')[0] }}</td>
                         <td>{{ player['Gender'] }}</td>
                         <td>{{ player['State'] }}</td>

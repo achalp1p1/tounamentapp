@@ -1304,9 +1304,6 @@
                 <button class="tab-button" onclick="showTab('manage')" id="tab-manage">
                     <i class="fas fa-cog"></i>Manage
                 </button>
-                <button class="tab-button" onclick="showTab('manage-old')" id="tab-manage-old">
-                    <i class="fas fa-cog"></i>Manage-OLD
-                </button>
             </div>
 
             <!-- Info Tab -->
@@ -1791,36 +1788,6 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Manage-OLD Tab -->
-            <div id="manage-old" class="tab-content">
-                <div id="section-manage" class="detail-card">
-                    <h2 class="section-title">Manage Tournament</h2>
-                    <div class="manage-options">
-                        <a href="{{ url_for('tournament_update_seeding', tournament_id=tournament['Tournament Id']) }}" class="manage-button">
-                            <i class="fas fa-sort-numeric-up"></i>
-                            <div class="manage-button-content">
-                                <h3>Update Seeding</h3>
-                                <p>Update player seeding for the tournament</p>
-                            </div>
-                        </a>
-                        <a href="{{ url_for('tournament_create_draw', tournament_id=tournament['Tournament Id']) }}" class="manage-button">
-                            <i class="fas fa-random"></i>
-                            <div class="manage-button-content">
-                                <h3>Create Draw</h3>
-                                <p>Generate tournament draws based on seeding</p>
-                            </div>
-                        </a>
-                        <a href="{{ url_for('tournament_create_bracket', tournament_id=tournament['Tournament Id']) }}" class="manage-button">
-                            <i class="fas fa-sitemap"></i>
-                            <div class="manage-button-content">
-                                <h3>Create Bracket</h3>
-                                <p>Create tournament brackets and schedule</p>
-                            </div>
-                        </a>
                     </div>
                 </div>
             </div>
