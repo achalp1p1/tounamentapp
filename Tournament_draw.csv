@@ -51,7 +51,7 @@ Rank,Seeding,TournamentId,Player Name,School/Institution,Category
 ,,250008,Yugan,ABC5 School,u17 Boys
 ,,250008,Yugan,ABC5 School,u19 Boys
 ,,250008,Yugan,ABC5 School,u11 Boys
-1,1,250012,Shashi,123 Main Street,Men
-2,1,250012,Achal,123 Main Street,Men
-3,2,250012,Ashish Hari,,Men
-4,3,250012,Ankit,123 Main Street,Men
+1,1,250012,Ankit,123 Main Street,Men
+2,2,250012,Ashish Hari,,Men
+3,4,250012,Achal,123 Main Street,Men
+4,3,250012,Shashi,123 Main Street,Men

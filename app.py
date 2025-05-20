@@ -354,10 +354,6 @@ def save_seeding():
                               success='false',
                               message=f"Error saving seeding: {str(e)}"))
 
-@app.route('/create-draws')
-def create_draws():
-    return render_template('create_draws.html')
-
 def generate_tournament_id():
     # Get current year's last 2 digits
     current_year = str(datetime.now().year)[-2:]
@@ -1642,23 +1638,6 @@ def tournament_create_draw(tournament_id):
                           categories=categories, 
                           active_page='tournament',  # For main menu
                           active_subpage='create_draw')  # For submenu
-
-@app.route('/tournament/<tournament_id>/create_bracket')
-def tournament_create_bracket(tournament_id):
-    # Get tournament data
-    tournament = get_tournament(tournament_id)
-    if not tournament:
-        return redirect(url_for('list_tournament'))
-    
-    # Get tournament categories specific to this tournament
-    categories = get_tournament_categories(tournament_id)
-    
-    return render_template('tournament_create_bracket.html', 
-                          tournament=tournament, 
-                          tournament_id=tournament_id, 
-                          categories=categories,
-                          active_page='tournament',  # For main menu
-                          active_subpage='create_bracket')  # For submenu
 
 @app.route('/save_tournament_draw', methods=['POST'])
 def save_tournament_draw():
