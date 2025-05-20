@@ -309,6 +309,32 @@
             color: #999;
             cursor: not-allowed;
         }
+
+        .bank-details {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+
+        .bank-info {
+            background: white;
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .bank-info p {
+            margin: 5px 0;
+        }
+
+        #noc_section {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
@@ -454,44 +480,52 @@
 
                             <div class="form-group">
                                 <div class="checkbox-group">
-                                    <input type="checkbox" id="do_state_registration" name="do_state_registration" disabled>
+                                    <input type="checkbox" id="do_state_registration" name="do_state_registration">
                                     <label for="do_state_registration">Do Official State Registration</label>
                                 </div>
                             </div>
 
-                            <div id="payment_section" style="display: none; margin-top: 1rem; padding: 1rem; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #f8f9fa;">
-                                <h3 style="color: #1e3c72; margin-bottom: 1rem;">State Registration Payment</h3>
+                            <div id="payment_section" style="display: none;">
+                                <h3>Payment Details</h3>
+                                <p>Registration Fee: ₹1000</p>
                                 
-                                <div style="margin-bottom: 1rem;">
-                                    <p style="font-weight: 500; color: #2c3e50;">Registration Fee: <span id="registration_fee">₹1000</span></p>
-                                    <p style="font-size: 0.9rem; color: #666;">Please transfer the amount using the bank details below</p>
-                                </div>
-
-                                <div style="margin-bottom: 1.5rem; padding: 1rem; background-color: #fff; border: 1px solid #e0e0e0; border-radius: 8px;">
-                                    <h4 style="color: #1e3c72; margin-bottom: 0.75rem;">Bank Account Details</h4>
-                                    <div style="font-size: 0.95rem; line-height: 1.6;">
+                                <div class="bank-details">
+                                    <h4>Bank Account Details</h4>
+                                    <p>Please transfer the amount using the following bank details:</p>
+                                    <div class="bank-info">
                                         <p><strong>Account Name:</strong> Delhi State Table Tennis Association</p>
                                         <p><strong>Bank Name:</strong> AU Small Finance Bank</p>
                                         <p><strong>Account Number:</strong> 2402257962293561</p>
                                         <p><strong>IFSC Code:</strong> AUBL0002579</p>
                                         <p><strong>Branch:</strong> Punjabi Bagh Branch</p>
-                                        <p style="margin-top: 0.5rem; color: #666; font-size: 0.9rem;">Please keep the payment screenshot and transaction ID ready for upload</p>
                                     </div>
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="payment_snapshot" class="required">Payment Screenshot</label>
-                                    <input type="file" id="payment_snapshot" name="payment_snapshot" accept="image/*,.pdf"
-                                           title="Please upload payment screenshot">
-                                    <small class="help-text">Upload screenshot of successful payment (JPG, PNG or PDF)</small>
+                                    <label for="payment_snapshot">Payment Snapshot</label>
+                                    <input type="file" id="payment_snapshot" name="payment_snapshot" accept="image/*,.pdf" required>
+                                    <small class="form-text text-muted">Upload screenshot or PDF of your payment</small>
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="transaction_id" class="required">Transaction ID</label>
-                                    <input type="text" id="transaction_id" name="transaction_id" 
-                                           placeholder="Enter payment transaction ID"
-                                           pattern="[A-Za-z0-9]+" 
-                                           title="Please enter the transaction ID from your payment">
+                                    <label for="transaction_id">Transaction ID</label>
+                                    <input type="text" id="transaction_id" name="transaction_id" required>
+                                    <small class="form-text text-muted">Enter the transaction ID from your payment</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <div class="checkbox-group">
+                                        <input type="checkbox" id="is_state_transfer" name="is_state_transfer">
+                                        <label for="is_state_transfer">Player is transferring from another state</label>
+                                    </div>
+                                </div>
+
+                                <div id="noc_section" style="display: none;">
+                                    <div class="form-group">
+                                        <label for="noc_certificate">NOC Certificate</label>
+                                        <input type="file" id="noc_certificate" name="noc_certificate" accept="image/*,.pdf">
+                                        <small class="form-text text-muted">Upload NOC certificate from previous state association</small>
+                                    </div>
                                 </div>
                             </div>
 
@@ -642,6 +676,9 @@
             const paymentSnapshot = document.getElementById('payment_snapshot');
             const transactionId = document.getElementById('transaction_id');
             const officialStateId = document.getElementById('official_state_id');
+            const isStateTransfer = document.getElementById('is_state_transfer');
+            const nocSection = document.getElementById('noc_section');
+            const nocCertificate = document.getElementById('noc_certificate');
 
             // Function to generate Official State ID
             function generateOfficialStateId(playerId) {
@@ -681,17 +718,22 @@
             });
 
             doStateRegistration.addEventListener('change', function() {
-                if (this.checked) {
-                    paymentSection.style.display = 'block';
-                    paymentSnapshot.required = true;
-                    transactionId.required = true;
-                } else {
-                    paymentSection.style.display = 'none';
-                    paymentSnapshot.required = false;
-                    transactionId.required = false;
-                    paymentSnapshot.value = '';
-                    transactionId.value = '';
-                    officialStateId.value = '';
+                paymentSection.style.display = this.checked ? 'block' : 'none';
+                if (!this.checked) {
+                    // Clear payment fields when unchecked
+                    document.getElementById('payment_snapshot').value = '';
+                    document.getElementById('transaction_id').value = '';
+                    isStateTransfer.checked = false;
+                    nocSection.style.display = 'none';
+                    nocCertificate.value = '';
+                }
+            });
+
+            // Handle state transfer checkbox
+            isStateTransfer.addEventListener('change', function() {
+                nocSection.style.display = this.checked ? 'block' : 'none';
+                if (!this.checked) {
+                    nocCertificate.value = '';
                 }
             });
         });

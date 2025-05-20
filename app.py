@@ -160,6 +160,8 @@ def player_registration():
             payment_snapshot = request.files.get('payment_snapshot')
             transaction_id = form_data.get('transaction_id', '').strip()
             do_state_registration = form_data.get('do_state_registration') == 'on'
+            is_state_transfer = form_data.get('is_state_transfer') == 'on'
+            noc_certificate = request.files.get('noc_certificate')
 
             # Handle file uploads
             photo = request.files.get('photo')
@@ -176,6 +178,10 @@ def player_registration():
             if not all(c.isalpha() or c.isspace() for c in player_name):
                 raise ValueError("Name should only contain letters and spaces")
 
+            # Additional validation for state transfer
+            if do_state_registration and is_state_transfer and not noc_certificate:
+                raise ValueError("NOC certificate is required for state transfer")
+
             # Generate Player ID
             current_year = str(datetime.now().year)[-2:]
             player_id = generate_new_player_id(date_of_birth)
@@ -189,6 +195,7 @@ def player_registration():
             birth_cert_path = ''
             address_proof_path = ''
             payment_snapshot_path = ''
+            noc_certificate_path = ''
 
             # Save uploaded files if provided
             if photo and photo.filename:
@@ -210,6 +217,11 @@ def player_registration():
                 payment_snapshot_path = os.path.join(uploads_dir, 'payment_snapshot' + os.path.splitext(payment_snapshot.filename)[1])
                 payment_snapshot.save(payment_snapshot_path)
                 payment_snapshot_path = os.path.join('uploads', 'players', player_id, 'payment_snapshot' + os.path.splitext(payment_snapshot.filename)[1])
+
+            if noc_certificate and noc_certificate.filename:
+                noc_certificate_path = os.path.join(uploads_dir, 'noc_certificate' + os.path.splitext(noc_certificate.filename)[1])
+                noc_certificate.save(noc_certificate_path)
+                noc_certificate_path = os.path.join('uploads', 'players', player_id, 'noc_certificate' + os.path.splitext(noc_certificate.filename)[1])
 
             # If state registration is checked and payment details are provided, generate official state ID
             if do_state_registration and state == 'Delhi' and payment_snapshot and transaction_id:
@@ -241,7 +253,9 @@ def player_registration():
                 'UPI ID': upi_id,
                 'Payment Snapshot Path': payment_snapshot_path,
                 'Transaction ID': transaction_id,
-                'State Registration': 'Yes' if do_state_registration else 'No'
+                'State Registration': 'Yes' if do_state_registration else 'No',
+                'Is State Transfer': 'Yes' if is_state_transfer else 'No',
+                'NOC Certificate Path': noc_certificate_path
             }
 
             # Check if file exists and if player already exists
