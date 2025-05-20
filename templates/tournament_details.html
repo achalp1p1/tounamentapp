@@ -937,6 +937,86 @@
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
+
+        /* Add these styles to your existing CSS */
+        .status-message {
+            padding: 10px 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .shuffle-counter {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 18px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .stop-shuffle-btn {
+            background-color: #dc3545;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .stop-shuffle-btn:hover {
+            background-color: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .stop-shuffle-btn:active {
+            transform: translateY(1px);
+        }
+
+        @keyframes highlight {
+            0% { background-color: #f9fbfd; }
+            50% { background-color: #d4e5ff; }
+            100% { background-color: #f9fbfd; }
+        }
+
+        .highlight-animation {
+            animation: highlight 0.05s ease;
+        }
+
+        .rank-cell {
+            text-align: center;
+            font-weight: 600;
+            background-color: #f0f5ff;
+        }
+
+        .editable-input {
+            border: 1px solid #b0b8c9;
+            border-radius: 4px;
+            padding: 6px 8px;
+            font-size: 1em;
+            background: #fff;
+            color: #1e3c72;
+            box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
@@ -965,7 +1045,7 @@
                 <button class="tab-button active" onclick="showTab('info')" id="tab-info">
                     <i class="fas fa-info-circle"></i>Info
                 </button>
-                <button class="tab-button" onclick="{% if registration_open %}showTab('register'){% else %}void(0){% endif %}" id="tab-register" {% if not registration_open %}disabled{% endif %}>
+                <button class="tab-button" onclick="showTab('register')" id="tab-register" {% if not registration_open %}disabled{% endif %}>
                     <i class="fas fa-user-plus"></i>Add Player
                 </button>
                 <button class="tab-button" onclick="showTab('entries')" id="tab-entries">
@@ -1387,7 +1467,7 @@
                         <div id="step1Content" class="step-content-area" style="display: none;">
                             <h3 style="color: #1e3c72; margin-bottom: 20px;">Update Seeding</h3>
                             <div class="form-group">
-                                <select id="manageCategorySelect" class="form-control" style="max-width: 300px;">
+                                <select id="seedingCategorySelect" class="form-control" style="max-width: 300px;">
                                     <option value="">Select a category</option>
                                     {% for category in categories %}
                                     <option value="{{ category['Category'] }}">{{ category['Category'] }}</option>
@@ -1420,9 +1500,32 @@
                         <!-- Step 2 Content -->
                         <div id="step2Content" class="step-content-area" style="display: none;">
                             <h3 style="color: #1e3c72; margin-bottom: 20px;">Create Draws</h3>
-                            <button class="submit-button" id="createDrawsBtn" style="max-width: 200px;" disabled>
-                                <i class="fas fa-random"></i> Create Draws
-                            </button>
+                            <div class="form-group">
+                                <select id="drawCategorySelect" class="form-control" style="max-width: 300px;">
+                                    <option value="">Select a category</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category['Category'] }}">{{ category['Category'] }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="controls-container" style="margin-bottom: 20px;">
+                                <div class="button-group">
+                                    <button id="create-draw-btn" class="submit-button" style="max-width: 200px;">
+                                        <i class="fas fa-random"></i> Create Draw
+                                    </button>
+                                    <button id="stop-shuffle-btn" class="stop-shuffle-btn" style="display: none;">Stop Shuffling</button>
+                                    <button id="save-draw-btn" class="submit-button" style="max-width: 200px; display: none;">
+                                        <i class="fas fa-save"></i> Save Draw
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div id="status-message" class="status-message"></div>
+                            
+                            <div id="draw-tables-wrapper" style="display: flex; justify-content: space-between; gap: 48px; align-items: flex-start; width: 100%;">
+                                <div id="players-table-container" style="width: 40%;"></div>
+                                <div id="editable-table-container" style="width: 40%;"></div>
+                            </div>
                         </div>
 
                         <!-- Step 3 Content -->
@@ -2121,73 +2224,15 @@
     </script>
 
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const categorySelect = document.getElementById('manageCategorySelect');
-        const updateSeedingBtn = document.getElementById('updateSeedingBtn');
-        const createDrawsBtn = document.getElementById('createDrawsBtn');
-        const createBracketsBtn = document.getElementById('createBracketsBtn');
+    // Global variables
+    let currentPlayers = [];
+    let isShuffling = false;
+    let shuffleInterval;
+    let shuffleCount = 0;
 
-        // Function to show step content
-        window.showStepContent = function(stepNumber) {
-            // Hide all step content areas
-            document.querySelectorAll('.step-content-area').forEach(content => {
-                content.style.display = 'none';
-            });
-            
-            // Show selected step content
-            document.getElementById(`step${stepNumber}Content`).style.display = 'block';
-            
-            // Update step items styling
-            document.querySelectorAll('.step-item').forEach((item, index) => {
-                if (index + 1 === stepNumber) {
-                    item.style.background = '#e9ecef';
-                    item.style.borderColor = '#1e3c72';
-                } else {
-                    item.style.background = '#f8f9fa';
-                    item.style.borderColor = '#e9ecef';
-                }
-            });
-        };
-
-        // Enable/disable buttons based on category selection
-        categorySelect.addEventListener('change', function() {
-            updateSeedingBtn.disabled = !this.value;
-        });
-
-        // Step 1: Update Seeding
-        updateSeedingBtn.addEventListener('click', function() {
-            if (categorySelect.value) {
-                // Enable next step
-                createDrawsBtn.disabled = false;
-                // Add your update seeding logic here
-            }
-        });
-
-        // Step 2: Create Draws
-        createDrawsBtn.addEventListener('click', function() {
-            if (categorySelect.value) {
-                // Enable next step
-                createBracketsBtn.disabled = false;
-                // Add your create draws logic here
-            }
-        });
-
-        // Step 3: Create Brackets
-        createBracketsBtn.addEventListener('click', function() {
-            if (categorySelect.value) {
-                // Add your create brackets logic here
-            }
-        });
-
-        // Show first step by default
-        showStepContent(1);
-    });
-    </script>
-
-    <script>
-    // Add these functions to your existing JavaScript
+    // Function to load players for seeding
     function loadPlayers() {
-        const category = document.getElementById('manageCategorySelect').value;
+        const category = document.getElementById('seedingCategorySelect').value;
         const playersContainer = document.getElementById('playersContainer');
         const playersTableBody = document.getElementById('playersTableBody');
         const saveButton = document.getElementById('saveButton');
@@ -2236,11 +2281,12 @@
             });
     }
 
+    // Function to save seeding
     function saveSeeding(event) {
         event.preventDefault();
         const form = event.target;
         const formData = new FormData(form);
-        formData.append('category', document.getElementById('manageCategorySelect').value);
+        formData.append('category', document.getElementById('seedingCategorySelect').value);
 
         const saveButton = document.getElementById('saveButton');
         const messageBox = document.getElementById('messageBox');
@@ -2258,14 +2304,8 @@
             messageBox.textContent = data.success ? 'Seeding updated successfully!' : 'Error: ' + data.message;
             messageBox.style.display = 'block';
             saveButton.disabled = false;
-
-            if (data.success) {
-                // Enable next step
-                document.getElementById('createDrawsBtn').disabled = false;
-            }
         })
         .catch(error => {
-            console.error('Error:', error);
             messageBox.className = 'message error-message';
             messageBox.textContent = 'Error updating seeding';
             messageBox.style.display = 'block';
@@ -2273,9 +2313,343 @@
         });
     }
 
-    // Update the existing event listener for category selection
-    document.getElementById('manageCategorySelect').addEventListener('change', function() {
-        loadPlayers();
+    // Function to show step content
+    function showStepContent(stepNumber) {
+        // Hide all step content areas
+        document.querySelectorAll('.step-content-area').forEach(content => {
+            content.style.display = 'none';
+        });
+        
+        // Show selected step content
+        document.getElementById(`step${stepNumber}Content`).style.display = 'block';
+        
+        // Update step items styling
+        document.querySelectorAll('.step-item').forEach((item, index) => {
+            if (index + 1 === stepNumber) {
+                item.style.background = '#e9ecef';
+                item.style.borderColor = '#1e3c72';
+            } else {
+                item.style.background = '#f8f9fa';
+                item.style.borderColor = '#e9ecef';
+            }
+        });
+
+        // Initialize event listeners for the current step
+        if (stepNumber === 1) {
+            const seedingCategorySelect = document.getElementById('seedingCategorySelect');
+            if (seedingCategorySelect) {
+                seedingCategorySelect.removeEventListener('change', loadPlayers);
+                seedingCategorySelect.addEventListener('change', loadPlayers);
+            }
+        } else if (stepNumber === 2) {
+            const drawCategorySelect = document.getElementById('drawCategorySelect');
+            if (drawCategorySelect) {
+                drawCategorySelect.removeEventListener('change', handleCategoryChange);
+                drawCategorySelect.addEventListener('change', handleCategoryChange);
+            }
+        }
+    }
+
+    // Function to handle category change in Step 2
+    function handleCategoryChange() {
+        const category = this.value;
+        if (category) {
+            // Show loading message
+            document.getElementById('players-table-container').innerHTML = '<p style="color:#1e3c72;">Loading players...</p>';
+            document.getElementById('editable-table-container').innerHTML = '';
+            document.getElementById('create-draw-btn').style.display = 'none';
+            document.getElementById('save-draw-btn').style.display = 'none';
+            document.getElementById('stop-shuffle-btn').style.display = 'none';
+            document.getElementById('status-message').style.display = 'none';
+            
+            // Fetch players for the selected category
+            const url = `/tournament/{{ tournament['Tournament Id'] }}/get_category_players/${encodeURIComponent(category)}?fields=full`;
+            console.log('Fetching players from:', url);
+            
+            fetch(url)
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Received data:', data);
+                    if (data.success && data.players && data.players.length > 0) {
+                        currentPlayers = data.players.map(player => ({...player}));
+                        console.log('Processed players:', currentPlayers);
+                        createAndDisplayTables(currentPlayers);
+                    } else {
+                        console.log('No players found or invalid data');
+                        document.getElementById('players-table-container').innerHTML = '<p style="color:#b00;">No players found for this category.</p>';
+                        document.getElementById('editable-table-container').innerHTML = '';
+                        document.getElementById('create-draw-btn').style.display = 'none';
+                        document.getElementById('save-draw-btn').style.display = 'none';
+                        document.getElementById('stop-shuffle-btn').style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching players:', error);
+                    document.getElementById('players-table-container').innerHTML = '<p style="color:#b00;">Error loading players</p>';
+                });
+        } else {
+            document.getElementById('players-table-container').innerHTML = '';
+            document.getElementById('editable-table-container').innerHTML = '';
+            document.getElementById('create-draw-btn').style.display = 'none';
+            document.getElementById('save-draw-btn').style.display = 'none';
+            document.getElementById('stop-shuffle-btn').style.display = 'none';
+            document.getElementById('status-message').style.display = 'none';
+        }
+    }
+
+    // Function to create and display tables
+    function createAndDisplayTables(players) {
+        // Create the left table (original players)
+        const leftTable = document.createElement('table');
+        leftTable.className = 'table table-striped';
+        leftTable.style.width = '100%';
+        leftTable.style.marginBottom = '20px';
+        leftTable.innerHTML = `
+            <thead>
+                <tr>
+                    <th style="padding: 12px; text-align: left; background: #f5f5f5;">Seed</th>
+                    <th style="padding: 12px; text-align: left; background: #f5f5f5;">Name</th>
+                    <th style="padding: 12px; text-align: left; background: #f5f5f5;">School/Institution</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${players.map(player => `
+                    <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid #eee;">${player.seeding || ''}</td>
+                        <td style="padding: 12px; border-bottom: 1px solid #eee;">${player.name}</td>
+                        <td style="padding: 12px; border-bottom: 1px solid #eee;">${player.school || ''}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        `;
+        
+        // Create the right table (editable draw)
+        const rightTable = document.createElement('table');
+        rightTable.className = 'table table-striped';
+        rightTable.id = 'editable-table';
+        rightTable.style.width = '100%';
+        rightTable.innerHTML = `
+            <thead>
+                <tr>
+                    <th style="padding: 12px; text-align: left; background: #f5f5f5;">Rank</th>
+                    <th style="padding: 12px; text-align: left; background: #f5f5f5;">Seed</th>
+                    <th style="padding: 12px; text-align: left; background: #f5f5f5;">Name</th>
+                    <th style="padding: 12px; text-align: left; background: #f5f5f5;">School/Institution</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${players.map((player, idx) => `
+                    <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center; background: #f0f5ff;">${idx + 1}</td>
+                        <td style="padding: 12px; border-bottom: 1px solid #eee;">
+                            <input type="text" name="edit_seeding_${idx}" class="editable-input" value="${player.seeding || ''}" autocomplete="off" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                        </td>
+                        <td style="padding: 12px; border-bottom: 1px solid #eee;">
+                            <input type="text" name="edit_name_${idx}" class="editable-input" value="${player.name}" autocomplete="off" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                        </td>
+                        <td style="padding: 12px; border-bottom: 1px solid #eee;">
+                            <input type="text" name="edit_school_${idx}" class="editable-input" value="${player.school || ''}" autocomplete="off" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        `;
+        
+        // Update the containers
+        const leftContainer = document.getElementById('players-table-container');
+        const rightContainer = document.getElementById('editable-table-container');
+        
+        leftContainer.innerHTML = '';
+        leftContainer.appendChild(leftTable);
+        rightContainer.innerHTML = '';
+        rightContainer.appendChild(rightTable);
+        
+        // Show the create draw button
+        document.getElementById('create-draw-btn').style.display = 'block';
+        console.log('Tables created and displayed');
+    }
+
+    // Function to start shuffling
+    function startShuffling() {
+        if (!currentPlayers.length) {
+            showStatusMessage('Please select a category first!', 'error');
+            return;
+        }
+
+        isShuffling = true;
+        shuffleCount = 0;
+        
+        // Update UI
+        document.getElementById('create-draw-btn').style.display = 'none';
+        document.getElementById('stop-shuffle-btn').style.display = 'block';
+        document.getElementById('save-draw-btn').style.display = 'none';
+        
+        // Start shuffling
+        shuffleInterval = setInterval(performShuffle, 100);
+    }
+
+    // Function to stop shuffling
+    function stopShuffling() {
+        isShuffling = false;
+        clearInterval(shuffleInterval);
+        
+        // Update UI
+        document.getElementById('create-draw-btn').style.display = 'none';
+        document.getElementById('stop-shuffle-btn').style.display = 'none';
+        document.getElementById('save-draw-btn').style.display = 'block';
+        
+        showStatusMessage('Draw created! Click "Save Draw" to save it.', 'success');
+    }
+
+    // Function to perform shuffle
+    function performShuffle() {
+        if (!isShuffling) return;
+
+        shuffleCount++;
+        
+        // Shuffle players
+        const shuffledPlayers = [...currentPlayers];
+        for (let i = shuffledPlayers.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffledPlayers[i], shuffledPlayers[j]] = [shuffledPlayers[j], shuffledPlayers[i]];
+        }
+
+        // Update table
+        const editableTable = document.getElementById('editable-table');
+        if (editableTable) {
+            shuffledPlayers.forEach((player, idx) => {
+                const row = editableTable.rows[idx + 1];
+                if (row) {
+                    row.querySelector('input[name^="edit_seeding_"]').value = player.seeding || '';
+                    row.querySelector('input[name^="edit_name_"]').value = player.name;
+                    row.querySelector('input[name^="edit_school_"]').value = player.school || '';
+                }
+            });
+        }
+
+        // Add highlight animation
+        editableTable.classList.add('highlight-animation');
+        setTimeout(() => {
+            editableTable.classList.remove('highlight-animation');
+        }, 50);
+    }
+
+    // Function to save draw
+    function saveDraw() {
+        const drawData = [];
+        const tournamentId = "{{ tournament['Tournament Id'] }}";
+        const category = document.getElementById('drawCategorySelect').value;
+        
+        const editableTable = document.getElementById('editable-table');
+        if (editableTable) {
+            Array.from(editableTable.rows).forEach((row, index) => {
+                if (index === 0) return; // Skip header row
+                
+                const rank = row.cells[0].textContent;
+                const seeding = row.querySelector('input[name^="edit_seeding_"]').value;
+                const name = row.querySelector('input[name^="edit_name_"]').value;
+                const school = row.querySelector('input[name^="edit_school_"]').value;
+                
+                if (name.trim() !== '') {
+                    drawData.push({
+                        rank,
+                        seeding,
+                        tournamentId,
+                        name,
+                        school,
+                        category
+                    });
+                }
+            });
+        }
+        
+        if (drawData.length > 0) {
+            fetch('/save_tournament_draw', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    drawData: drawData,
+                    tournamentId: tournamentId,
+                    category: category
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showStatusMessage('Draw saved successfully!', 'success');
+                    // Enable next step
+                    document.getElementById('createBracketsBtn').disabled = false;
+                } else {
+                    showStatusMessage('Error: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showStatusMessage('Error saving draw. Please try again.', 'error');
+                console.error('Error saving draw:', error);
+            });
+        } else {
+            showStatusMessage('No data to save. Please create a draw first.', 'error');
+        }
+    }
+
+    // Function to show status message
+    function showStatusMessage(message, type) {
+        const statusMsg = document.getElementById('status-message');
+        if (statusMsg) {
+            statusMsg.textContent = message;
+            statusMsg.className = 'status-message status-' + type;
+            statusMsg.style.display = 'block';
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusMsg.style.display = 'none';
+                }, 5000);
+            }
+        }
+    }
+
+    // Initialize event listeners when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Step 1
+        const seedingCategorySelect = document.getElementById('seedingCategorySelect');
+        if (seedingCategorySelect) {
+            seedingCategorySelect.addEventListener('change', loadPlayers);
+        }
+
+        // Initialize seeding form
+        const seedingForm = document.getElementById('seedingForm');
+        if (seedingForm) {
+            seedingForm.addEventListener('submit', saveSeeding);
+        }
+
+        // Initialize Step 2
+        const drawCategorySelect = document.getElementById('drawCategorySelect');
+        if (drawCategorySelect) {
+            drawCategorySelect.addEventListener('change', handleCategoryChange);
+        }
+
+        const createDrawBtn = document.getElementById('create-draw-btn');
+        if (createDrawBtn) {
+            createDrawBtn.addEventListener('click', startShuffling);
+        }
+
+        const stopShuffleBtn = document.getElementById('stop-shuffle-btn');
+        if (stopShuffleBtn) {
+            stopShuffleBtn.addEventListener('click', stopShuffling);
+        }
+
+        const saveDrawBtn = document.getElementById('save-draw-btn');
+        if (saveDrawBtn) {
+            saveDrawBtn.addEventListener('click', saveDraw);
+        }
+
+        // Show the first step by default
+        showStepContent(1);
     });
     </script>
 </body>
