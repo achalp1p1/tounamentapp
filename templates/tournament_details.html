@@ -1255,6 +1255,12 @@
             border-radius: 4px;
             margin-bottom: 10px;
         }
+
+        .readonly-cell {
+            pointer-events: none;
+            background-color: #f8f9fa;
+            user-select: none;
+        }
     </style>
 </head>
 <body>
@@ -2479,6 +2485,7 @@
     let isShuffling = false;
     let shuffleInterval;
     let shuffleCount = 0;
+    let seedRanges = null; // Store seeding ranges globally
 
     // Function to load players for seeding
     function loadPlayers() {
@@ -2652,25 +2659,63 @@
 
     // Function to create and display tables
     function createAndDisplayTables(players) {
+        // Common table styles
+        const tableStyle = `
+            width: 100%;
+            margin-bottom: 20px;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        `;
+        
+        const headerStyle = `
+            padding: 16px;
+            text-align: left;
+            background: #1e3c72;
+            color: white;
+            font-weight: 500;
+            font-size: 0.95em;
+            border-bottom: 2px solid #2a5298;
+        `;
+        
+        const cellStyle = `
+            padding: 14px 16px;
+            border-bottom: 1px solid #e0e0e0;
+            color: #333;
+            font-size: 0.95em;
+        `;
+        
+        const rankCellStyle = `
+            padding: 14px 16px;
+            border-bottom: 1px solid #e0e0e0;
+            text-align: center;
+            background: #f0f5ff;
+            color: #1e3c72;
+            font-weight: 600;
+            font-size: 0.95em;
+            width: 60px;
+        `;
+
         // Create the left table (original players)
         const leftTable = document.createElement('table');
         leftTable.className = 'table table-striped';
-        leftTable.style.width = '100%';
-        leftTable.style.marginBottom = '20px';
+        leftTable.style.cssText = tableStyle;
         leftTable.innerHTML = `
             <thead>
                 <tr>
-                    <th style="padding: 12px; text-align: left; background: #f5f5f5;">Seed</th>
-                    <th style="padding: 12px; text-align: left; background: #f5f5f5;">Name</th>
-                    <th style="padding: 12px; text-align: left; background: #f5f5f5;">School/Institution</th>
+                    <th style="${headerStyle}">Seed</th>
+                    <th style="${headerStyle}">Name</th>
+                    <th style="${headerStyle}">School/Institution</th>
                 </tr>
             </thead>
             <tbody>
                 ${players.map(player => `
                     <tr>
-                        <td style="padding: 12px; border-bottom: 1px solid #eee;">${player.seeding || ''}</td>
-                        <td style="padding: 12px; border-bottom: 1px solid #eee;">${player.name}</td>
-                        <td style="padding: 12px; border-bottom: 1px solid #eee;">${player.school || ''}</td>
+                        <td style="${cellStyle}">${player.seeding || ''}</td>
+                        <td style="${cellStyle}">${player.name}</td>
+                        <td style="${cellStyle}">${player.school || ''}</td>
                     </tr>
                 `).join('')}
             </tbody>
@@ -2680,35 +2725,29 @@
         const rightTable = document.createElement('table');
         rightTable.className = 'table table-striped';
         rightTable.id = 'editable-table';
-        rightTable.style.width = '100%';
+        rightTable.style.cssText = tableStyle;
         rightTable.innerHTML = `
             <thead>
                 <tr>
-                    <th style="padding: 12px; text-align: left; background: #f5f5f5;">Rank</th>
-                    <th style="padding: 12px; text-align: left; background: #f5f5f5;">Seed</th>
-                    <th style="padding: 12px; text-align: left; background: #f5f5f5;">Name</th>
-                    <th style="padding: 12px; text-align: left; background: #f5f5f5;">School/Institution</th>
+                    <th style="${headerStyle}">Rank</th>
+                    <th style="${headerStyle}">Seed</th>
+                    <th style="${headerStyle}">Name</th>
+                    <th style="${headerStyle}">School/Institution</th>
                 </tr>
             </thead>
             <tbody>
                 ${players.map((player, idx) => `
                     <tr>
-                        <td style="padding: 12px; border-bottom: 1px solid #eee; text-align: center; background: #f0f5ff;">${idx + 1}</td>
-                        <td style="padding: 12px; border-bottom: 1px solid #eee;">
-                            <input type="text" name="edit_seeding_${idx}" class="editable-input" value="${player.seeding || ''}" autocomplete="off" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
-                        </td>
-                        <td style="padding: 12px; border-bottom: 1px solid #eee;">
-                            <input type="text" name="edit_name_${idx}" class="editable-input" value="${player.name}" autocomplete="off" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
-                        </td>
-                        <td style="padding: 12px; border-bottom: 1px solid #eee;">
-                            <input type="text" name="edit_school_${idx}" class="editable-input" value="${player.school || ''}" autocomplete="off" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
-                        </td>
+                        <td style="${rankCellStyle}">${idx + 1}</td>
+                        <td style="${cellStyle}">${player.seeding || ''}</td>
+                        <td style="${cellStyle}">${player.name}</td>
+                        <td style="${cellStyle}">${player.school || ''}</td>
                     </tr>
                 `).join('')}
             </tbody>
         `;
         
-        // Update the containers
+        // Update the containers with consistent styling
         const leftContainer = document.getElementById('players-table-container');
         const rightContainer = document.getElementById('editable-table-container');
         
@@ -2716,6 +2755,18 @@
         leftContainer.appendChild(leftTable);
         rightContainer.innerHTML = '';
         rightContainer.appendChild(rightTable);
+        
+        // Add hover effect to rows
+        const allRows = document.querySelectorAll('table tbody tr');
+        allRows.forEach(row => {
+            row.style.transition = 'background-color 0.2s ease';
+            row.addEventListener('mouseover', () => {
+                row.style.backgroundColor = '#f8f9fa';
+            });
+            row.addEventListener('mouseout', () => {
+                row.style.backgroundColor = '';
+            });
+        });
         
         // Show the create draw button
         document.getElementById('create-draw-btn').style.display = 'block';
@@ -2729,38 +2780,7 @@
             return;
         }
 
-        isShuffling = true;
-        shuffleCount = 0;
-        
-        // Update UI
-        document.getElementById('create-draw-btn').style.display = 'none';
-        document.getElementById('stop-shuffle-btn').style.display = 'block';
-        document.getElementById('save-draw-btn').style.display = 'none';
-        
-        // Start shuffling
-        shuffleInterval = setInterval(performShuffle, 100);
-    }
-
-    // Function to stop shuffling
-    function stopShuffling() {
-        isShuffling = false;
-        clearInterval(shuffleInterval);
-        
-        // Update UI
-        document.getElementById('create-draw-btn').style.display = 'none';
-        document.getElementById('stop-shuffle-btn').style.display = 'none';
-        document.getElementById('save-draw-btn').style.display = 'block';
-        
-        showStatusMessage('Draw created! Click "Save Draw" to save it.', 'success');
-    }
-
-    // Function to perform shuffle
-    function performShuffle() {
-        if (!isShuffling) return;
-
-        shuffleCount++;
-        
-        // Get seed ranges from the server
+        // First fetch the seeding ranges
         fetch('/get_seeding_ranges')
             .then(response => response.json())
             .then(data => {
@@ -2768,91 +2788,112 @@
                     console.error('Failed to get seeding ranges');
                     return;
                 }
-
-                const seedRanges = data.seeding_ranges;
+                seedRanges = data.seeding_ranges;
                 
-                // Group players by their seed ranges
-                const playersByRange = {};
-                seedRanges.forEach(range => {
-                    playersByRange[`${range.min}-${range.max}`] = [];
-                });
-
-                // Sort players into their respective ranges
-                currentPlayers.forEach(player => {
-                    const seed = parseInt(player.seeding) || 999;
-                    for (const range of seedRanges) {
-                        if (seed >= range.min && seed <= range.max) {
-                            playersByRange[`${range.min}-${range.max}`].push(player);
-                            break;
-                        }
-                    }
-                });
-
-                // Shuffle players within each range
-                const shuffledPlayers = [];
-                seedRanges.forEach(range => {
-                    const rangeKey = `${range.min}-${range.max}`;
-                    const playersInRange = playersByRange[rangeKey];
-                    
-                    // Shuffle players within this range
-                    for (let i = playersInRange.length - 1; i > 0; i--) {
-                        const j = Math.floor(Math.random() * (i + 1));
-                        [playersInRange[i], playersInRange[j]] = [playersInRange[j], playersInRange[i]];
-                    }
-                    
-                    shuffledPlayers.push(...playersInRange);
-                });
-
-                // Update table with shuffled players
-                const editableTable = document.getElementById('editable-table');
-                if (editableTable) {
-                    shuffledPlayers.forEach((player, idx) => {
-                        const row = editableTable.rows[idx + 1];
-                        if (row) {
-                            row.querySelector('input[name^="edit_seeding_"]').value = player.seeding || '';
-                            row.querySelector('input[name^="edit_name_"]').value = player.name;
-                            row.querySelector('input[name^="edit_school_"]').value = player.school || '';
-                        }
-                    });
-                }
-
-                // Add highlight animation with different speeds based on shuffle count
-                editableTable.classList.add('highlight-animation');
+                // Start the actual shuffling process
+                isShuffling = true;
+                shuffleCount = 0;
                 
-                // Adjust animation speed based on shuffle count
-                let animationDuration = 50; // default duration
-                if (shuffleCount < 10) {
-                    animationDuration = 100; // slower at start
-                } else if (shuffleCount < 20) {
-                    animationDuration = 75; // medium speed
-                } else if (shuffleCount < 30) {
-                    animationDuration = 50; // faster
-                } else {
-                    animationDuration = 25; // fastest
-                }
+                // Update UI
+                document.getElementById('create-draw-btn').style.display = 'none';
+                document.getElementById('stop-shuffle-btn').style.display = 'block';
+                document.getElementById('save-draw-btn').style.display = 'none';
+                document.getElementById('shuffleCounter').style.display = 'block';
+                document.getElementById('shuffleCount').textContent = '0';
                 
-                setTimeout(() => {
-                    editableTable.classList.remove('highlight-animation');
-                }, animationDuration);
-
-                // Schedule next shuffle with dynamic interval
-                if (isShuffling) {
-                    let nextInterval = 100; // default interval
-                    if (shuffleCount < 10) {
-                        nextInterval = 200; // slower at start
-                    } else if (shuffleCount < 20) {
-                        nextInterval = 150; // medium speed
-                    } else if (shuffleCount < 30) {
-                        nextInterval = 100; // faster
-                    } else {
-                        nextInterval = 50; // fastest
-                    }
-                    shuffleInterval = setTimeout(performShuffle, nextInterval);
-                }
+                // Start shuffling with the first iteration
+                performShuffle();
             })
             .catch(error => {
                 console.error('Error getting seeding ranges:', error);
             });
+    }
+
+    // Function to stop shuffling
+    function stopShuffling() {
+        isShuffling = false;
+        clearInterval(shuffleInterval);
+        clearTimeout(shuffleInterval); // Clear any pending timeouts
+        
+        // Update UI
+        document.getElementById('create-draw-btn').style.display = 'none';
+        document.getElementById('stop-shuffle-btn').style.display = 'none';
+        document.getElementById('save-draw-btn').style.display = 'block';
+        document.getElementById('shuffleCounter').style.display = 'none';
+        
+        // Remove any pending animations
+        const editableTable = document.getElementById('editable-table');
+        if (editableTable) {
+            editableTable.classList.remove('highlight-animation');
+        }
+        
+        showStatusMessage('Draw created! Click "Save Draw" to save it.', 'success');
+    }
+
+    // Function to perform shuffle
+    function performShuffle() {
+        if (!isShuffling || !seedRanges) return;
+
+        shuffleCount++;
+        document.getElementById('shuffleCount').textContent = shuffleCount;
+        
+        // Group players by their seed ranges
+        const playersByRange = {};
+        seedRanges.forEach(range => {
+            playersByRange[`${range.min}-${range.max}`] = [];
+        });
+
+        // Sort players into their respective ranges
+        currentPlayers.forEach(player => {
+            const seed = parseInt(player.seeding) || 999;
+            for (const range of seedRanges) {
+                if (seed >= range.min && seed <= range.max) {
+                    playersByRange[`${range.min}-${range.max}`].push(player);
+                    break;
+                }
+            }
+        });
+
+        // Shuffle players within each range
+        const shuffledPlayers = [];
+        seedRanges.forEach(range => {
+            const rangeKey = `${range.min}-${range.max}`;
+            const playersInRange = playersByRange[rangeKey];
+            
+            // Shuffle players within this range
+            for (let i = playersInRange.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [playersInRange[i], playersInRange[j]] = [playersInRange[j], playersInRange[i]];
+            }
+            
+            shuffledPlayers.push(...playersInRange);
+        });
+
+        // Update table with shuffled players
+        const editableTable = document.getElementById('editable-table');
+        if (editableTable) {
+            shuffledPlayers.forEach((player, idx) => {
+                const row = editableTable.rows[idx + 1];
+                if (row) {
+                    row.cells[1].textContent = player.seeding || '';
+                    row.cells[2].textContent = player.name;
+                    row.cells[3].textContent = player.school || '';
+                }
+            });
+        }
+
+        // Add highlight animation
+        editableTable.classList.add('highlight-animation');
+        setTimeout(() => {
+            if (isShuffling) {
+                editableTable.classList.remove('highlight-animation');
+            }
+        }, 50);
+
+        // Schedule next shuffle with uniform interval
+        if (isShuffling) {
+            shuffleInterval = setTimeout(performShuffle, 100);
+        }
     }
 
     // Function to save draw
@@ -2867,9 +2908,9 @@
                 if (index === 0) return; // Skip header row
                 
                 const rank = row.cells[0].textContent;
-                const seeding = row.querySelector('input[name^="edit_seeding_"]').value;
-                const name = row.querySelector('input[name^="edit_name_"]').value;
-                const school = row.querySelector('input[name^="edit_school_"]').value;
+                const seeding = row.cells[1].textContent;
+                const name = row.cells[2].textContent;
+                const school = row.cells[3].textContent;
                 
                 if (name.trim() !== '') {
                     drawData.push({
@@ -3036,6 +3077,10 @@
             <button type="button" class="cancel-btn" id="closeSwapPopup">Cancel</button>
             <button type="button" class="save-btn" id="confirmSwap">Confirm Swap</button>
         </div>
+    </div>
+
+    <div class="shuffle-counter" id="shuffleCounter" style="display: none;">
+        Shuffles: <span id="shuffleCount">0</span>
     </div>
 
     <script>
