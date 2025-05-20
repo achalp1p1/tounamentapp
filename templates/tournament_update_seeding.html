@@ -162,51 +162,48 @@
             }
         }
     </style>
-</head>
-<body>
-    {% include 'menu.html' %}
-    <div class="container">
-        <div class="header">
-            <h1>{{ tournament['Tournament Name'] }}</h1>
-            {% include 'tournament_submenu.html' %}
-        </div>
-
-        <div class="content">
-            <div class="update-seeding-container">
-                <h2>Update Seeding</h2>
-                <div class="form-group">
-                    <label for="category">Category:</label>
-                    <select id="category" class="form-control" onchange="loadPlayers()">
-                        <option value="">Select Category</option>
-                        {% for category in categories %}
-                        <option value="{{ category }}">{{ category }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div id="playersContainer" class="players-container">
-                    <form id="seedingForm" onsubmit="saveSeeding(event)">
-                        <table class="players-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 50px;">No.</th>
-                                    <th>Player Name</th>
-                                    <th style="width: 120px;">Seeding</th>
-                                </tr>
-                            </thead>
-                            <tbody id="playersTableBody">
-                                <!-- Players will be loaded here -->
-                            </tbody>
-                        </table>
-                        <button type="submit" id="saveButton" class="save-btn" style="display: none;">Save Changes</button>
-                    </form>
-                </div>
-                <div id="messageBox" class="message"></div>
-            </div>
-        </div>
-    </div>
-
     <script>
+        // Define saveSeeding in the global scope
+        function saveSeeding(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            formData.append('category', document.getElementById('category').value);
+
+            // Log the data being sent
+            console.log('=== Sending Seeding Update ===');
+            console.log('Category:', document.getElementById('category').value);
+            console.log('Player IDs:', formData.getAll('player_ids[]'));
+            console.log('Seedings:', formData.getAll('seedings[]'));
+
+            const saveButton = document.getElementById('saveButton');
+            const messageBox = document.getElementById('messageBox');
+            
+            saveButton.disabled = true;
+            messageBox.style.display = 'none';
+
+            fetch(`/tournament/{{ tournament["Tournament Id"] }}/update_seeding`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Server response:', data);
+                messageBox.className = 'message ' + (data.success ? 'success-message' : 'error-message');
+                messageBox.textContent = data.success ? 'Seeding updated successfully!' : 'Error: ' + data.message;
+                messageBox.style.display = 'block';
+                saveButton.disabled = false;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                messageBox.className = 'message error-message';
+                messageBox.textContent = 'Error updating seeding';
+                messageBox.style.display = 'block';
+                saveButton.disabled = false;
+            });
+        }
+
+        // Define loadPlayers in the global scope
         function loadPlayers() {
             const category = document.getElementById('category').value;
             const playersContainer = document.getElementById('playersContainer');
@@ -265,38 +262,49 @@
                     saveButton.style.display = 'none';
                 });
         }
-
-        function saveSeeding(event) {
-            event.preventDefault();
-            const form = event.target;
-            const formData = new FormData(form);
-            formData.append('category', document.getElementById('category').value);
-
-            const saveButton = document.getElementById('saveButton');
-            const messageBox = document.getElementById('messageBox');
-            
-            saveButton.disabled = true;
-            messageBox.style.display = 'none';
-
-            fetch(`/tournament/{{ tournament["Tournament Id"] }}/update_seeding`, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                messageBox.className = 'message ' + (data.success ? 'success-message' : 'error-message');
-                messageBox.textContent = data.success ? 'Seeding updated successfully!' : 'Error: ' + data.message;
-                messageBox.style.display = 'block';
-                saveButton.disabled = false;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                messageBox.className = 'message error-message';
-                messageBox.textContent = 'Error updating seeding';
-                messageBox.style.display = 'block';
-                saveButton.disabled = false;
-            });
-        }
     </script>
+</head>
+<body>
+    {% include 'menu.html' %}
+    <div class="container">
+        <div class="header">
+            <h1>{{ tournament['Tournament Name'] }}</h1>
+            {% include 'tournament_submenu.html' %}
+        </div>
+
+        <div class="content">
+            <div class="update-seeding-container">
+                <h2>Update Seeding</h2>
+                <div class="form-group">
+                    <label for="category">Category:</label>
+                    <select id="category" class="form-control" onchange="loadPlayers()">
+                        <option value="">Select Category</option>
+                        {% for category in categories %}
+                        <option value="{{ category }}">{{ category }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div id="playersContainer" class="players-container">
+                    <form id="seedingForm" onsubmit="saveSeeding(event)">
+                        <table class="players-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">No.</th>
+                                    <th>Player Name</th>
+                                    <th style="width: 120px;">Seeding</th>
+                                </tr>
+                            </thead>
+                            <tbody id="playersTableBody">
+                                <!-- Players will be loaded here -->
+                            </tbody>
+                        </table>
+                        <button type="submit" id="saveButton" class="save-btn" style="display: none;">Save Changes</button>
+                    </form>
+                </div>
+                <div id="messageBox" class="message"></div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

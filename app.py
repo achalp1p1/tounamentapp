@@ -1045,11 +1045,13 @@ def tournament_update_seeding(tournament_id):
             player_ids = request.form.getlist('player_ids[]')
             seedings = request.form.getlist('seedings[]')
             
-            print("\nReceived data:")
+            print("\n=== Seeding Update Request ===")
             print(f"Tournament ID: {tournament_id}")
             print(f"Category: {category}")
-            print(f"Player IDs: {player_ids}")
-            print(f"Seedings: {seedings}")
+            print(f"Number of players: {len(player_ids)}")
+            print("\nPlayer IDs and Seedings:")
+            for i, (pid, seed) in enumerate(zip(player_ids, seedings)):
+                print(f"Player {i+1}: ID={pid}, Seeding={seed}")
 
             # Read all registrations
             registrations = []
@@ -1058,24 +1060,22 @@ def tournament_update_seeding(tournament_id):
                 fieldnames = reader.fieldnames
                 registrations = list(reader)
                 print(f"\nTotal registrations read: {len(registrations)}")
-
-            # Debug: Print a few sample registrations
-            print("\nSample registrations:")
-            for reg in registrations[:3]:
-                print(reg)
+                print(f"CSV Headers: {fieldnames}")
 
             # Update seedings
             updates_made = 0
             for i, player_id in enumerate(player_ids):
                 seeding = seedings[i]
-                print(f"\nTrying to update player {player_id} with seeding {seeding}")
+                print(f"\nProcessing player {i+1}:")
+                print(f"Player ID: {player_id}")
+                print(f"New Seeding: {seeding}")
                 
                 for reg in registrations:
                     # Print exact values being compared
-                    print(f"\nComparing:")
-                    print(f"Tournament Ids: '{reg['Tournament Id']}' == '{tournament_id}' : {reg['Tournament Id'] == tournament_id}")
-                    print(f"Player IDs: '{reg['Player ID']}' == '{player_id}' : {reg['Player ID'] == player_id}")
-                    print(f"Categories: '{reg['Category']}' == '{category}' : {reg['Category'] == category}")
+                    print(f"\nComparing registration:")
+                    print(f"Tournament Id: '{reg['Tournament Id']}' == '{tournament_id}' : {reg['Tournament Id'] == tournament_id}")
+                    print(f"Player ID: '{reg['Player ID']}' == '{player_id}' : {reg['Player ID'] == player_id}")
+                    print(f"Category: '{reg['Category']}' == '{category}' : {reg['Category'] == category}")
                     
                     if (reg['Tournament Id'] == tournament_id and 
                         reg['Player ID'] == player_id and 
