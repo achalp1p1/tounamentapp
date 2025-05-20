@@ -146,7 +146,20 @@ def player_registration():
             dstta_id = form_data.get('dstta_id', '').strip() if state == 'Delhi' else ''
             institution = form_data.get('institution', '').strip()
             academy = form_data.get('academy', '').strip()
+            district = form_data.get('district', '').strip()
+            
+            # Bank details
+            account_holder_name = form_data.get('account_holder_name', '').strip()
+            account_number = form_data.get('account_number', '').strip()
+            bank_name = form_data.get('bank_name', '').strip()
+            branch_name = form_data.get('branch_name', '').strip()
+            ifsc_code = form_data.get('ifsc_code', '').strip()
             upi_id = form_data.get('upi_id', '').strip()
+
+            # Payment details
+            payment_snapshot = request.files.get('payment_snapshot')
+            transaction_id = form_data.get('transaction_id', '').strip()
+            do_state_registration = form_data.get('do_state_registration') == 'on'
 
             # Handle file uploads
             photo = request.files.get('photo')
@@ -175,6 +188,7 @@ def player_registration():
             photo_path = ''
             birth_cert_path = ''
             address_proof_path = ''
+            payment_snapshot_path = ''
 
             # Save uploaded files if provided
             if photo and photo.filename:
@@ -192,6 +206,15 @@ def player_registration():
                 address_proof.save(address_proof_path)
                 address_proof_path = os.path.join('uploads', 'players', player_id, 'address_proof' + os.path.splitext(address_proof.filename)[1])
 
+            if payment_snapshot and payment_snapshot.filename:
+                payment_snapshot_path = os.path.join(uploads_dir, 'payment_snapshot' + os.path.splitext(payment_snapshot.filename)[1])
+                payment_snapshot.save(payment_snapshot_path)
+                payment_snapshot_path = os.path.join('uploads', 'players', player_id, 'payment_snapshot' + os.path.splitext(payment_snapshot.filename)[1])
+
+            # If state registration is checked and payment details are provided, generate official state ID
+            if do_state_registration and state == 'Delhi' and payment_snapshot and transaction_id:
+                official_state_id = 'DL' + player_id.replace('-', '')
+
             player_data = {
                 'Player ID': player_id,
                 'Name': player_name,
@@ -200,16 +223,25 @@ def player_registration():
                 'Phone Number': phone,
                 'Email ID': email,
                 'State': state,
+                'District': district,
                 'School/Institution': institution,
                 'Academy': academy,
                 'Address': address,
                 'DSTTA ID': dstta_id,
                 'TTFI ID': ttfi_id,
                 'Official State ID': official_state_id,
-                'UPI ID': upi_id,
                 'Photo Path': photo_path,
                 'Birth Certificate Path': birth_cert_path,
-                'Address Proof Path': address_proof_path
+                'Address Proof Path': address_proof_path,
+                'Account Holder Name': account_holder_name,
+                'Account Number': account_number,
+                'Bank Name': bank_name,
+                'Branch Name': branch_name,
+                'IFSC Code': ifsc_code,
+                'UPI ID': upi_id,
+                'Payment Snapshot Path': payment_snapshot_path,
+                'Transaction ID': transaction_id,
+                'State Registration': 'Yes' if do_state_registration else 'No'
             }
 
             # Check if file exists and if player already exists

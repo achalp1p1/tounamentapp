@@ -287,6 +287,28 @@
         input[type="file"]::file-selector-button:hover {
             background: #2a5298;
         }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .checkbox-group input[type="checkbox"]:disabled + label {
+            color: #999;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -306,6 +328,7 @@
             
             <div class="registration-form">
                 <form method="POST" class="registration-form">
+                    <input type="hidden" id="player_id" name="player_id" value="{{ player_id }}">
                     <div class="form-container">
                         <!-- Left Column - Required Fields -->
                         <div class="mandatory-fields">
@@ -390,18 +413,25 @@
                                 <label for="state">State</label>
                                 <select id="state" name="state" class="form-control">
                                     <option value="">Select State</option>
+                                    <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
                                     <option value="Andhra Pradesh">Andhra Pradesh</option>
                                     <option value="Arunachal Pradesh">Arunachal Pradesh</option>
                                     <option value="Assam">Assam</option>
                                     <option value="Bihar">Bihar</option>
+                                    <option value="Chandigarh">Chandigarh</option>
                                     <option value="Chhattisgarh">Chhattisgarh</option>
+                                    <option value="Dadra and Nagar Haveli and Daman and Diu">Dadra and Nagar Haveli and Daman and Diu</option>
+                                    <option value="Delhi">Delhi</option>
                                     <option value="Goa">Goa</option>
                                     <option value="Gujarat">Gujarat</option>
                                     <option value="Haryana">Haryana</option>
                                     <option value="Himachal Pradesh">Himachal Pradesh</option>
+                                    <option value="Jammu and Kashmir">Jammu and Kashmir</option>
                                     <option value="Jharkhand">Jharkhand</option>
                                     <option value="Karnataka">Karnataka</option>
                                     <option value="Kerala">Kerala</option>
+                                    <option value="Ladakh">Ladakh</option>
+                                    <option value="Lakshadweep">Lakshadweep</option>
                                     <option value="Madhya Pradesh">Madhya Pradesh</option>
                                     <option value="Maharashtra">Maharashtra</option>
                                     <option value="Manipur">Manipur</option>
@@ -409,6 +439,7 @@
                                     <option value="Mizoram">Mizoram</option>
                                     <option value="Nagaland">Nagaland</option>
                                     <option value="Odisha">Odisha</option>
+                                    <option value="Puducherry">Puducherry</option>
                                     <option value="Punjab">Punjab</option>
                                     <option value="Rajasthan">Rajasthan</option>
                                     <option value="Sikkim">Sikkim</option>
@@ -418,15 +449,50 @@
                                     <option value="Uttar Pradesh">Uttar Pradesh</option>
                                     <option value="Uttarakhand">Uttarakhand</option>
                                     <option value="West Bengal">West Bengal</option>
-                                    <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
-                                    <option value="Chandigarh">Chandigarh</option>
-                                    <option value="Dadra and Nagar Haveli and Daman and Diu">Dadra and Nagar Haveli and Daman and Diu</option>
-                                    <option value="Delhi">Delhi</option>
-                                    <option value="Jammu and Kashmir">Jammu and Kashmir</option>
-                                    <option value="Ladakh">Ladakh</option>
-                                    <option value="Lakshadweep">Lakshadweep</option>
-                                    <option value="Puducherry">Puducherry</option>
                                 </select>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="do_state_registration" name="do_state_registration" disabled>
+                                    <label for="do_state_registration">Do Official State Registration</label>
+                                </div>
+                            </div>
+
+                            <div id="payment_section" style="display: none; margin-top: 1rem; padding: 1rem; border: 1px solid #e0e0e0; border-radius: 8px; background-color: #f8f9fa;">
+                                <h3 style="color: #1e3c72; margin-bottom: 1rem;">State Registration Payment</h3>
+                                
+                                <div style="margin-bottom: 1rem;">
+                                    <p style="font-weight: 500; color: #2c3e50;">Registration Fee: <span id="registration_fee">₹1000</span></p>
+                                    <p style="font-size: 0.9rem; color: #666;">Please transfer the amount using the bank details below</p>
+                                </div>
+
+                                <div style="margin-bottom: 1.5rem; padding: 1rem; background-color: #fff; border: 1px solid #e0e0e0; border-radius: 8px;">
+                                    <h4 style="color: #1e3c72; margin-bottom: 0.75rem;">Bank Account Details</h4>
+                                    <div style="font-size: 0.95rem; line-height: 1.6;">
+                                        <p><strong>Account Name:</strong> Delhi State Table Tennis Association</p>
+                                        <p><strong>Bank Name:</strong> AU Small Finance Bank</p>
+                                        <p><strong>Account Number:</strong> 2402257962293561</p>
+                                        <p><strong>IFSC Code:</strong> AUBL0002579</p>
+                                        <p><strong>Branch:</strong> Punjabi Bagh Branch</p>
+                                        <p style="margin-top: 0.5rem; color: #666; font-size: 0.9rem;">Please keep the payment screenshot and transaction ID ready for upload</p>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="payment_snapshot" class="required">Payment Screenshot</label>
+                                    <input type="file" id="payment_snapshot" name="payment_snapshot" accept="image/*,.pdf"
+                                           title="Please upload payment screenshot">
+                                    <small class="help-text">Upload screenshot of successful payment (JPG, PNG or PDF)</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="transaction_id" class="required">Transaction ID</label>
+                                    <input type="text" id="transaction_id" name="transaction_id" 
+                                           placeholder="Enter payment transaction ID"
+                                           pattern="[A-Za-z0-9]+" 
+                                           title="Please enter the transaction ID from your payment">
+                                </div>
                             </div>
 
                             <div class="form-group">
@@ -434,7 +500,9 @@
                                 <input type="text" id="official_state_id" name="official_state_id" 
                                        placeholder="Enter official state ID if issued"
                                        pattern="[A-Za-z0-9]+" 
-                                       title="Please enter a valid state ID">
+                                       title="Please enter a valid state ID"
+                                       readonly>
+                                <small class="help-text">This will be automatically generated after payment verification</small>
                             </div>
 
                             <div class="form-group">
@@ -565,6 +633,67 @@
                 dsttaContainer.style.display = 'none';
                 document.getElementById('dstta_id').value = '';
             }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const stateSelect = document.getElementById('state');
+            const doStateRegistration = document.getElementById('do_state_registration');
+            const paymentSection = document.getElementById('payment_section');
+            const paymentSnapshot = document.getElementById('payment_snapshot');
+            const transactionId = document.getElementById('transaction_id');
+            const officialStateId = document.getElementById('official_state_id');
+
+            // Function to generate Official State ID
+            function generateOfficialStateId(playerId) {
+                if (!playerId) return '';
+                // Remove any dashes and add DL prefix
+                return 'DL' + playerId.replace(/-/g, '');
+            }
+
+            // Function to check if payment details are provided
+            function checkPaymentDetails() {
+                if (paymentSnapshot.files.length > 0 && transactionId.value.trim() !== '') {
+                    // Get the player ID from the form (you'll need to add this field to your form)
+                    const playerId = document.getElementById('player_id').value;
+                    if (playerId) {
+                        officialStateId.value = generateOfficialStateId(playerId);
+                    }
+                } else {
+                    officialStateId.value = '';
+                }
+            }
+
+            // Listen for changes in payment details
+            paymentSnapshot.addEventListener('change', checkPaymentDetails);
+            transactionId.addEventListener('input', checkPaymentDetails);
+
+            stateSelect.addEventListener('change', function() {
+                if (this.value === 'Delhi') {
+                    doStateRegistration.disabled = false;
+                } else {
+                    doStateRegistration.disabled = true;
+                    doStateRegistration.checked = false;
+                    paymentSection.style.display = 'none';
+                    paymentSnapshot.required = false;
+                    transactionId.required = false;
+                    officialStateId.value = '';
+                }
+            });
+
+            doStateRegistration.addEventListener('change', function() {
+                if (this.checked) {
+                    paymentSection.style.display = 'block';
+                    paymentSnapshot.required = true;
+                    transactionId.required = true;
+                } else {
+                    paymentSection.style.display = 'none';
+                    paymentSnapshot.required = false;
+                    transactionId.required = false;
+                    paymentSnapshot.value = '';
+                    transactionId.value = '';
+                    officialStateId.value = '';
+                }
+            });
         });
     </script>
 </body>
