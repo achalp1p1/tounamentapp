@@ -980,6 +980,9 @@
                 <button class="tab-button" onclick="showTab('manage')" id="tab-manage">
                     <i class="fas fa-cog"></i>Manage
                 </button>
+                <button class="tab-button" onclick="showTab('manage-old')" id="tab-manage-old">
+                    <i class="fas fa-cog"></i>Manage-OLD
+                </button>
             </div>
 
             <!-- Info Tab -->
@@ -1349,7 +1352,94 @@
             <!-- Manage Tab -->
             <div id="manage" class="tab-content">
                 <div id="section-manage" class="detail-card">
-                    <h2 class="section-title">Tournament Management</h2>
+                    <h2 class="section-title">Manage Tournament</h2>
+                    
+                    <!-- Horizontal Steps -->
+                    <div class="steps-container" style="display: flex; gap: 5px; margin: 20px 0; justify-content: space-between;">
+                        <!-- Step 1: Update Seeding -->
+                        <div class="step-item" style="flex: 1; padding: 10px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef; cursor: pointer; text-align: center;" onclick="showStepContent(1)">
+                            <div class="step-header" style="display: flex; align-items: center; justify-content: center; gap: 5px;">
+                                <div class="step-number" style="width: 24px; height: 24px; background: #1e3c72; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9em;">1</div>
+                                <h3 style="margin: 0; color: #1e3c72; font-size: 0.9em;">Update Seeding</h3>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Create Draws -->
+                        <div class="step-item" style="flex: 1; padding: 10px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef; cursor: pointer; text-align: center;" onclick="showStepContent(2)">
+                            <div class="step-header" style="display: flex; align-items: center; justify-content: center; gap: 5px;">
+                                <div class="step-number" style="width: 24px; height: 24px; background: #1e3c72; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9em;">2</div>
+                                <h3 style="margin: 0; color: #1e3c72; font-size: 0.9em;">Create Draws</h3>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Create Brackets -->
+                        <div class="step-item" style="flex: 1; padding: 10px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef; cursor: pointer; text-align: center;" onclick="showStepContent(3)">
+                            <div class="step-header" style="display: flex; align-items: center; justify-content: center; gap: 5px;">
+                                <div class="step-number" style="width: 24px; height: 24px; background: #1e3c72; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9em;">3</div>
+                                <h3 style="margin: 0; color: #1e3c72; font-size: 0.9em;">Create Brackets</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step Content Areas -->
+                    <div id="stepContent" style="margin-top: 20px;">
+                        <!-- Step 1 Content -->
+                        <div id="step1Content" class="step-content-area" style="display: none;">
+                            <h3 style="color: #1e3c72; margin-bottom: 20px;">Update Seeding</h3>
+                            <div class="form-group">
+                                <select id="manageCategorySelect" class="form-control" style="max-width: 300px;">
+                                    <option value="">Select a category</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category['Category'] }}">{{ category['Category'] }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div id="playersContainer" class="players-container" style="margin-top: 20px; display: none;">
+                                <form id="seedingForm" onsubmit="saveSeeding(event)">
+                                    <table class="players-table" style="width: 100%; border-collapse: collapse;">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 50px; background: #f5f5f5; padding: 12px; text-align: left; font-weight: 500; border-bottom: 2px solid #ddd;">No.</th>
+                                                <th style="background: #f5f5f5; padding: 12px; text-align: left; font-weight: 500; border-bottom: 2px solid #ddd;">Player Name</th>
+                                                <th style="width: 120px; background: #f5f5f5; padding: 12px; text-align: left; font-weight: 500; border-bottom: 2px solid #ddd;">Seeding</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="playersTableBody">
+                                            <!-- Players will be loaded here -->
+                                        </tbody>
+                                    </table>
+                                    <button type="submit" id="saveButton" class="submit-button" style="max-width: 200px; margin-top: 20px; display: none;">
+                                        <i class="fas fa-save"></i> Save Changes
+                                    </button>
+                                </form>
+                                <div id="messageBox" class="message" style="margin-top: 10px; padding: 10px; border-radius: 4px; display: none;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2 Content -->
+                        <div id="step2Content" class="step-content-area" style="display: none;">
+                            <h3 style="color: #1e3c72; margin-bottom: 20px;">Create Draws</h3>
+                            <button class="submit-button" id="createDrawsBtn" style="max-width: 200px;" disabled>
+                                <i class="fas fa-random"></i> Create Draws
+                            </button>
+                        </div>
+
+                        <!-- Step 3 Content -->
+                        <div id="step3Content" class="step-content-area" style="display: none;">
+                            <h3 style="color: #1e3c72; margin-bottom: 20px;">Create Brackets</h3>
+                            <button class="submit-button" id="createBracketsBtn" style="max-width: 200px;" disabled>
+                                <i class="fas fa-sitemap"></i> Create Brackets
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manage-OLD Tab -->
+            <div id="manage-old" class="tab-content">
+                <div id="section-manage" class="detail-card">
+                    <h2 class="section-title">Manage Tournament</h2>
                     <div class="manage-options">
                         <a href="{{ url_for('tournament_update_seeding', tournament_id=tournament['Tournament Id']) }}" class="manage-button">
                             <i class="fas fa-sort-numeric-up"></i>
@@ -2028,6 +2118,165 @@
         // Update countdown every second
         setInterval(updateCountdown, 1000);
         updateCountdown(); // Initial call
+    </script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const categorySelect = document.getElementById('manageCategorySelect');
+        const updateSeedingBtn = document.getElementById('updateSeedingBtn');
+        const createDrawsBtn = document.getElementById('createDrawsBtn');
+        const createBracketsBtn = document.getElementById('createBracketsBtn');
+
+        // Function to show step content
+        window.showStepContent = function(stepNumber) {
+            // Hide all step content areas
+            document.querySelectorAll('.step-content-area').forEach(content => {
+                content.style.display = 'none';
+            });
+            
+            // Show selected step content
+            document.getElementById(`step${stepNumber}Content`).style.display = 'block';
+            
+            // Update step items styling
+            document.querySelectorAll('.step-item').forEach((item, index) => {
+                if (index + 1 === stepNumber) {
+                    item.style.background = '#e9ecef';
+                    item.style.borderColor = '#1e3c72';
+                } else {
+                    item.style.background = '#f8f9fa';
+                    item.style.borderColor = '#e9ecef';
+                }
+            });
+        };
+
+        // Enable/disable buttons based on category selection
+        categorySelect.addEventListener('change', function() {
+            updateSeedingBtn.disabled = !this.value;
+        });
+
+        // Step 1: Update Seeding
+        updateSeedingBtn.addEventListener('click', function() {
+            if (categorySelect.value) {
+                // Enable next step
+                createDrawsBtn.disabled = false;
+                // Add your update seeding logic here
+            }
+        });
+
+        // Step 2: Create Draws
+        createDrawsBtn.addEventListener('click', function() {
+            if (categorySelect.value) {
+                // Enable next step
+                createBracketsBtn.disabled = false;
+                // Add your create draws logic here
+            }
+        });
+
+        // Step 3: Create Brackets
+        createBracketsBtn.addEventListener('click', function() {
+            if (categorySelect.value) {
+                // Add your create brackets logic here
+            }
+        });
+
+        // Show first step by default
+        showStepContent(1);
+    });
+    </script>
+
+    <script>
+    // Add these functions to your existing JavaScript
+    function loadPlayers() {
+        const category = document.getElementById('manageCategorySelect').value;
+        const playersContainer = document.getElementById('playersContainer');
+        const playersTableBody = document.getElementById('playersTableBody');
+        const saveButton = document.getElementById('saveButton');
+        const messageBox = document.getElementById('messageBox');
+        
+        if (!category) {
+            playersContainer.style.display = 'none';
+            return;
+        }
+
+        fetch(`/tournament/{{ tournament["Tournament Id"] }}/get_category_players/${category}?fields=basic`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    let html = '';
+                    data.players.forEach((player, index) => {
+                        html += `
+                            <tr>
+                                <td style="padding: 12px; border-bottom: 1px solid #eee;">${index + 1}</td>
+                                <td style="padding: 12px; border-bottom: 1px solid #eee;">${player.name}</td>
+                                <td style="padding: 12px; border-bottom: 1px solid #eee;">
+                                    <input type="hidden" name="player_ids[]" value="${player.player_id}">
+                                    <input type="number" 
+                                           name="seedings[]" 
+                                           class="seeding-input" 
+                                           value="${player.seeding || ''}" 
+                                           min="1"
+                                           placeholder="Seeding"
+                                           style="width: 80px; padding: 6px; border: 1px solid #ddd; border-radius: 4px; text-align: center;">
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    playersTableBody.innerHTML = html;
+                    playersContainer.style.display = 'block';
+                    saveButton.style.display = data.players.length > 0 ? 'block' : 'none';
+                } else {
+                    playersTableBody.innerHTML = `<tr><td colspan="3" style="padding: 12px; text-align: center;">Error: ${data.message || 'Failed to load players'}</td></tr>`;
+                    saveButton.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                playersTableBody.innerHTML = '<tr><td colspan="3" style="padding: 12px; text-align: center;">Error loading players</td></tr>';
+                saveButton.style.display = 'none';
+            });
+    }
+
+    function saveSeeding(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+        formData.append('category', document.getElementById('manageCategorySelect').value);
+
+        const saveButton = document.getElementById('saveButton');
+        const messageBox = document.getElementById('messageBox');
+        
+        saveButton.disabled = true;
+        messageBox.style.display = 'none';
+
+        fetch(`/tournament/{{ tournament["Tournament Id"] }}/update_seeding`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            messageBox.className = 'message ' + (data.success ? 'success-message' : 'error-message');
+            messageBox.textContent = data.success ? 'Seeding updated successfully!' : 'Error: ' + data.message;
+            messageBox.style.display = 'block';
+            saveButton.disabled = false;
+
+            if (data.success) {
+                // Enable next step
+                document.getElementById('createDrawsBtn').disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            messageBox.className = 'message error-message';
+            messageBox.textContent = 'Error updating seeding';
+            messageBox.style.display = 'block';
+            saveButton.disabled = false;
+        });
+    }
+
+    // Update the existing event listener for category selection
+    document.getElementById('manageCategorySelect').addEventListener('change', function() {
+        loadPlayers();
+    });
     </script>
 </body>
 </html>
