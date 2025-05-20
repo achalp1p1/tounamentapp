@@ -2760,31 +2760,99 @@
 
         shuffleCount++;
         
-        // Shuffle players
-        const shuffledPlayers = [...currentPlayers];
-        for (let i = shuffledPlayers.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffledPlayers[i], shuffledPlayers[j]] = [shuffledPlayers[j], shuffledPlayers[i]];
-        }
-
-        // Update table
-        const editableTable = document.getElementById('editable-table');
-        if (editableTable) {
-            shuffledPlayers.forEach((player, idx) => {
-                const row = editableTable.rows[idx + 1];
-                if (row) {
-                    row.querySelector('input[name^="edit_seeding_"]').value = player.seeding || '';
-                    row.querySelector('input[name^="edit_name_"]').value = player.name;
-                    row.querySelector('input[name^="edit_school_"]').value = player.school || '';
+        // Get seed ranges from the server
+        fetch('/get_seeding_ranges')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    console.error('Failed to get seeding ranges');
+                    return;
                 }
-            });
-        }
 
-        // Add highlight animation
-        editableTable.classList.add('highlight-animation');
-        setTimeout(() => {
-            editableTable.classList.remove('highlight-animation');
-        }, 50);
+                const seedRanges = data.seeding_ranges;
+                
+                // Group players by their seed ranges
+                const playersByRange = {};
+                seedRanges.forEach(range => {
+                    playersByRange[`${range.min}-${range.max}`] = [];
+                });
+
+                // Sort players into their respective ranges
+                currentPlayers.forEach(player => {
+                    const seed = parseInt(player.seeding) || 999;
+                    for (const range of seedRanges) {
+                        if (seed >= range.min && seed <= range.max) {
+                            playersByRange[`${range.min}-${range.max}`].push(player);
+                            break;
+                        }
+                    }
+                });
+
+                // Shuffle players within each range
+                const shuffledPlayers = [];
+                seedRanges.forEach(range => {
+                    const rangeKey = `${range.min}-${range.max}`;
+                    const playersInRange = playersByRange[rangeKey];
+                    
+                    // Shuffle players within this range
+                    for (let i = playersInRange.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [playersInRange[i], playersInRange[j]] = [playersInRange[j], playersInRange[i]];
+                    }
+                    
+                    shuffledPlayers.push(...playersInRange);
+                });
+
+                // Update table with shuffled players
+                const editableTable = document.getElementById('editable-table');
+                if (editableTable) {
+                    shuffledPlayers.forEach((player, idx) => {
+                        const row = editableTable.rows[idx + 1];
+                        if (row) {
+                            row.querySelector('input[name^="edit_seeding_"]').value = player.seeding || '';
+                            row.querySelector('input[name^="edit_name_"]').value = player.name;
+                            row.querySelector('input[name^="edit_school_"]').value = player.school || '';
+                        }
+                    });
+                }
+
+                // Add highlight animation with different speeds based on shuffle count
+                editableTable.classList.add('highlight-animation');
+                
+                // Adjust animation speed based on shuffle count
+                let animationDuration = 50; // default duration
+                if (shuffleCount < 10) {
+                    animationDuration = 100; // slower at start
+                } else if (shuffleCount < 20) {
+                    animationDuration = 75; // medium speed
+                } else if (shuffleCount < 30) {
+                    animationDuration = 50; // faster
+                } else {
+                    animationDuration = 25; // fastest
+                }
+                
+                setTimeout(() => {
+                    editableTable.classList.remove('highlight-animation');
+                }, animationDuration);
+
+                // Schedule next shuffle with dynamic interval
+                if (isShuffling) {
+                    let nextInterval = 100; // default interval
+                    if (shuffleCount < 10) {
+                        nextInterval = 200; // slower at start
+                    } else if (shuffleCount < 20) {
+                        nextInterval = 150; // medium speed
+                    } else if (shuffleCount < 30) {
+                        nextInterval = 100; // faster
+                    } else {
+                        nextInterval = 50; // fastest
+                    }
+                    shuffleInterval = setTimeout(performShuffle, nextInterval);
+                }
+            })
+            .catch(error => {
+                console.error('Error getting seeding ranges:', error);
+            });
     }
 
     // Function to save draw

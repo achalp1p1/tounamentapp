@@ -1742,38 +1742,17 @@ def list_players():
 @app.route('/get_seeding_ranges')
 def get_seeding_ranges():
     try:
-        config_path = os.path.join('config', 'seeding_ranges.json')
-        if os.path.exists(config_path):
-            with open(config_path, 'r') as f:
-                data = json.load(f)
-                print(f"Loaded seeding ranges: {data}")
-                return jsonify(data)
-        else:
-            print(f"Seeding ranges file not found at {config_path}")
-            # Return default seeding ranges
-            default_ranges = {
-                "seeding_ranges": [
-                    {"min": 1, "max": 2, "description": "Top Seeds"},
-                    {"min": 3, "max": 5, "description": "Upper Seeds"},
-                    {"min": 6, "max": 15, "description": "Mid Seeds"},
-                    {"min": 16, "max": 31, "description": "Lower Seeds"},
-                    {"min": 32, "max": 999, "description": "Unseeded"}
-                ]
-            }
-            return jsonify(default_ranges)
+        with open('config/seeding_ranges.json', 'r') as f:
+            data = json.load(f)
+        return jsonify({
+            'success': True,
+            'seeding_ranges': data['seeding_ranges']
+        })
     except Exception as e:
-        print(f"Error loading seeding ranges: {str(e)}")
-        # Return default seeding ranges
-        default_ranges = {
-            "seeding_ranges": [
-                {"min": 1, "max": 2, "description": "Top Seeds"},
-                {"min": 3, "max": 5, "description": "Upper Seeds"},
-                {"min": 6, "max": 15, "description": "Mid Seeds"},
-                {"min": 16, "max": 31, "description": "Lower Seeds"},
-                {"min": 32, "max": 999, "description": "Unseeded"}
-            ]
-        }
-        return jsonify(default_ranges)
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
 
 @app.route('/search-players')
 def search_players():
