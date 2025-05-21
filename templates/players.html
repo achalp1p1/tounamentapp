@@ -228,7 +228,7 @@
 
             /* Adjust button size for mobile */
             button {
-                width: 100%;
+            width: 100%;
                 padding: 14px 20px;
                 font-size: 16px;
             }
@@ -351,8 +351,8 @@
                 {{ error }}
             </div>
             {% endif %}
-            
-            <div class="registration-form">
+        
+        <div class="registration-form">
                 <form method="POST" class="registration-form">
                     <input type="hidden" id="player_id" name="player_id" value="{{ player_id }}">
                     <div class="form-container">
@@ -360,32 +360,32 @@
                         <div class="mandatory-fields">
                             <div class="section-title">Basic Information</div>
                             
-                            <div class="form-group">
+                <div class="form-group">
                                 <label for="player_name" class="required">Name</label>
                                 <input type="text" id="player_name" name="player_name" required 
                                        placeholder="Enter player's full name"
                                        pattern="[A-Za-z\s]+" 
                                        title="Please enter a valid name (letters and spaces only)">
-                            </div>
-                            
-                            <div class="form-group">
+                </div>
+                
+                <div class="form-group">
                                 <label for="date_of_birth" class="required">Date of Birth</label>
                                 <input type="date" id="date_of_birth" name="date_of_birth" required
                                        max="{{ today_date }}"
                                        title="Please select a valid date of birth">
-                            </div>
-                            
-                            <div class="form-group">
+                </div>
+                
+                <div class="form-group">
                                 <label for="gender" class="required">Gender</label>
                                 <select id="gender" name="gender" required>
                                     <option value="">Select Gender</option>
                                     <option value="Male">Male</option>
                                     <option value="Female">Female</option>
                                     <option value="Other">Other</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
+                    </select>
+                </div>
+                
+                <div class="form-group">
                                 <label for="phone" class="required">Phone Number</label>
                                 <input type="tel" id="phone" name="phone" required
                                        placeholder="Enter 10-digit mobile number"
@@ -475,10 +475,10 @@
                                     <option value="Uttar Pradesh">Uttar Pradesh</option>
                                     <option value="Uttarakhand">Uttarakhand</option>
                                     <option value="West Bengal">West Bengal</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
+                    </select>
+                </div>
+                
+                <div class="form-group">
                                 <div class="checkbox-group">
                                     <input type="checkbox" id="do_state_registration" name="do_state_registration">
                                     <label for="do_state_registration">Do Official State Registration</label>
@@ -622,11 +622,11 @@
 
                     <div style="margin-top: 2rem; padding: 1rem; background-color: #fff3cd; border: 1px solid #ffeeba; border-radius: 8px; color: #856404;">
                         <strong>Important Note:</strong> Please fill in all information carefully and accurately. This information will be used for printing digital certificates for players. Any errors in the information may affect the certificate generation process.
-                    </div>
-
-                    <button type="submit">Register Player</button>
-                </form>
-            </div>
+                </div>
+                
+                <button type="submit">Register Player</button>
+            </form>
+        </div>
         </div>
     </div>
 

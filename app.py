@@ -1830,13 +1830,19 @@ def edit_player(player_id):
                 'Phone Number': request.form.get('phone'),
                 'Email ID': request.form.get('email'),
                 'State': request.form.get('state'),
+                'District': request.form.get('district'),
                 'School/Institution': request.form.get('institution'),
                 'Academy': request.form.get('academy'),
                 'Address': request.form.get('address'),
                 'TTFI ID': request.form.get('ttfi_id'),
                 'Official State ID': request.form.get('official_state_id'),
                 'DSTTA ID': request.form.get('dstta_id'),
-                'UPI ID': request.form.get('upi_id')
+                'UPI ID': request.form.get('upi_id'),
+                'Account Holder Name': request.form.get('account_holder_name'),
+                'Account Number': request.form.get('account_number'),
+                'Bank Name': request.form.get('bank_name'),
+                'Branch Name': request.form.get('branch_name'),
+                'IFSC Code': request.form.get('ifsc_code')
             }
 
             # Handle file uploads

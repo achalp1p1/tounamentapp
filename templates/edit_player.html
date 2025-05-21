@@ -203,6 +203,47 @@
                 text-align: center;
             }
         }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .bank-details {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .bank-info {
+            background: white;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 0.5rem;
+            border: 1px solid #e0e0e0;
+        }
+
+        .bank-info p {
+            margin: 0.5rem 0;
+            color: #2c3e50;
+        }
+
+        .bank-info strong {
+            color: #1e3c72;
+            min-width: 120px;
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
@@ -351,6 +392,45 @@
                         </div>
 
                         <div class="form-group">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="do_state_registration" name="do_state_registration" {% if player['Official State ID'] %}checked{% endif %}>
+                                <label for="do_state_registration"><strong>Do Official State Registration</strong></label>
+                            </div>
+                        </div>
+
+                        <div id="payment_section" style="display: none;">
+                            <h3>Payment Details</h3>
+                            <p>Registration Fee: ₹1000</p>
+                            <div class="bank-details">
+                                <h4>Bank Account Details</h4>
+                                <p>Please transfer the amount using the following bank details:</p>
+                                <div class="bank-info">
+                                    <p><strong>Account Name:</strong> Delhi State Table Tennis Association</p>
+                                    <p><strong>Bank Name:</strong> AU Small Finance Bank</p>
+                                    <p><strong>Account Number:</strong> 2402257962293561</p>
+                                    <p><strong>IFSC Code:</strong> AUBL0002579</p>
+                                    <p><strong>Branch:</strong> Punjabi Bagh Branch</p>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="payment_snapshot">Payment Snapshot</label>
+                                <input type="file" id="payment_snapshot" name="payment_snapshot" accept="image/*,.pdf">
+                                <small class="form-text text-muted">Upload screenshot or PDF of your payment</small>
+                                {% if player['Payment Snapshot Path'] %}
+                                <div class="current-file">
+                                    <small>Current file: {{ player['Payment Snapshot Path'] }}</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-group">
+                                <label for="transaction_id">Transaction ID</label>
+                                <input type="text" id="transaction_id" name="transaction_id" value="{{ player['Transaction ID'] }}">
+                                <small class="form-text text-muted">Enter the transaction ID from your payment</small>
+                            </div>
+                        </div>
+
+                        <div class="section-title" style="margin-top: 2rem;">Bank Account Details</div>
+                        <div class="form-group">
                             <label for="official_state_id">Official State ID</label>
                             <input type="text" id="official_state_id" name="official_state_id" 
                                    value="{{ player['Official State ID'] }}"
@@ -488,6 +568,62 @@
                 document.getElementById('dstta_id').value = '';
             }
         });
+
+        // Handle state registration checkbox
+        const doStateRegistration = document.getElementById('do_state_registration');
+        const paymentSection = document.getElementById('payment_section');
+        const stateSelect = document.getElementById('state');
+        const officialStateId = document.getElementById('official_state_id');
+        const paymentSnapshot = document.getElementById('payment_snapshot');
+        const transactionId = document.getElementById('transaction_id');
+
+        // Function to generate Official State ID
+        function generateOfficialStateId(playerId) {
+            if (!playerId) return '';
+            // Remove any dashes
+            return playerId.replace(/-/g, '');
+        }
+
+        // Function to check if payment details are provided
+        function checkPaymentDetails() {
+            if (paymentSnapshot.files.length > 0 && transactionId.value.trim() !== '') {
+                // Get the player ID from the form
+                const playerId = document.getElementById('player_id').value;
+                if (playerId) {
+                    const stateId = generateOfficialStateId(playerId);
+                    officialStateId.value = stateSelect.value === 'Delhi' ? 'DL' + stateId : stateId;
+                }
+            } else {
+                officialStateId.value = '';
+            }
+        }
+
+        // Listen for changes in payment details
+        paymentSnapshot.addEventListener('change', checkPaymentDetails);
+        transactionId.addEventListener('input', checkPaymentDetails);
+
+        // Show/hide payment section based on checkbox
+        doStateRegistration.addEventListener('change', function() {
+            paymentSection.style.display = this.checked ? 'block' : 'none';
+            paymentSnapshot.required = this.checked;
+            transactionId.required = this.checked;
+            if (!this.checked) {
+                paymentSnapshot.value = '';
+                transactionId.value = '';
+                officialStateId.value = '';
+            }
+        });
+
+        // Initialize state registration section
+        if (doStateRegistration.checked) {
+            paymentSection.style.display = 'block';
+            paymentSnapshot.required = true;
+            transactionId.required = true;
+        } else {
+            paymentSection.style.display = 'none';
+            paymentSnapshot.required = false;
+            transactionId.required = false;
+        }
     </script>
 </body>
 </html> 
