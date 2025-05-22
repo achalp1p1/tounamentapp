@@ -353,7 +353,7 @@
             {% endif %}
         
         <div class="registration-form">
-                <form method="POST" class="registration-form">
+                <form method="POST" action="{{ url_for('player_registration') }}" enctype="multipart/form-data" class="registration-form">
                     <input type="hidden" id="player_id" name="player_id" value="{{ player_id }}">
                     <div class="form-container">
                         <!-- Left Column - Required Fields -->
@@ -503,13 +503,13 @@
 
                                 <div class="form-group">
                                     <label for="payment_snapshot">Payment Snapshot</label>
-                                    <input type="file" id="payment_snapshot" name="payment_snapshot" accept="image/*,.pdf" required>
+                                    <input type="file" id="payment_snapshot" name="payment_snapshot" accept="image/*,.pdf">
                                     <small class="form-text text-muted">Upload screenshot or PDF of your payment</small>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="transaction_id">Transaction ID</label>
-                                    <input type="text" id="transaction_id" name="transaction_id" required>
+                                    <input type="text" id="transaction_id" name="transaction_id">
                                     <small class="form-text text-muted">Enter the transaction ID from your payment</small>
                                 </div>
 
@@ -720,10 +720,18 @@
 
             doStateRegistration.addEventListener('change', function() {
                 paymentSection.style.display = this.checked ? 'block' : 'none';
-                if (!this.checked) {
+                const paymentSnapshot = document.getElementById('payment_snapshot');
+                const transactionId = document.getElementById('transaction_id');
+                
+                if (this.checked) {
+                    paymentSnapshot.setAttribute('required', 'required');
+                    transactionId.setAttribute('required', 'required');
+                } else {
+                    paymentSnapshot.removeAttribute('required');
+                    transactionId.removeAttribute('required');
                     // Clear payment fields when unchecked
-                    document.getElementById('payment_snapshot').value = '';
-                    document.getElementById('transaction_id').value = '';
+                    paymentSnapshot.value = '';
+                    transactionId.value = '';
                     isStateTransfer.checked = false;
                     nocSection.style.display = 'none';
                     nocCertificate.value = '';

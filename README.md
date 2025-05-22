@@ -1,45 +1,23 @@
-<<<<<<< HEAD
-# Indian Table Tennis Foundation Tournament Management System
+# Tournament Management System
 
-A web-based tournament management system for the Indian Table Tennis Foundation, built with Flask.
+A web-based tournament management system built with Flask for managing table tennis tournaments, player registrations, and tournament draws.
 
 ## Features
 
-- Player Registration
-- Player Search
+- Player Registration and Management
+- Tournament Creation and Management
+- Tournament Registration
 - Seeding Management
-- Category-based Organization
-- Dashboard Interface
-
-## Categories Supported
-
-### Singles Categories
-- Women Singles
-- Men Singles
-- Women Singles 40+
-- Men Singles 40+
-
-### Doubles Categories
-- Women Doubles
-- Women Doubles 40+
-- Men Doubles
-- Men Doubles 40+
-
-### Age Group Categories
-- Girls Under 11
-- Boys Under 11
-- Girls Under 13
-- Boys Under 13
-- Girls Under 15
-- Boys Under 15
-- Girls Under 17
-- Boys Under 17
+- Draw Generation
+- File Upload Support
+- State Registration Integration
 
 ## Setup Instructions
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone [your-repository-url]
+cd tournamentapp
 ```
 
 2. Create and activate a virtual environment:
@@ -58,9 +36,26 @@ pip install -r requirements.txt
 python app.py
 ```
 
-5. Access the application at `http://localhost:5000`
+The application will be available at `http://localhost:5000`
 
-## Project Structure 
-=======
-# tounamentapp
->>>>>>> f87c77a2dc7ebb689fa47c2e1f9dfbf03752e1eb
+## Project Structure
+
+- `app.py` - Main application file
+- `templates/` - HTML templates
+- `static/` - Static files (CSS, JS, images)
+- `config/` - Configuration files
+- `uploads/` - Uploaded files directory
+
+## Dependencies
+
+- Flask
+- Python 3.x
+- Other dependencies listed in requirements.txt
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a new Pull Request

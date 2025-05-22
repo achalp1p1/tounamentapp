@@ -134,6 +134,10 @@ def player_registration():
             form_data = request.form.to_dict()
             print(f"Received form data: {form_data}")
 
+            # Get file data
+            files = request.files
+            print(f"Received files: {[f for f in files]}")
+
             player_name = form_data.get('player_name', '').strip()
             date_of_birth = form_data.get('date_of_birth', '').strip()
             gender = form_data.get('gender', '').strip()
@@ -168,6 +172,7 @@ def player_registration():
             birth_certificate = request.files.get('birth_certificate')
             address_proof = request.files.get('address_proof')
 
+            print("\nValidating form data...")
             # Basic validation
             if not all([player_name, date_of_birth, gender, phone]):
                 raise ValueError("All required fields must be filled out")
@@ -182,9 +187,10 @@ def player_registration():
             if do_state_registration and is_state_transfer and not noc_certificate:
                 raise ValueError("NOC certificate is required for state transfer")
 
+            print("\nGenerating Player ID...")
             # Generate Player ID
-            current_year = str(datetime.now().year)[-2:]
             player_id = generate_new_player_id(date_of_birth)
+            print(f"Generated Player ID: {player_id}")
 
             # Generate Official State ID only if state registration is checked
             official_state_id = ''
@@ -192,10 +198,13 @@ def player_registration():
                 official_state_id = player_id.replace('-', '')
                 if state == 'Delhi':
                     official_state_id = 'DL' + official_state_id
+                print(f"Generated Official State ID: {official_state_id}")
 
+            print("\nCreating uploads directory...")
             # Create uploads directory if it doesn't exist
             uploads_dir = os.path.join('static', 'uploads', 'players', player_id)
             os.makedirs(uploads_dir, exist_ok=True)
+            print(f"Created directory: {uploads_dir}")
 
             # Initialize file paths
             photo_path = ''
@@ -204,35 +213,37 @@ def player_registration():
             payment_snapshot_path = ''
             noc_certificate_path = ''
 
+            print("\nSaving uploaded files...")
             # Save uploaded files if provided
             if photo and photo.filename:
                 photo_path = os.path.join(uploads_dir, 'photo' + os.path.splitext(photo.filename)[1])
                 photo.save(photo_path)
                 photo_path = os.path.join('uploads', 'players', player_id, 'photo' + os.path.splitext(photo.filename)[1])
+                print(f"Saved photo: {photo_path}")
 
             if birth_certificate and birth_certificate.filename:
                 birth_cert_path = os.path.join(uploads_dir, 'birth_certificate' + os.path.splitext(birth_certificate.filename)[1])
                 birth_certificate.save(birth_cert_path)
                 birth_cert_path = os.path.join('uploads', 'players', player_id, 'birth_certificate' + os.path.splitext(birth_certificate.filename)[1])
+                print(f"Saved birth certificate: {birth_cert_path}")
 
             if address_proof and address_proof.filename:
                 address_proof_path = os.path.join(uploads_dir, 'address_proof' + os.path.splitext(address_proof.filename)[1])
                 address_proof.save(address_proof_path)
                 address_proof_path = os.path.join('uploads', 'players', player_id, 'address_proof' + os.path.splitext(address_proof.filename)[1])
+                print(f"Saved address proof: {address_proof_path}")
 
             if payment_snapshot and payment_snapshot.filename:
                 payment_snapshot_path = os.path.join(uploads_dir, 'payment_snapshot' + os.path.splitext(payment_snapshot.filename)[1])
                 payment_snapshot.save(payment_snapshot_path)
                 payment_snapshot_path = os.path.join('uploads', 'players', player_id, 'payment_snapshot' + os.path.splitext(payment_snapshot.filename)[1])
+                print(f"Saved payment snapshot: {payment_snapshot_path}")
 
             if noc_certificate and noc_certificate.filename:
                 noc_certificate_path = os.path.join(uploads_dir, 'noc_certificate' + os.path.splitext(noc_certificate.filename)[1])
                 noc_certificate.save(noc_certificate_path)
                 noc_certificate_path = os.path.join('uploads', 'players', player_id, 'noc_certificate' + os.path.splitext(noc_certificate.filename)[1])
-
-            # If state registration is checked and payment details are provided, generate official state ID
-            if do_state_registration and state == 'Delhi' and payment_snapshot and transaction_id:
-                official_state_id = 'DL' + official_state_id
+                print(f"Saved NOC certificate: {noc_certificate_path}")
 
             player_data = {
                 'Player ID': player_id,
@@ -265,10 +276,10 @@ def player_registration():
                 'NOC Certificate Path': noc_certificate_path
             }
 
+            print("\nChecking for existing player...")
             # Check if file exists and if player already exists
             player_exists = False
             if os.path.exists(PLAYERS_CSV):
-                print("Checking for existing player")
                 with open(PLAYERS_CSV, 'r', newline='', encoding='utf-8') as file:
                     reader = csv.DictReader(file)
                     for row in reader:
@@ -280,9 +291,10 @@ def player_registration():
 
             if not player_exists:
                 try:
+                    print("\nWriting new player to CSV...")
                     # Write to CSV file
                     file_exists = os.path.exists(PLAYERS_CSV)
-                    print(f"Writing new player to CSV. File exists: {file_exists}")
+                    print(f"File exists: {file_exists}")
 
                     mode = 'a' if file_exists else 'w'
                     print(f"Opening file in mode: {mode}")
@@ -304,6 +316,7 @@ def player_registration():
 
         except Exception as e:
             print(f"Error in player registration: {str(e)}")
+            print(traceback.format_exc())  # Add full traceback
             return render_template('players.html', error=str(e), today_date=datetime.now().strftime('%Y-%m-%d'))
 
     # For GET request
