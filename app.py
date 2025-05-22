@@ -1834,6 +1834,11 @@ app.jinja_env.globals.update(get_full_tournament_categories=get_full_tournament_
 def edit_player(player_id):
     if request.method == 'POST':
         try:
+            print("\n=== Starting Player Edit Process ===")
+            print(f"Player ID: {player_id}")
+            print(f"Form data: {request.form}")
+            print(f"Files received: {request.files}")
+            
             # Get form data
             player_data = {
                 'Player ID': player_id,
@@ -1855,62 +1860,67 @@ def edit_player(player_id):
                 'Account Number': request.form.get('account_number'),
                 'Bank Name': request.form.get('bank_name'),
                 'Branch Name': request.form.get('branch_name'),
-                'IFSC Code': request.form.get('ifsc_code')
+                'IFSC Code': request.form.get('ifsc_code'),
+                'Transaction ID': request.form.get('transaction_id'),
+                'State Registration': 'Yes' if request.form.get('do_state_registration') == 'on' else 'No'
             }
+
+            print("\nForm data received:")
+            print(f"Transaction ID: {player_data['Transaction ID']}")
+            print(f"State Registration: {player_data['State Registration']}")
 
             # Handle file uploads
             uploads_dir = os.path.join('static', 'uploads', 'players', player_id)
             os.makedirs(uploads_dir, exist_ok=True)
+            print(f"\nUploads directory: {uploads_dir}")
 
-            # Handle photo upload
-            photo = request.files.get('photo')
-            if photo and photo.filename:
-                photo_path = os.path.join(uploads_dir, 'photo' + os.path.splitext(photo.filename)[1])
-                photo.save(photo_path)
-                player_data['Photo Path'] = os.path.join('uploads', 'players', player_id, 'photo' + os.path.splitext(photo.filename)[1])
-
-            # Handle birth certificate upload
-            birth_certificate = request.files.get('birth_certificate')
-            if birth_certificate and birth_certificate.filename:
-                birth_cert_path = os.path.join(uploads_dir, 'birth_certificate' + os.path.splitext(birth_certificate.filename)[1])
-                birth_certificate.save(birth_cert_path)
-                player_data['Birth Certificate Path'] = os.path.join('uploads', 'players', player_id, 'birth_certificate' + os.path.splitext(birth_certificate.filename)[1])
-
-            # Handle address proof upload
-            address_proof = request.files.get('address_proof')
-            if address_proof and address_proof.filename:
-                address_proof_path = os.path.join(uploads_dir, 'address_proof' + os.path.splitext(address_proof.filename)[1])
-                address_proof.save(address_proof_path)
-                player_data['Address Proof Path'] = os.path.join('uploads', 'players', player_id, 'address_proof' + os.path.splitext(address_proof.filename)[1])
+            # Handle payment snapshot upload
+            payment_snapshot = request.files.get('payment_snapshot')
+            print(f"\nPayment snapshot file: {payment_snapshot}")
+            if payment_snapshot and payment_snapshot.filename:
+                print(f"Processing payment snapshot: {payment_snapshot.filename}")
+                try:
+                    payment_snapshot_path = os.path.join(uploads_dir, 'payment_snapshot' + os.path.splitext(payment_snapshot.filename)[1])
+                    payment_snapshot.save(payment_snapshot_path)
+                    player_data['Payment Snapshot Path'] = os.path.join('uploads', 'players', player_id, 'payment_snapshot' + os.path.splitext(payment_snapshot.filename)[1])
+                    print(f"Successfully saved payment snapshot: {player_data['Payment Snapshot Path']}")
+                except Exception as e:
+                    print(f"Error saving payment snapshot: {str(e)}")
+                    raise
 
             # Read all players
             players = []
+            print("\nReading existing player data...")
             with open(PLAYERS_CSV, 'r', newline='', encoding='utf-8') as file:
                 reader = csv.DictReader(file)
                 fieldnames = reader.fieldnames
+                print(f"CSV Headers: {fieldnames}")
                 for row in reader:
                     if row['Player ID'] == player_id:
+                        print(f"\nFound existing player record:")
+                        print(f"Existing Payment Snapshot Path: {row.get('Payment Snapshot Path', 'Not found')}")
                         # Preserve existing file paths if no new files were uploaded
-                        if 'Photo Path' not in player_data and 'Photo Path' in row:
-                            player_data['Photo Path'] = row['Photo Path']
-                        if 'Birth Certificate Path' not in player_data and 'Birth Certificate Path' in row:
-                            player_data['Birth Certificate Path'] = row['Birth Certificate Path']
-                        if 'Address Proof Path' not in player_data and 'Address Proof Path' in row:
-                            player_data['Address Proof Path'] = row['Address Proof Path']
+                        if 'Payment Snapshot Path' not in player_data and 'Payment Snapshot Path' in row:
+                            player_data['Payment Snapshot Path'] = row['Payment Snapshot Path']
+                            print(f"Preserved existing Payment Snapshot Path: {player_data['Payment Snapshot Path']}")
                         players.append(player_data)
                     else:
                         players.append(row)
 
+            print("\nWriting updated data to CSV...")
             # Write back to CSV
             with open(PLAYERS_CSV, 'w', newline='', encoding='utf-8') as file:
                 writer = csv.DictWriter(file, fieldnames=fieldnames)
                 writer.writeheader()
                 writer.writerows(players)
+            print("CSV update completed")
 
             flash('Player updated successfully!', 'success')
             return redirect(url_for('list_players'))
 
         except Exception as e:
+            print(f"\nError in edit_player: {str(e)}")
+            print(traceback.format_exc())
             flash(f'Error updating player: {str(e)}', 'error')
             return redirect(url_for('edit_player', player_id=player_id))
 

@@ -262,7 +262,7 @@
                 {% endif %}
             {% endwith %}
 
-            <form method="POST" class="registration-form">
+            <form method="POST" class="registration-form" enctype="multipart/form-data">
                 <div class="form-container">
                     <!-- Left Column - Required Fields -->
                     <div class="mandatory-fields">
@@ -587,8 +587,8 @@
         // Function to check if payment details are provided
         function checkPaymentDetails() {
             if (paymentSnapshot.files.length > 0 && transactionId.value.trim() !== '') {
-                // Get the player ID from the form
-                const playerId = document.getElementById('player_id').value;
+                // Get the player ID from the URL
+                const playerId = window.location.pathname.split('/').pop();
                 if (playerId) {
                     const stateId = generateOfficialStateId(playerId);
                     officialStateId.value = stateSelect.value === 'Delhi' ? 'DL' + stateId : stateId;
