@@ -521,12 +521,6 @@
                                        class="form-control">
                             </div>
                         </div>
-
-                        <div class="form-group" id="dstta_id_container" {% if player['State'] != 'Delhi' %}style="display: none;"{% endif %}>
-                            <label for="dstta_id">DSTTA ID</label>
-                            <input type="text" id="dstta_id" name="dstta_id" value="{{ player['DSTTA ID'] }}"
-                                   placeholder="Enter DSTTA ID">
-                        </div>
                     </div>
                 </div>
 
@@ -560,17 +554,6 @@
                 this.setCustomValidity('Please enter a valid UPI ID');
             } else {
                 this.setCustomValidity('');
-            }
-        });
-
-        // Show/hide DSTTA ID field based on state
-        document.getElementById('state').addEventListener('input', function() {
-            const dsttaContainer = document.getElementById('dstta_id_container');
-            if (this.value.toLowerCase() === 'delhi') {
-                dsttaContainer.style.display = 'block';
-            } else {
-                dsttaContainer.style.display = 'none';
-                document.getElementById('dstta_id').value = '';
             }
         });
 

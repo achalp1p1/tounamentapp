@@ -147,7 +147,6 @@ def player_registration():
             state = form_data.get('state', '').strip()
             ttfi_id = form_data.get('ttfi_id', '').strip()
             official_state_id = form_data.get('official_state_id', '').strip()
-            dstta_id = form_data.get('dstta_id', '').strip() if state == 'Delhi' else ''
             institution = form_data.get('institution', '').strip()
             academy = form_data.get('academy', '').strip()
             district = form_data.get('district', '').strip()
@@ -257,7 +256,6 @@ def player_registration():
                 'School/Institution': institution,
                 'Academy': academy,
                 'Address': address,
-                'DSTTA ID': dstta_id,
                 'TTFI ID': ttfi_id,
                 'Official State ID': official_state_id,
                 'Photo Path': photo_path,
@@ -1854,7 +1852,6 @@ def edit_player(player_id):
                 'Address': request.form.get('address'),
                 'TTFI ID': request.form.get('ttfi_id'),
                 'Official State ID': request.form.get('official_state_id'),
-                'DSTTA ID': request.form.get('dstta_id'),
                 'UPI ID': request.form.get('upi_id'),
                 'Account Holder Name': request.form.get('account_holder_name'),
                 'Account Number': request.form.get('account_number'),
