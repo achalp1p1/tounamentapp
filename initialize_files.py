@@ -20,7 +20,7 @@ def initialize_csv_files():
         'players_data.csv': [
             'Player ID', 'Name', 'Date of Birth', 'Gender',
             'Phone Number', 'Email ID', 'State', 'School/Institution',
-            'Academy', 'Address', 'DSTTA ID', 'UPI ID'
+            'Academy', 'Address', 'UPI ID'
         ]
     }
 

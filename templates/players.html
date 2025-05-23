@@ -652,14 +652,14 @@
             }
         });
 
-        // Show/hide DSTTA ID field based on state
-        document.getElementById('state').addEventListener('input', function() {
-            const dsttaContainer = document.getElementById('dstta_id_container');
-            if (this.value.toLowerCase() === 'delhi') {
-                dsttaContainer.style.display = 'block';
+        // Show/hide TTFI ID field based on state
+        document.getElementById('state').addEventListener('change', function() {
+            var state = this.value.toLowerCase();
+            var ttfiIdContainer = document.getElementById('ttfi_id_container');
+            if (state === 'delhi') {
+                ttfiIdContainer.style.display = 'block';
             } else {
-                dsttaContainer.style.display = 'none';
-                document.getElementById('dstta_id').value = '';
+                ttfiIdContainer.style.display = 'none';
             }
         });
 

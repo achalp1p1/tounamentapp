@@ -1313,7 +1313,7 @@ def tournament_bulk_register(tournament_id):
                 headers = csv_data[0]
                 expected_headers = [
                     'Name', 'Date of Birth', 'Gender', 'Phone Number', 'Category',
-                    'Email ID', 'Address', 'State', 'TTFI ID', 'DSTTA ID', 
+                    'Email ID', 'Address', 'State', 'TTFI ID', 
                     'School/Institution', 'Academy', 'UPI ID'
                 ]
 
@@ -1422,7 +1422,7 @@ def tournament_bulk_register(tournament_id):
     # GET request
     headers = [
         'Name', 'Date of Birth', 'Gender', 'Phone Number', 'Category',
-        'Email ID', 'Address', 'State', 'TTFI ID', 'DSTTA ID',
+        'Email ID', 'Address', 'State', 'TTFI ID',
         'School/Institution', 'Academy', 'UPI ID'
     ]
     empty_row = {
@@ -1446,8 +1446,8 @@ def download_bulk_template(tournament_id):
     try:
         # Create CSV content
         csv_content = (
-            "Name,Date of Birth,Gender,Phone Number,Category,Email ID,Address,State,TTFI ID,DSTTA ID,School/Institution,Academy,UPI ID\n"
-            "John Doe,2000-01-01,Male,9876543210,Under 11 Boys Singles,john.doe@email.com,123 Main Street,Delhi,TTFI123456,DSTTA789,ABC School,XYZ Academy,upi@bank"
+            "Name,Date of Birth,Gender,Phone Number,Category,Email ID,Address,State,TTFI ID,School/Institution,Academy,UPI ID\n"
+            "John Doe,2000-01-01,Male,9876543210,Under 11 Boys Singles,john.doe@email.com,123 Main Street,Delhi,TTFI123456,ABC School,XYZ Academy,upi@bank"
         )
         
         # Create response
@@ -1491,10 +1491,9 @@ def submit_bulk_registration(tournament_id):
             state = player_data[7].strip() if len(player_data) > 7 else ''
             ttfi_id = player_data[8].strip() if len(player_data) > 8 else ''
             official_state_id = player_data[9].strip() if len(player_data) > 9 else ''
-            dstta_id = player_data[10].strip() if len(player_data) > 10 else ''
-            institution = player_data[11].strip() if len(player_data) > 11 else ''
-            academy = player_data[12].strip() if len(player_data) > 12 else ''
-            upi_id = player_data[13].strip() if len(player_data) > 13 else ''
+            institution = player_data[10].strip() if len(player_data) > 10 else ''
+            academy = player_data[11].strip() if len(player_data) > 11 else ''
+            upi_id = player_data[12].strip() if len(player_data) > 12 else ''
 
             player_id = get_player_id_from_players_data(name, dob, phone)
             if not player_id:
@@ -1507,8 +1506,8 @@ def submit_bulk_registration(tournament_id):
                     writer = csv.writer(file)
                     writer.writerow([
                         player_id, name, dob, gender, phone, email, 
-                        address, state, ttfi_id, official_state_id, dstta_id, 
-                        institution, academy, upi_id
+                        address, state, ttfi_id, official_state_id, institution, 
+                        academy, upi_id
                     ])
 
             # Check if player is already registered for this tournament/category
