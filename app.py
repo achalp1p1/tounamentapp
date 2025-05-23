@@ -1874,6 +1874,45 @@ def edit_player(player_id):
             os.makedirs(uploads_dir, exist_ok=True)
             print(f"\nUploads directory: {uploads_dir}")
 
+            # Handle photo upload
+            photo = request.files.get('photo')
+            if photo and photo.filename:
+                print(f"Processing photo: {photo.filename}")
+                try:
+                    photo_path = os.path.join(uploads_dir, 'photo' + os.path.splitext(photo.filename)[1])
+                    photo.save(photo_path)
+                    player_data['Photo Path'] = os.path.join('uploads', 'players', player_id, 'photo' + os.path.splitext(photo.filename)[1])
+                    print(f"Successfully saved photo: {player_data['Photo Path']}")
+                except Exception as e:
+                    print(f"Error saving photo: {str(e)}")
+                    raise
+
+            # Handle birth certificate upload
+            birth_certificate = request.files.get('birth_certificate')
+            if birth_certificate and birth_certificate.filename:
+                print(f"Processing birth certificate: {birth_certificate.filename}")
+                try:
+                    birth_cert_path = os.path.join(uploads_dir, 'birth_certificate' + os.path.splitext(birth_certificate.filename)[1])
+                    birth_certificate.save(birth_cert_path)
+                    player_data['Birth Certificate Path'] = os.path.join('uploads', 'players', player_id, 'birth_certificate' + os.path.splitext(birth_certificate.filename)[1])
+                    print(f"Successfully saved birth certificate: {player_data['Birth Certificate Path']}")
+                except Exception as e:
+                    print(f"Error saving birth certificate: {str(e)}")
+                    raise
+
+            # Handle address proof upload
+            address_proof = request.files.get('address_proof')
+            if address_proof and address_proof.filename:
+                print(f"Processing address proof: {address_proof.filename}")
+                try:
+                    address_proof_path = os.path.join(uploads_dir, 'address_proof' + os.path.splitext(address_proof.filename)[1])
+                    address_proof.save(address_proof_path)
+                    player_data['Address Proof Path'] = os.path.join('uploads', 'players', player_id, 'address_proof' + os.path.splitext(address_proof.filename)[1])
+                    print(f"Successfully saved address proof: {player_data['Address Proof Path']}")
+                except Exception as e:
+                    print(f"Error saving address proof: {str(e)}")
+                    raise
+
             # Handle payment snapshot upload
             payment_snapshot = request.files.get('payment_snapshot')
             print(f"\nPayment snapshot file: {payment_snapshot}")
@@ -1898,8 +1937,20 @@ def edit_player(player_id):
                 for row in reader:
                     if row['Player ID'] == player_id:
                         print(f"\nFound existing player record:")
+                        print(f"Existing Photo Path: {row.get('Photo Path', 'Not found')}")
+                        print(f"Existing Birth Certificate Path: {row.get('Birth Certificate Path', 'Not found')}")
+                        print(f"Existing Address Proof Path: {row.get('Address Proof Path', 'Not found')}")
                         print(f"Existing Payment Snapshot Path: {row.get('Payment Snapshot Path', 'Not found')}")
                         # Preserve existing file paths if no new files were uploaded
+                        if 'Photo Path' not in player_data and 'Photo Path' in row:
+                            player_data['Photo Path'] = row['Photo Path']
+                            print(f"Preserved existing Photo Path: {player_data['Photo Path']}")
+                        if 'Birth Certificate Path' not in player_data and 'Birth Certificate Path' in row:
+                            player_data['Birth Certificate Path'] = row['Birth Certificate Path']
+                            print(f"Preserved existing Birth Certificate Path: {player_data['Birth Certificate Path']}")
+                        if 'Address Proof Path' not in player_data and 'Address Proof Path' in row:
+                            player_data['Address Proof Path'] = row['Address Proof Path']
+                            print(f"Preserved existing Address Proof Path: {player_data['Address Proof Path']}")
                         if 'Payment Snapshot Path' not in player_data and 'Payment Snapshot Path' in row:
                             player_data['Payment Snapshot Path'] = row['Payment Snapshot Path']
                             print(f"Preserved existing Payment Snapshot Path: {player_data['Payment Snapshot Path']}")

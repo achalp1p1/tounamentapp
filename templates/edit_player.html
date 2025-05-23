@@ -393,12 +393,14 @@
 
                         <div class="form-group">
                             <div class="checkbox-group">
-                                <input type="checkbox" id="do_state_registration" name="do_state_registration" {% if player['Official State ID'] %}checked{% endif %}>
+                                <input type="checkbox" id="do_state_registration" name="do_state_registration" 
+                                       {% if player['Official State ID'] %}checked{% endif %}
+                                       {% if player['State Registration'] == 'Yes' %}disabled{% endif %}>
                                 <label for="do_state_registration"><strong>Do Official State Registration</strong></label>
                             </div>
                         </div>
 
-                        <div id="payment_section" style="display: none;">
+                        <div id="payment_section" style="display: {% if player['State Registration'] == 'Yes' or player['Official State ID'] %}block{% else %}none{% endif %};">
                             <h3>Payment Details</h3>
                             <p>Registration Fee: ₹1000</p>
                             <div class="bank-details">
@@ -414,7 +416,8 @@
                             </div>
                             <div class="form-group">
                                 <label for="payment_snapshot">Payment Snapshot</label>
-                                <input type="file" id="payment_snapshot" name="payment_snapshot" accept="image/*,.pdf">
+                                <input type="file" id="payment_snapshot" name="payment_snapshot" accept="image/*,.pdf"
+                                       {% if player['State Registration'] == 'Yes' %}disabled{% endif %}>
                                 <small class="form-text text-muted">Upload screenshot or PDF of your payment</small>
                                 {% if player['Payment Snapshot Path'] %}
                                 <div class="current-file">
@@ -424,7 +427,8 @@
                             </div>
                             <div class="form-group">
                                 <label for="transaction_id">Transaction ID</label>
-                                <input type="text" id="transaction_id" name="transaction_id" value="{{ player['Transaction ID'] }}">
+                                <input type="text" id="transaction_id" name="transaction_id" value="{{ player['Transaction ID'] }}"
+                                       {% if player['State Registration'] == 'Yes' %}readonly{% endif %}>
                                 <small class="form-text text-muted">Enter the transaction ID from your payment</small>
                             </div>
                         </div>
@@ -436,7 +440,8 @@
                                    value="{{ player['Official State ID'] }}"
                                    placeholder="Enter official state ID if issued"
                                    pattern="[A-Za-z0-9]+" 
-                                   title="Please enter a valid state ID">
+                                   title="Please enter a valid state ID"
+                                   {% if player['State Registration'] == 'Yes' %}readonly{% endif %}>
                         </div>
 
                         <div class="form-group">
@@ -598,21 +603,24 @@
             }
         }
 
-        // Listen for changes in payment details
-        paymentSnapshot.addEventListener('change', checkPaymentDetails);
-        transactionId.addEventListener('input', checkPaymentDetails);
+        // Only add event listeners if the fields are not disabled
+        if (!doStateRegistration.disabled) {
+            // Listen for changes in payment details
+            paymentSnapshot.addEventListener('change', checkPaymentDetails);
+            transactionId.addEventListener('input', checkPaymentDetails);
 
-        // Show/hide payment section based on checkbox
-        doStateRegistration.addEventListener('change', function() {
-            paymentSection.style.display = this.checked ? 'block' : 'none';
-            paymentSnapshot.required = this.checked;
-            transactionId.required = this.checked;
-            if (!this.checked) {
-                paymentSnapshot.value = '';
-                transactionId.value = '';
-                officialStateId.value = '';
-            }
-        });
+            // Show/hide payment section based on checkbox
+            doStateRegistration.addEventListener('change', function() {
+                paymentSection.style.display = this.checked ? 'block' : 'none';
+                paymentSnapshot.required = this.checked;
+                transactionId.required = this.checked;
+                if (!this.checked) {
+                    paymentSnapshot.value = '';
+                    transactionId.value = '';
+                    officialStateId.value = '';
+                }
+            });
+        }
 
         // Initialize state registration section
         if (doStateRegistration.checked) {
