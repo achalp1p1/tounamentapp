@@ -1722,6 +1722,7 @@
                                         <thead>
                                             <tr>
                                                 <th style="width: 50px; background: #f5f5f5; padding: 12px; text-align: left; font-weight: 500; border-bottom: 2px solid #ddd;">No.</th>
+                                                <th style="width: 80px; background: #f5f5f5; padding: 12px; text-align: left; font-weight: 500; border-bottom: 2px solid #ddd;">Ranking</th>
                                                 <th style="background: #f5f5f5; padding: 12px; text-align: left; font-weight: 500; border-bottom: 2px solid #ddd;">Player Name</th>
                                                 <th style="width: 120px; background: #f5f5f5; padding: 12px; text-align: left; font-weight: 500; border-bottom: 2px solid #ddd;">Seeding</th>
                                             </tr>
@@ -2455,53 +2456,50 @@
     let seedRanges = null; // Store seeding ranges globally
 
     // Function to load players for seeding
-    function loadPlayers() {
-        const category = document.getElementById('seedingCategorySelect').value;
-        const playersContainer = document.getElementById('playersContainer');
-        const playersTableBody = document.getElementById('playersTableBody');
-        const saveButton = document.getElementById('saveButton');
-        const messageBox = document.getElementById('messageBox');
-        
+    function loadPlayers(category) {
         if (!category) {
-            playersContainer.style.display = 'none';
+            document.getElementById('playersContainer').style.display = 'none';
             return;
         }
 
-        fetch(`/tournament/{{ tournament["Tournament Id"] }}/get_category_players/${category}?fields=basic`)
+        document.getElementById('playersContainer').style.display = 'block';
+        document.getElementById('saveButton').style.display = 'none';
+        document.getElementById('messageBox').style.display = 'none';
+
+        fetch(`/tournament/{{ tournament["Tournament Id"] }}/get_category_players/${category}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    let html = '';
+                    const tbody = document.getElementById('playersTableBody');
+                    tbody.innerHTML = '';
                     data.players.forEach((player, index) => {
-                        html += `
-                            <tr>
-                                <td style="padding: 12px; border-bottom: 1px solid #eee;">${index + 1}</td>
-                                <td style="padding: 12px; border-bottom: 1px solid #eee;">${player.name}</td>
-                                <td style="padding: 12px; border-bottom: 1px solid #eee;">
-                                    <input type="hidden" name="player_ids[]" value="${player.player_id}">
-                                    <input type="number" 
-                                           name="seedings[]" 
-                                           class="seeding-input" 
-                                           value="${player.seeding || ''}" 
-                                           min="1"
-                                           placeholder="Seeding"
-                                           style="width: 80px; padding: 6px; border: 1px solid #ddd; border-radius: 4px; text-align: center;">
-                                </td>
-                            </tr>
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td style="padding: 12px; border-bottom: 1px solid #eee;">${index + 1}</td>
+                            <td style="padding: 12px; border-bottom: 1px solid #eee;">${player.ranking || ''}</td>
+                            <td style="padding: 12px; border-bottom: 1px solid #eee;">${player.name}</td>
+                            <td style="padding: 12px; border-bottom: 1px solid #eee;">
+                                <input type="number" 
+                                       class="form-control seeding-input" 
+                                       value="${player.seeding || ''}" 
+                                       min="1"
+                                       data-player-id="${player.player_id}">
+                            </td>
                         `;
+                        tbody.appendChild(row);
                     });
-                    playersTableBody.innerHTML = html;
-                    playersContainer.style.display = 'block';
-                    saveButton.style.display = data.players.length > 0 ? 'block' : 'none';
+                    document.getElementById('saveButton').style.display = data.players.length > 0 ? 'block' : 'none';
                 } else {
-                    playersTableBody.innerHTML = `<tr><td colspan="3" style="padding: 12px; text-align: center;">Error: ${data.message || 'Failed to load players'}</td></tr>`;
-                    saveButton.style.display = 'none';
+                    document.getElementById('messageBox').className = 'message error-message';
+                    document.getElementById('messageBox').textContent = 'Error: ' + (data.message || 'Failed to load players');
+                    document.getElementById('messageBox').style.display = 'block';
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                playersTableBody.innerHTML = '<tr><td colspan="3" style="padding: 12px; text-align: center;">Error loading players</td></tr>';
-                saveButton.style.display = 'none';
+                console.error('Error loading players:', error);
+                document.getElementById('messageBox').className = 'message error-message';
+                document.getElementById('messageBox').textContent = 'Error loading players';
+                document.getElementById('messageBox').style.display = 'block';
             });
     }
 
@@ -2947,7 +2945,9 @@
         // Initialize Step 1
         const seedingCategorySelect = document.getElementById('seedingCategorySelect');
         if (seedingCategorySelect) {
-            seedingCategorySelect.addEventListener('change', loadPlayers);
+            seedingCategorySelect.addEventListener('change', function() {
+                loadPlayers(this.value);
+            });
         }
 
         // Initialize seeding form
