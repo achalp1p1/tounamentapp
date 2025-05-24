@@ -1134,7 +1134,7 @@ def tournament_update_seeding(tournament_id):
             except Exception as e:
                 print(f"Error reading tournament categories: {str(e)}")
 
-            return render_template('tournament_update_seeding.html',
+            return render_template('tournament_details.html',
                                 tournament=tournament,
                                 categories=categories,
                                 active_subpage='update_seeding')
