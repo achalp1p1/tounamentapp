@@ -1147,10 +1147,6 @@ def get_category_players(tournament_id, category):
     # Get the requested fields
     fields = request.args.get('fields', 'basic')  # default to 'basic'
     players = []
-    
-    # Get player rankings
-    rankings = get_player_rankings()
-    
     with open(TOURNAMENT_REGISTRATIONS_CSV, 'r', newline='', encoding='utf-8') as file:
         reader = csv.DictReader(file)
         for row in reader:
@@ -1166,8 +1162,7 @@ def get_category_players(tournament_id, category):
                             player = {
                                 'name': prow['Name'],
                                 'player_id': player_id,
-                                'seeding': seeding,
-                                'ranking': rankings.get(player_id, '')
+                                'seeding': seeding
                             }
                             if fields == 'full':
                                 player['school'] = prow.get('School/Institution', '')
@@ -2043,25 +2038,6 @@ def update_tournaments_csv():
         return "Tournaments CSV updated successfully!"
     except Exception as e:
         return f"Error updating tournaments CSV: {str(e)}"
-
-def get_player_rankings():
-    """
-    Reads the Ranking.csv file and returns a dictionary mapping player IDs to their rankings.
-    Returns:
-        dict: A dictionary where keys are player IDs and values are their rankings
-    """
-    rankings = {}
-    try:
-        with open('Ranking.csv', 'r', newline='', encoding='utf-8') as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                player_id = row['Player Id ID']
-                ranking = row.get('Points', '')  # Changed from 'Ranking' to 'Points'
-                if player_id and ranking:
-                    rankings[player_id] = ranking
-    except Exception as e:
-        print(f"Error reading rankings: {str(e)}")
-    return rankings
 
 if __name__ == '__main__':
     # Initialize CSV files if they don't exist
