@@ -1863,69 +1863,50 @@ def edit_player(player_id):
 
             print("\nForm data received:")
             print(f"Transaction ID: {player_data['Transaction ID']}")
-            print(f"State Registration: {player_data['State Registration']}")
-
+            
             # Handle file uploads
-            uploads_dir = os.path.join('static', 'uploads', 'players', player_id)
-            os.makedirs(uploads_dir, exist_ok=True)
-            print(f"\nUploads directory: {uploads_dir}")
-
-            # Handle photo upload
-            photo = request.files.get('photo')
-            if photo and photo.filename:
-                print(f"Processing photo: {photo.filename}")
-                try:
-                    photo_path = os.path.join(uploads_dir, 'photo' + os.path.splitext(photo.filename)[1])
+            if 'photo' in request.files and request.files['photo'].filename:
+                photo = request.files['photo']
+                if photo and allowed_file(photo.filename, {'png', 'jpg', 'jpeg'}):
+                    filename = secure_filename(photo.filename)
+                    photo_path = os.path.join(app.config['UPLOAD_FOLDER'], 'photos', filename)
+                    os.makedirs(os.path.dirname(photo_path), exist_ok=True)
                     photo.save(photo_path)
-                    player_data['Photo Path'] = os.path.join('uploads', 'players', player_id, 'photo' + os.path.splitext(photo.filename)[1])
-                    print(f"Successfully saved photo: {player_data['Photo Path']}")
-                except Exception as e:
-                    print(f"Error saving photo: {str(e)}")
-                    raise
+                    player_data['Photo Path'] = os.path.join('uploads', 'photos', filename)
+                    print(f"Photo saved to: {player_data['Photo Path']}")
 
-            # Handle birth certificate upload
-            birth_certificate = request.files.get('birth_certificate')
-            if birth_certificate and birth_certificate.filename:
-                print(f"Processing birth certificate: {birth_certificate.filename}")
-                try:
-                    birth_cert_path = os.path.join(uploads_dir, 'birth_certificate' + os.path.splitext(birth_certificate.filename)[1])
-                    birth_certificate.save(birth_cert_path)
-                    player_data['Birth Certificate Path'] = os.path.join('uploads', 'players', player_id, 'birth_certificate' + os.path.splitext(birth_certificate.filename)[1])
-                    print(f"Successfully saved birth certificate: {player_data['Birth Certificate Path']}")
-                except Exception as e:
-                    print(f"Error saving birth certificate: {str(e)}")
-                    raise
+            if 'birth_certificate' in request.files and request.files['birth_certificate'].filename:
+                birth_cert = request.files['birth_certificate']
+                if birth_cert and allowed_file(birth_cert.filename, {'pdf', 'jpg', 'jpeg', 'png'}):
+                    filename = secure_filename(birth_cert.filename)
+                    cert_path = os.path.join(app.config['UPLOAD_FOLDER'], 'birth_certificates', filename)
+                    os.makedirs(os.path.dirname(cert_path), exist_ok=True)
+                    birth_cert.save(cert_path)
+                    player_data['Birth Certificate Path'] = os.path.join('uploads', 'birth_certificates', filename)
+                    print(f"Birth certificate saved to: {player_data['Birth Certificate Path']}")
 
-            # Handle address proof upload
-            address_proof = request.files.get('address_proof')
-            if address_proof and address_proof.filename:
-                print(f"Processing address proof: {address_proof.filename}")
-                try:
-                    address_proof_path = os.path.join(uploads_dir, 'address_proof' + os.path.splitext(address_proof.filename)[1])
-                    address_proof.save(address_proof_path)
-                    player_data['Address Proof Path'] = os.path.join('uploads', 'players', player_id, 'address_proof' + os.path.splitext(address_proof.filename)[1])
-                    print(f"Successfully saved address proof: {player_data['Address Proof Path']}")
-                except Exception as e:
-                    print(f"Error saving address proof: {str(e)}")
-                    raise
+            if 'address_proof' in request.files and request.files['address_proof'].filename:
+                address_proof = request.files['address_proof']
+                if address_proof and allowed_file(address_proof.filename, {'pdf', 'jpg', 'jpeg', 'png'}):
+                    filename = secure_filename(address_proof.filename)
+                    proof_path = os.path.join(app.config['UPLOAD_FOLDER'], 'address_proofs', filename)
+                    os.makedirs(os.path.dirname(proof_path), exist_ok=True)
+                    address_proof.save(proof_path)
+                    player_data['Address Proof Path'] = os.path.join('uploads', 'address_proofs', filename)
+                    print(f"Address proof saved to: {player_data['Address Proof Path']}")
 
-            # Handle payment snapshot upload
-            payment_snapshot = request.files.get('payment_snapshot')
-            print(f"\nPayment snapshot file: {payment_snapshot}")
-            if payment_snapshot and payment_snapshot.filename:
-                print(f"Processing payment snapshot: {payment_snapshot.filename}")
-                try:
-                    payment_snapshot_path = os.path.join(uploads_dir, 'payment_snapshot' + os.path.splitext(payment_snapshot.filename)[1])
-                    payment_snapshot.save(payment_snapshot_path)
-                    player_data['Payment Snapshot Path'] = os.path.join('uploads', 'players', player_id, 'payment_snapshot' + os.path.splitext(payment_snapshot.filename)[1])
-                    print(f"Successfully saved payment snapshot: {player_data['Payment Snapshot Path']}")
-                except Exception as e:
-                    print(f"Error saving payment snapshot: {str(e)}")
-                    raise
+            if 'payment_snapshot' in request.files and request.files['payment_snapshot'].filename:
+                payment_snap = request.files['payment_snapshot']
+                if payment_snap and allowed_file(payment_snap.filename, {'jpg', 'jpeg', 'png'}):
+                    filename = secure_filename(payment_snap.filename)
+                    snap_path = os.path.join(app.config['UPLOAD_FOLDER'], 'payment_snapshots', filename)
+                    os.makedirs(os.path.dirname(snap_path), exist_ok=True)
+                    payment_snap.save(snap_path)
+                    player_data['Payment Snapshot Path'] = os.path.join('uploads', 'payment_snapshots', filename)
+                    print(f"Payment snapshot saved to: {player_data['Payment Snapshot Path']}")
 
-            # Read all players
+            # Read existing players
             players = []
-            print("\nReading existing player data...")
             with open(PLAYERS_CSV, 'r', newline='', encoding='utf-8') as file:
                 reader = csv.DictReader(file)
                 fieldnames = reader.fieldnames

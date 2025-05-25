@@ -257,7 +257,9 @@
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
-                        <div class="{{ category }}">{{ message }}</div>
+                        {% if message != 'Player updated successfully!' %}
+                            <div class="{{ category }}">{{ message }}</div>
+                        {% endif %}
                     {% endfor %}
                 {% endif %}
             {% endwith %}
