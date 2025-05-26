@@ -2500,8 +2500,25 @@
                                 return rankA - rankB;
                             });
 
-                            // Create table rows with sorted players
+                            // Generate default seeding based on rankings only for players without existing seeding
+                            let currentSeeding = 1;
+                            let currentRank = null;
+                            let sameRankCount = 0;
+
                             playersWithRankings.forEach((player, index) => {
+                                const rank = parseInt(player.ranking) || 999999;
+                                
+                                // Only calculate default seeding if player doesn't have existing seeding
+                                if (!player.seeding) {
+                                    if (rank !== currentRank) {
+                                        currentSeeding = index + 1;
+                                        currentRank = rank;
+                                        sameRankCount = 0;
+                                    } else {
+                                        sameRankCount++;
+                                    }
+                                }
+
                                 const row = document.createElement('tr');
                                 row.innerHTML = `
                                     <td style="${cellStyle}">${player.name}</td>
@@ -2509,7 +2526,7 @@
                                     <td style="${cellStyle}">
                                         <input type="number" 
                                                class="form-control" 
-                                               value="${player.seeding || ''}" 
+                                               value="${player.seeding || currentSeeding}" 
                                                min="1" 
                                                name="seedings[]"
                                                data-player-id="${player.player_id}"
