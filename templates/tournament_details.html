@@ -2489,7 +2489,6 @@
                             data.players.forEach((player, index) => {
                                 const row = document.createElement('tr');
                                 row.innerHTML = `
-                                    <td style="${cellStyle}">${index + 1}</td>
                                     <td style="${cellStyle}">${player.name}</td>
                                     <td style="${cellStyle}">${getPlayerRanking(player.player_id, category, rankingsData)}</td>
                                     <td style="${cellStyle}">
@@ -2512,7 +2511,6 @@
                             data.players.forEach((player, index) => {
                                 const row = document.createElement('tr');
                                 row.innerHTML = `
-                                    <td style="${cellStyle}">${index + 1}</td>
                                     <td style="${cellStyle}">${player.name}</td>
                                     <td style="${cellStyle}"></td>
                                     <td style="${cellStyle}">
