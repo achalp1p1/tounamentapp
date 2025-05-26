@@ -480,7 +480,7 @@
                 
                 <div class="form-group">
                                 <div class="checkbox-group">
-                                    <input type="checkbox" id="do_state_registration" name="do_state_registration">
+                                    <input type="checkbox" id="do_state_registration" name="do_state_registration" disabled>
                                     <label for="do_state_registration">Do Official State Registration</label>
                                 </div>
                             </div>
@@ -674,6 +674,11 @@
             const nocSection = document.getElementById('noc_section');
             const nocCertificate = document.getElementById('noc_certificate');
 
+            // Ensure checkbox is disabled on page load
+            doStateRegistration.disabled = true;
+            doStateRegistration.checked = false;
+            paymentSection.style.display = 'none';
+
             // Function to generate Official State ID
             function generateOfficialStateId(playerId) {
                 if (!playerId) return '';
@@ -700,7 +705,7 @@
             transactionId.addEventListener('input', checkPaymentDetails);
 
             stateSelect.addEventListener('change', function() {
-                if (this.value === 'Delhi') {
+                if (this.value) {
                     doStateRegistration.disabled = false;
                 } else {
                     doStateRegistration.disabled = true;
