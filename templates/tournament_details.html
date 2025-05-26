@@ -2799,8 +2799,7 @@
                 <tr>
                     <th style="${headerStyle}">Seed</th>
                     <th style="${headerStyle}">Name</th>
-                    <th style="${headerStyle}">Ranking</th>
-                    <th style="${headerStyle}">Seeding</th>
+                    <th style="${headerStyle}">Rank</th>
                     <th style="${headerStyle}">School/Institution</th>
                 </tr>
             </thead>
@@ -2810,16 +2809,6 @@
                         <td style="${cellStyle}">${player.seeding || ''}</td>
                         <td style="${cellStyle}">${player.name}</td>
                         <td style="${cellStyle}"></td>
-                        <td style="${cellStyle}">
-                            <input type="hidden" name="player_ids[]" value="${player.player_id}">
-                            <input type="number" 
-                                   name="seedings[]" 
-                                   class="seeding-input" 
-                                   value="${player.seeding || ''}" 
-                                   min="1"
-                                   placeholder="Seeding"
-                                   style="width: 80px; padding: 6px; border: 1px solid #ddd; border-radius: 4px; text-align: center;">
-                        </td>
                         <td style="${cellStyle}">${player.school || ''}</td>
                     </tr>
                 `).join('')}
