@@ -2496,7 +2496,8 @@
                                                class="form-control" 
                                                value="${player.seeding || ''}" 
                                                min="1" 
-                                               onchange="updateSeeding(this, '${player.player_id}')"
+                                               name="seedings[]"
+                                               data-player-id="${player.player_id}"
                                                style="width: 80px;">
                                     </td>
                                 `;
@@ -2518,7 +2519,8 @@
                                                class="form-control" 
                                                value="${player.seeding || ''}" 
                                                min="1" 
-                                               onchange="updateSeeding(this, '${player.player_id}')"
+                                               name="seedings[]"
+                                               data-player-id="${player.player_id}"
                                                style="width: 80px;">
                                     </td>
                                 `;
@@ -2596,8 +2598,16 @@
     function saveSeeding(event) {
         event.preventDefault();
         const form = event.target;
-        const formData = new FormData(form);
-        formData.append('category', document.getElementById('seedingCategorySelect').value);
+        const formData = new FormData();
+        const category = document.getElementById('seedingCategorySelect').value;
+        
+        // Get all seeding inputs
+        const seedingInputs = form.querySelectorAll('input[name="seedings[]"]');
+        seedingInputs.forEach(input => {
+            formData.append('player_ids[]', input.dataset.playerId);
+            formData.append('seedings[]', input.value);
+        });
+        formData.append('category', category);
 
         const saveButton = document.getElementById('saveButton');
         const messageBox = document.getElementById('messageBox');
