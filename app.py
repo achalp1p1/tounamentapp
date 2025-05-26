@@ -186,6 +186,15 @@ def player_registration():
             if do_state_registration and is_state_transfer and not noc_certificate:
                 raise ValueError("NOC certificate is required for state transfer")
 
+            # Additional validation for state registration documents
+            if do_state_registration:
+                if not photo or not photo.filename:
+                    raise ValueError("Photo is required for state registration")
+                if not birth_certificate or not birth_certificate.filename:
+                    raise ValueError("Birth Certificate is required for state registration")
+                if not address_proof or not address_proof.filename:
+                    raise ValueError("Address Proof is required for state registration")
+
             print("\nGenerating Player ID...")
             # Generate Player ID
             player_id = generate_new_player_id(date_of_birth)

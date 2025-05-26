@@ -716,13 +716,22 @@
                 paymentSection.style.display = this.checked ? 'block' : 'none';
                 const paymentSnapshot = document.getElementById('payment_snapshot');
                 const transactionId = document.getElementById('transaction_id');
+                const photo = document.getElementById('photo');
+                const birthCertificate = document.getElementById('birth_certificate');
+                const addressProof = document.getElementById('address_proof');
                 
                 if (this.checked) {
                     paymentSnapshot.setAttribute('required', 'required');
                     transactionId.setAttribute('required', 'required');
+                    photo.setAttribute('required', 'required');
+                    birthCertificate.setAttribute('required', 'required');
+                    addressProof.setAttribute('required', 'required');
                 } else {
                     paymentSnapshot.removeAttribute('required');
                     transactionId.removeAttribute('required');
+                    photo.removeAttribute('required');
+                    birthCertificate.removeAttribute('required');
+                    addressProof.removeAttribute('required');
                     // Clear payment fields when unchecked
                     paymentSnapshot.value = '';
                     transactionId.value = '';
