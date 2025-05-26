@@ -2453,56 +2453,145 @@
     let shuffleInterval;
     let shuffleCount = 0;
     let seedRanges = null; // Store seeding ranges globally
+    const tournamentId = "{{ tournament['Tournament Id'] }}"; // Add tournament ID
+
+    // Table styles
+    const cellStyle = `
+        padding: 14px 16px;
+        border-bottom: 1px solid #e0e0e0;
+        color: #333;
+        font-size: 0.95em;
+    `;
 
     // Function to load players for seeding
     function loadPlayers() {
         const category = document.getElementById('seedingCategorySelect').value;
-        const playersContainer = document.getElementById('playersContainer');
-        const playersTableBody = document.getElementById('playersTableBody');
-        const saveButton = document.getElementById('saveButton');
-        const messageBox = document.getElementById('messageBox');
-        
-        if (!category) {
-            playersContainer.style.display = 'none';
-            return;
-        }
+        if (!category) return;
 
-        fetch(`/tournament/{{ tournament["Tournament Id"] }}/get_category_players/${category}?fields=basic`)
+        console.log('Loading players for category:', category);
+        
+        // Show the players container
+        document.getElementById('playersContainer').style.display = 'block';
+
+        fetch(`/tournament/${tournamentId}/get_category_players/${category}?fields=full`)
             .then(response => response.json())
             .then(data => {
+                console.log('Received data:', data);
                 if (data.success) {
-                    let html = '';
-                    data.players.forEach((player, index) => {
-                        html += `
-                            <tr>
-                                <td style="padding: 12px; border-bottom: 1px solid #eee;">${player.name}</td>
-                                <td style="padding: 12px; border-bottom: 1px solid #eee;"></td>
-                                <td style="padding: 12px; border-bottom: 1px solid #eee;">
-                                    <input type="hidden" name="player_ids[]" value="${player.player_id}">
-                                    <input type="number" 
-                                           name="seedings[]" 
-                                           class="seeding-input" 
-                                           value="${player.seeding || ''}" 
-                                           min="1"
-                                           placeholder="Seeding"
-                                           style="width: 80px; padding: 6px; border: 1px solid #ddd; border-radius: 4px; text-align: center;">
-                                </td>
-                            </tr>
-                        `;
-                    });
-                    playersTableBody.innerHTML = html;
-                    playersContainer.style.display = 'block';
-                    saveButton.style.display = data.players.length > 0 ? 'block' : 'none';
+                    const tbody = document.getElementById('playersTableBody');
+                    tbody.innerHTML = '';
+                    
+                    // Fetch rankings data
+                    fetch('/get_rankings')
+                        .then(response => response.json())
+                        .then(rankingsData => {
+                            console.log('Received rankings data:', rankingsData);
+                            data.players.forEach((player, index) => {
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td style="${cellStyle}">${index + 1}</td>
+                                    <td style="${cellStyle}">${player.name}</td>
+                                    <td style="${cellStyle}">${getPlayerRanking(player.player_id, category, rankingsData)}</td>
+                                    <td style="${cellStyle}">
+                                        <input type="number" 
+                                               class="form-control" 
+                                               value="${player.seeding || ''}" 
+                                               min="1" 
+                                               onchange="updateSeeding(this, '${player.player_id}')"
+                                               style="width: 80px;">
+                                    </td>
+                                `;
+                                tbody.appendChild(row);
+                            });
+                            // Show the save button after loading players
+                            document.getElementById('saveButton').style.display = 'block';
+                        })
+                        .catch(error => {
+                            console.error('Error fetching rankings:', error);
+                            // If rankings fetch fails, still show players without rankings
+                            data.players.forEach((player, index) => {
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td style="${cellStyle}">${index + 1}</td>
+                                    <td style="${cellStyle}">${player.name}</td>
+                                    <td style="${cellStyle}"></td>
+                                    <td style="${cellStyle}">
+                                        <input type="number" 
+                                               class="form-control" 
+                                               value="${player.seeding || ''}" 
+                                               min="1" 
+                                               onchange="updateSeeding(this, '${player.player_id}')"
+                                               style="width: 80px;">
+                                    </td>
+                                `;
+                                tbody.appendChild(row);
+                            });
+                            // Show the save button after loading players
+                            document.getElementById('saveButton').style.display = 'block';
+                        });
                 } else {
-                    playersTableBody.innerHTML = `<tr><td colspan="3" style="padding: 12px; text-align: center;">Error: ${data.message || 'Failed to load players'}</td></tr>`;
-                    saveButton.style.display = 'none';
+                    console.error('Failed to load players:', data.message);
+                    alert('Error loading players: ' + (data.message || 'Unknown error'));
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                playersTableBody.innerHTML = '<tr><td colspan="3" style="padding: 12px; text-align: center;">Error loading players</td></tr>';
-                saveButton.style.display = 'none';
+                console.error('Error loading players:', error);
+                alert('Error loading players. Please try again.');
             });
+    }
+
+    // Function to update seeding
+    function updateSeeding(input, playerId) {
+        const form = document.getElementById('seedingForm');
+        const formData = new FormData(form);
+        formData.append('player_ids[]', playerId);
+        formData.append('seedings[]', input.value);
+        formData.append('category', document.getElementById('seedingCategorySelect').value);
+
+        fetch(`/tournament/${tournamentId}/update_seeding`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            const messageBox = document.getElementById('messageBox');
+            if (data.success) {
+                messageBox.className = 'message success-message';
+                messageBox.textContent = 'Seeding updated successfully!';
+                messageBox.style.display = 'block';
+                // Clear any existing error message
+                setTimeout(() => {
+                    messageBox.style.display = 'none';
+                }, 3000);
+            } else if (data.message && data.message.includes('No matching records found')) {
+                // Ignore the "No matching records" error if we already got a success message
+                return;
+            } else {
+                messageBox.className = 'message error-message';
+                messageBox.textContent = 'Error: ' + data.message;
+                messageBox.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.className = 'message error-message';
+            messageBox.textContent = 'Error updating seeding';
+            messageBox.style.display = 'block';
+        });
+    }
+
+    function getPlayerRanking(playerId, category, rankingsData) {
+        // Find player's official state ID
+        const playerData = rankingsData.players.find(p => p.player_id === playerId);
+        if (!playerData || !playerData.official_state_id) return '';
+
+        // Find ranking for this player and category
+        const ranking = rankingsData.rankings.find(r => 
+            r.official_state_id === playerData.official_state_id && 
+            r.category === category
+        );
+
+        return ranking ? ranking.ranking : '';
     }
 
     // Function to save seeding
@@ -2524,9 +2613,22 @@
         })
         .then(response => response.json())
         .then(data => {
-            messageBox.className = 'message ' + (data.success ? 'success-message' : 'error-message');
-            messageBox.textContent = data.success ? 'Seeding updated successfully!' : 'Error: ' + data.message;
-            messageBox.style.display = 'block';
+            if (data.success) {
+                messageBox.className = 'message success-message';
+                messageBox.textContent = 'Seeding updated successfully!';
+                messageBox.style.display = 'block';
+                // Clear the success message after 3 seconds
+                setTimeout(() => {
+                    messageBox.style.display = 'none';
+                }, 3000);
+            } else if (data.message && data.message.includes('No matching records found')) {
+                // Ignore the "No matching records" error if we already got a success message
+                return;
+            } else {
+                messageBox.className = 'message error-message';
+                messageBox.textContent = 'Error: ' + data.message;
+                messageBox.style.display = 'block';
+            }
             saveButton.disabled = false;
         })
         .catch(error => {

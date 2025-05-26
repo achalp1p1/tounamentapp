@@ -2020,6 +2020,44 @@ def update_tournaments_csv():
     except Exception as e:
         return f"Error updating tournaments CSV: {str(e)}"
 
+@app.route('/get_rankings')
+def get_rankings():
+    try:
+        rankings = []
+        players = []
+        
+        # Read players_data.csv to get Player ID to Official State ID mapping
+        with open('players_data.csv', 'r', newline='', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if row.get('Official State ID'):  # Only include players with Official State ID
+                    players.append({
+                        'player_id': row['Player ID'],
+                        'official_state_id': row['Official State ID']
+                    })
+        
+        # Read Ranking.csv to get rankings
+        with open('Ranking.csv', 'r', newline='', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                rankings.append({
+                    'official_state_id': row['Official State Id'],
+                    'category': row['Category'],
+                    'ranking': row['Ranking']
+                })
+        
+        return jsonify({
+            'success': True,
+            'players': players,
+            'rankings': rankings
+        })
+    except Exception as e:
+        print(f"Error fetching rankings: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Error fetching rankings: {str(e)}'
+        })
+
 if __name__ == '__main__':
     # Initialize CSV files if they don't exist
     initialize_tournament_registrations_csv()
