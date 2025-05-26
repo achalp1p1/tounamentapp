@@ -1,5 +1,7 @@
 Player ID,Name,Date of Birth,Gender,Phone Number,Email ID,State,District,School/Institution,Academy,Address,TTFI ID,Official State ID,Photo Path,Birth Certificate Path,Address Proof Path,Account Holder Name,Account Number,Bank Name,Branch Name,IFSC Code,UPI ID,Payment Snapshot Path,Transaction ID,State Registration,Is State Transfer,NOC Certificate Path
-25-25-0001,Achal Svara,2025-05-22,Male,1111111111,achalp1p1@gmail.com,Delhi,,,,,,,,,,,,,,,,uploads\players\25-25-0001\payment_snapshot.jpg,,No,,
-25-25-0002,Ashish Hari,2025-05-22,Male,0111111111,,Delhi,,,,,,DL25250002,,,,,,,,,,uploads\players\25-25-0002\payment_snapshot.jpg,8888,Yes,,
+25-25-0001,Achal Svara,2025-05-01,Male,2222222288,achalp1p1@gmail.com,Delhi,District,School/Institution,Academy,aaaaaa,,DL25250001,,,,Account Hol,ss,AccouName,,,,uploads\payment_snapshots\pic1.jpg,9999,Yes,,
+25-25-0002,Ashish Hari,2025-05-15,Male,0111111111,,Delhi,,,,,,DL25250002,,,,,,,,,,uploads\players\25-25-0002\payment_snapshot.jpg,8888,No,,
 25-25-0003,Deepak,2025-05-22,Male,1111111111,achalp1p1@gmail.com,Delhi,,,,,,DL25250003,,,,,,,,,,uploads\players\25-25-0003\payment_snapshot.jpg,88888888888,Yes,,
 25-25-0004,Deepak Achal,2025-05-22,Female,1111111111,achalp1p1@gmail.com,Delhi,,,,,,DL25250004,,,,,,,,,,uploads\players\25-25-0004\payment_snapshot.jpg,888,Yes,No,
+25-25-0005,Achal Svara,2025-05-07,Male,1111111111,achalp1p1@gmail.com,Delhi,,,,,,DL25250005,,,,,,,,,,uploads\payment_snapshots\pic1.jpg,9999,Yes,,
+25-25-0006,anki,2025-05-15,Male,8888888888,,,,,,,,,,,,,,,,,,,,No,,

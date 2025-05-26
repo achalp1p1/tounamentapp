@@ -2058,6 +2058,152 @@ def get_rankings():
             'message': f'Error fetching rankings: {str(e)}'
         })
 
+def allowed_file(filename, allowed_extensions=None):
+    if allowed_extensions is None:
+        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
+
+@app.route('/update_player/<player_id>', methods=['POST'])
+def update_player(player_id):
+    if request.method == 'POST':
+        try:
+            print("\n=== Starting Player Edit Process ===")
+            print(f"Player ID: {player_id}")
+            print(f"Form data: {request.form}")
+            print(f"Files received: {request.files}")
+            
+            # Get form data
+            player_data = {
+                'Player ID': player_id,
+                'Name': request.form.get('player_name'),
+                'Date of Birth': request.form.get('date_of_birth'),
+                'Gender': request.form.get('gender'),
+                'Phone Number': request.form.get('phone'),
+                'Email ID': request.form.get('email'),
+                'State': request.form.get('state'),
+                'District': request.form.get('district'),
+                'School/Institution': request.form.get('institution'),
+                'Academy': request.form.get('academy'),
+                'Address': request.form.get('address'),
+                'TTFI ID': request.form.get('ttfi_id'),
+                'Official State ID': request.form.get('official_state_id'),
+                'UPI ID': request.form.get('upi_id'),
+                'Account Holder Name': request.form.get('account_holder_name'),
+                'Account Number': request.form.get('account_number'),
+                'Bank Name': request.form.get('bank_name'),
+                'Branch Name': request.form.get('branch_name'),
+                'IFSC Code': request.form.get('ifsc_code'),
+                'Transaction ID': request.form.get('transaction_id'),
+                'State Registration': 'Yes' if request.form.get('do_state_registration') == 'on' else 'No'
+            }
+
+            print("\nForm data received:")
+            print(f"Transaction ID: {player_data['Transaction ID']}")
+            
+            # Handle file uploads
+            if 'photo' in request.files and request.files['photo'].filename:
+                photo = request.files['photo']
+                if photo and allowed_file(photo.filename, {'png', 'jpg', 'jpeg'}):
+                    filename = secure_filename(photo.filename)
+                    photo_path = os.path.join(app.config['UPLOAD_FOLDER'], 'photos', filename)
+                    os.makedirs(os.path.dirname(photo_path), exist_ok=True)
+                    photo.save(photo_path)
+                    player_data['Photo Path'] = os.path.join('uploads', 'photos', filename)
+                    print(f"Photo saved to: {player_data['Photo Path']}")
+
+            if 'birth_certificate' in request.files and request.files['birth_certificate'].filename:
+                birth_cert = request.files['birth_certificate']
+                if birth_cert and allowed_file(birth_cert.filename, {'pdf', 'jpg', 'jpeg', 'png'}):
+                    filename = secure_filename(birth_cert.filename)
+                    cert_path = os.path.join(app.config['UPLOAD_FOLDER'], 'birth_certificates', filename)
+                    os.makedirs(os.path.dirname(cert_path), exist_ok=True)
+                    birth_cert.save(cert_path)
+                    player_data['Birth Certificate Path'] = os.path.join('uploads', 'birth_certificates', filename)
+                    print(f"Birth certificate saved to: {player_data['Birth Certificate Path']}")
+
+            if 'address_proof' in request.files and request.files['address_proof'].filename:
+                address_proof = request.files['address_proof']
+                if address_proof and allowed_file(address_proof.filename, {'pdf', 'jpg', 'jpeg', 'png'}):
+                    filename = secure_filename(address_proof.filename)
+                    proof_path = os.path.join(app.config['UPLOAD_FOLDER'], 'address_proofs', filename)
+                    os.makedirs(os.path.dirname(proof_path), exist_ok=True)
+                    address_proof.save(proof_path)
+                    player_data['Address Proof Path'] = os.path.join('uploads', 'address_proofs', filename)
+                    print(f"Address proof saved to: {player_data['Address Proof Path']}")
+
+            if 'payment_snapshot' in request.files and request.files['payment_snapshot'].filename:
+                payment_snap = request.files['payment_snapshot']
+                if payment_snap and allowed_file(payment_snap.filename, {'jpg', 'jpeg', 'png'}):
+                    filename = secure_filename(payment_snap.filename)
+                    snap_path = os.path.join(app.config['UPLOAD_FOLDER'], 'payment_snapshots', filename)
+                    os.makedirs(os.path.dirname(snap_path), exist_ok=True)
+                    payment_snap.save(snap_path)
+                    player_data['Payment Snapshot Path'] = os.path.join('uploads', 'payment_snapshots', filename)
+                    print(f"Payment snapshot saved to: {player_data['Payment Snapshot Path']}")
+
+            # Read existing players
+            players = []
+            with open(PLAYERS_CSV, 'r', newline='', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                fieldnames = reader.fieldnames
+                print(f"CSV Headers: {fieldnames}")
+                for row in reader:
+                    if row['Player ID'] == player_id:
+                        print(f"\nFound existing player record:")
+                        print(f"Existing Photo Path: {row.get('Photo Path', 'Not found')}")
+                        print(f"Existing Birth Certificate Path: {row.get('Birth Certificate Path', 'Not found')}")
+                        print(f"Existing Address Proof Path: {row.get('Address Proof Path', 'Not found')}")
+                        print(f"Existing Payment Snapshot Path: {row.get('Payment Snapshot Path', 'Not found')}")
+                        # Preserve existing file paths if no new files were uploaded
+                        if 'Photo Path' not in player_data and 'Photo Path' in row:
+                            player_data['Photo Path'] = row['Photo Path']
+                            print(f"Preserved existing Photo Path: {player_data['Photo Path']}")
+                        if 'Birth Certificate Path' not in player_data and 'Birth Certificate Path' in row:
+                            player_data['Birth Certificate Path'] = row['Birth Certificate Path']
+                            print(f"Preserved existing Birth Certificate Path: {player_data['Birth Certificate Path']}")
+                        if 'Address Proof Path' not in player_data and 'Address Proof Path' in row:
+                            player_data['Address Proof Path'] = row['Address Proof Path']
+                            print(f"Preserved existing Address Proof Path: {player_data['Address Proof Path']}")
+                        if 'Payment Snapshot Path' not in player_data and 'Payment Snapshot Path' in row:
+                            player_data['Payment Snapshot Path'] = row['Payment Snapshot Path']
+                            print(f"Preserved existing Payment Snapshot Path: {player_data['Payment Snapshot Path']}")
+                        players.append(player_data)
+                    else:
+                        players.append(row)
+
+            print("\nWriting updated data to CSV...")
+            # Write back to CSV
+            with open(PLAYERS_CSV, 'w', newline='', encoding='utf-8') as file:
+                writer = csv.DictWriter(file, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerows(players)
+            print("CSV update completed")
+
+            flash('Player updated successfully!', 'success')
+            return redirect(url_for('list_players'))
+
+        except Exception as e:
+            print(f"\nError in edit_player: {str(e)}")
+            print(traceback.format_exc())
+            flash(f'Error updating player: {str(e)}', 'error')
+            return redirect(url_for('edit_player', player_id=player_id))
+
+    else:
+        # Get player data
+        player = None
+        with open(PLAYERS_CSV, 'r', newline='', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                if row['Player ID'] == player_id:
+                    player = row
+                    break
+
+        if not player:
+            flash('Player not found', 'error')
+            return redirect(url_for('list_players'))
+
+        return render_template('edit_player.html', player=player)
+
 if __name__ == '__main__':
     # Initialize CSV files if they don't exist
     initialize_tournament_registrations_csv()
