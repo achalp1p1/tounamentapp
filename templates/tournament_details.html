@@ -1731,7 +1731,7 @@
                                         </tbody>
                                     </table>
                                     <button type="submit" id="saveButton" class="submit-button" style="max-width: 200px; margin-top: 20px; display: none;">
-                                        <i class="fas fa-save"></i> Save Changes
+                                        <i class="fas fa-save"></i> Save Seeding
                                     </button>
                                 </form>
                                 <div id="messageBox" class="message" style="margin-top: 10px; padding: 10px; border-radius: 4px; display: none;"></div>
@@ -2486,11 +2486,26 @@
                         .then(response => response.json())
                         .then(rankingsData => {
                             console.log('Received rankings data:', rankingsData);
-                            data.players.forEach((player, index) => {
+                            
+                            // Add ranking to each player and sort by ranking
+                            const playersWithRankings = data.players.map(player => ({
+                                ...player,
+                                ranking: getPlayerRanking(player.player_id, category, rankingsData)
+                            }));
+
+                            // Sort players by ranking (ascending)
+                            playersWithRankings.sort((a, b) => {
+                                const rankA = parseInt(a.ranking) || 999999;
+                                const rankB = parseInt(b.ranking) || 999999;
+                                return rankA - rankB;
+                            });
+
+                            // Create table rows with sorted players
+                            playersWithRankings.forEach((player, index) => {
                                 const row = document.createElement('tr');
                                 row.innerHTML = `
                                     <td style="${cellStyle}">${player.name}</td>
-                                    <td style="${cellStyle}">${getPlayerRanking(player.player_id, category, rankingsData)}</td>
+                                    <td style="${cellStyle}">${player.ranking}</td>
                                     <td style="${cellStyle}">
                                         <input type="number" 
                                                class="form-control" 
