@@ -2768,6 +2768,13 @@
 
     // Function to create and display tables
     function createAndDisplayTables(players) {
+        // Sort players by seeding
+        players.sort((a, b) => {
+            const seedA = parseInt(a.seeding) || 999999;
+            const seedB = parseInt(b.seeding) || 999999;
+            return seedA - seedB;
+        });
+
         // Common table styles
         const tableStyle = `
             width: 100%;
@@ -2814,18 +2821,18 @@
         leftTable.innerHTML = `
             <thead>
                 <tr>
+                    <th style="${headerStyle}">Rank</th>
                     <th style="${headerStyle}">Seed</th>
                     <th style="${headerStyle}">Name</th>
-                    <th style="${headerStyle}">Rank</th>
                     <th style="${headerStyle}">School/Institution</th>
                 </tr>
             </thead>
             <tbody>
-                ${players.map(player => `
+                ${players.map((player, idx) => `
                     <tr>
+                        <td style="${rankCellStyle}">${idx + 1}</td>
                         <td style="${cellStyle}">${player.seeding || ''}</td>
                         <td style="${cellStyle}">${player.name}</td>
-                        <td style="${cellStyle}"></td>
                         <td style="${cellStyle}">${player.school || ''}</td>
                     </tr>
                 `).join('')}
@@ -3018,14 +3025,13 @@
             Array.from(editableTable.rows).forEach((row, index) => {
                 if (index === 0) return; // Skip header row
                 
-                const rank = row.cells[0].textContent;
-                const seeding = row.cells[1].textContent;
-                const name = row.cells[2].textContent;
-                const school = row.cells[3].textContent;
+                const seeding = row.cells[0].textContent;
+                const name = row.cells[1].textContent;
+                const school = row.cells[2].textContent;
                 
                 if (name.trim() !== '') {
                     drawData.push({
-                        rank,
+                        rank: index, // Use the row index as rank
                         seeding,
                         tournamentId,
                         name,

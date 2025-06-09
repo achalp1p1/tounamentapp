@@ -22,7 +22,7 @@
         },
         {
             "min": 32,
-            "max": 999,
+            "max": 100000,
             "description": "Unseeded"
         }
     ]
