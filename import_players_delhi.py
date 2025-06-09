@@ -37,23 +37,56 @@ def clean_phone_number(phone):
         return cleaned
     return None
 
-def generate_player_id(date_of_birth):
-    # Convert date string to datetime object
-    dob = datetime.strptime(date_of_birth, '%d-%m-%Y')
-    # Get current year's last 2 digits
-    current_year = datetime.now().year % 100
-    # Get player's birth year last 2 digits
-    birth_year = dob.year % 100
-    # Generate a unique number (you might want to make this more sophisticated)
-    unique_num = datetime.now().strftime('%H%M%S')
-    # Format: YY-YY-XXXX
-    return f"{current_year}-{birth_year}-{unique_num}"
+def generate_player_id(official_state_id):
+    if not official_state_id:
+        # Generate a temporary ID if no official state ID is available
+        unique_num = datetime.now().strftime('%H%M%S')
+        return f"TEMP-{unique_num}"
+    # Remove DL prefix if present
+    if official_state_id.startswith('DL'):
+        official_state_id = official_state_id[2:]
+    # Add dashes after first 2 and 4 digits
+    if len(official_state_id) >= 4:
+        return f"{official_state_id[:2]}-{official_state_id[2:4]}-{official_state_id[4:]}"
+    return official_state_id
 
 def clean_column_name(col_name):
     # Remove metadata after the pipe character
     return col_name.split('|')[0]
 
+def get_official_state_ids():
+    # Read the Google Sheet for official state IDs from the correct tab (GID 460424309)
+    sheet_id = "1sX-zSmpArLYjPFEPRD2Sn5eKmwoPFcw38udUu3Ny2aI"
+    gid = "460424309"
+    url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}"
+    try:
+        print(f"\nFetching official state IDs from Google Sheet tab with GID {gid}...")
+        response = requests.get(url)
+        if response.status_code != 200:
+            print(f"Error accessing Google Sheet tab: {response.status_code}")
+            return {}
+        df = pd.read_csv(StringIO(response.text))
+        # Clean column names
+        df.columns = [col.strip() for col in df.columns]
+        # Create a dictionary mapping (name, dob) to Registration ID
+        state_ids = {}
+        for _, row in df.iterrows():
+            if pd.isna(row['Name']) or pd.isna(row['Date of Birth']) or pd.isna(row['Registration ID']):
+                continue
+            name = str(row['Name']).strip().upper()
+            dob = str(row['Date of Birth']).strip()
+            reg_id = str(row['Registration ID']).strip()
+            state_ids[(name, dob)] = reg_id
+        print(f"Successfully loaded {len(state_ids)} official state IDs from Registration ID field.")
+        return state_ids
+    except Exception as e:
+        print(f"Error fetching official state IDs: {str(e)}")
+        return {}
+
 def import_players_from_sheet():
+    # Get official state IDs
+    state_ids = get_official_state_ids()
+    
     # Read the Google Sheet
     sheet_url = "https://docs.google.com/spreadsheets/d/1sX-zSmpArLYjPFEPRD2Sn5eKmwoPFcw38udUu3Ny2aI/edit?usp=sharing"
     sheet_id = sheet_url.split('/d/')[1].split('/')[0]
@@ -125,22 +158,23 @@ def import_players_from_sheet():
         # Prepare new players data
         new_players = []
         for _, row in df.iterrows():
-            # Skip empty rows
-            if pd.isna(row['Name']) or str(row['Name']).strip() == '':
+            # Skip invalid entries
+            if pd.isna(row['Name']) or str(row['Name']).strip() == '' or str(row['Name']).strip() == '.':
                 continue
-
+                
+            if pd.isna(row['Date of Birth']):
+                print(f"Skipping {row['Name']} - Missing date of birth")
+                continue
+                
             try:
-                # Skip invalid entries
-                if pd.isna(row['Name']) or str(row['Name']).strip() == '' or str(row['Name']).strip() == '.':
-                    continue
-                    
-                if pd.isna(row['Date of Birth']):
-                    print(f"Skipping {row['Name']} - Missing date of birth")
-                    continue
-                    
-                # Generate player ID
-                player_id = generate_player_id(row['Date of Birth'])
+                # Get official state ID if available
+                name_key = str(row['Name']).strip().upper()
+                dob_key = str(row['Date of Birth']).strip()
+                official_state_id = state_ids.get((name_key, dob_key), '')
 
+                # Generate player ID from official state ID
+                player_id = generate_player_id(official_state_id)
+                
                 # Create player record
                 player = {
                     'Player ID': player_id,
@@ -155,7 +189,7 @@ def import_players_from_sheet():
                     'Academy': '',  # Not in sheet
                     'Address': str(row['Home Address']) if not pd.isna(row['Home Address']) else '',
                     'TTFI ID': str(row['TTFI ID']) if not pd.isna(row['TTFI ID']) else '',
-                    'Official State ID': '',  # Will be generated if state registration is done
+                    'Official State ID': official_state_id,  # Using registration ID from sheet
                     'Photo Path': str(row['Upload Photo']) if not pd.isna(row['Upload Photo']) else '',
                     'Birth Certificate Path': str(row['Upload Date of Birth Certificate']) if not pd.isna(row['Upload Date of Birth Certificate']) else '',
                     'Address Proof Path': str(row['Upload Address Proof']) if not pd.isna(row['Upload Address Proof']) else '',
@@ -198,6 +232,7 @@ def import_players_from_sheet():
         print(f"1. Total entries imported: {len(new_players)}")
         print(f"2. Phone numbers fixed: {fixed_count}")
         print(f"3. Duplicate entries removed: {removed_count if 'removed_count' in locals() else 0}")
+        print(f"4. Official state IDs mapped: {len(state_ids)}")
         return True
 
     except Exception as e:
