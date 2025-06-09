@@ -2821,7 +2821,6 @@
         leftTable.innerHTML = `
             <thead>
                 <tr>
-                    <th style="${headerStyle}">Rank</th>
                     <th style="${headerStyle}">Seed</th>
                     <th style="${headerStyle}">Name</th>
                     <th style="${headerStyle}">School/Institution</th>
@@ -2830,7 +2829,6 @@
             <tbody>
                 ${players.map((player, idx) => `
                     <tr>
-                        <td style="${rankCellStyle}">${idx + 1}</td>
                         <td style="${cellStyle}">${player.seeding || ''}</td>
                         <td style="${cellStyle}">${player.name}</td>
                         <td style="${cellStyle}">${player.school || ''}</td>
@@ -2847,7 +2845,6 @@
         rightTable.innerHTML = `
             <thead>
                 <tr>
-                    <th style="${headerStyle}">Rank</th>
                     <th style="${headerStyle}">Seed</th>
                     <th style="${headerStyle}">Name</th>
                     <th style="${headerStyle}">School/Institution</th>
@@ -2856,7 +2853,6 @@
             <tbody>
                 ${players.map((player, idx) => `
                     <tr>
-                        <td style="${rankCellStyle}">${idx + 1}</td>
                         <td style="${cellStyle}">${player.seeding || ''}</td>
                         <td style="${cellStyle}">${player.name}</td>
                         <td style="${cellStyle}">${player.school || ''}</td>
@@ -2950,57 +2946,61 @@
 
     // Function to perform shuffle
     function performShuffle() {
-        if (!isShuffling || !seedRanges) return;
-
-        shuffleCount++;
-        document.getElementById('shuffleCount').textContent = shuffleCount;
+        if (!isShuffling) return;
         
-        // Group players by their seed ranges
+        const editableTable = document.getElementById('editable-table');
+        if (!editableTable) return;
+        
+        // Get all rows except header
+        const rows = Array.from(editableTable.getElementsByTagName('tbody')[0].rows);
+        
+        // Group players by their seeding ranges
         const playersByRange = {};
-        seedRanges.forEach(range => {
-            playersByRange[`${range.min}-${range.max}`] = [];
-        });
-
-        // Sort players into their respective ranges
-        currentPlayers.forEach(player => {
-            const seed = parseInt(player.seeding) || 999;
+        rows.forEach(row => {
+            const seedingCell = row.cells[0]; // First cell contains seeding
+            const seeding = parseInt(seedingCell.textContent) || 999999;
+            
+            // Find which range this player belongs to
+            let rangeFound = false;
             for (const range of seedRanges) {
-                if (seed >= range.min && seed <= range.max) {
-                    playersByRange[`${range.min}-${range.max}`].push(player);
+                if (seeding >= range.min && seeding <= range.max) {
+                    if (!playersByRange[range.description]) {
+                        playersByRange[range.description] = [];
+                    }
+                    playersByRange[range.description].push(row);
+                    rangeFound = true;
                     break;
                 }
             }
-        });
-
-        // Shuffle players within each range
-        const shuffledPlayers = [];
-        seedRanges.forEach(range => {
-            const rangeKey = `${range.min}-${range.max}`;
-            const playersInRange = playersByRange[rangeKey];
             
-            // Shuffle players within this range
-            for (let i = playersInRange.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [playersInRange[i], playersInRange[j]] = [playersInRange[j], playersInRange[i]];
-            }
-            
-            shuffledPlayers.push(...playersInRange);
-        });
-
-        // Update table with shuffled players
-        const editableTable = document.getElementById('editable-table');
-        if (editableTable) {
-            shuffledPlayers.forEach((player, idx) => {
-                const row = editableTable.rows[idx + 1];
-                if (row) {
-                    row.cells[1].textContent = player.seeding || '';
-                    row.cells[2].textContent = player.name;
-                    row.cells[3].textContent = player.school || '';
+            // If no range found, put in unseeded
+            if (!rangeFound) {
+                if (!playersByRange['Unseeded']) {
+                    playersByRange['Unseeded'] = [];
                 }
-            });
+                playersByRange['Unseeded'].push(row);
+            }
+        });
+        
+        // Shuffle players within each range
+        for (const range in playersByRange) {
+            const players = playersByRange[range];
+            for (let i = players.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                const temp = players[i].innerHTML;
+                players[i].innerHTML = players[j].innerHTML;
+                players[j].innerHTML = temp;
+            }
         }
-
-        // Add highlight animation
+        
+        // Update shuffle counter
+        shuffleCount++;
+        const counter = document.getElementById('shuffleCounter');
+        if (counter) {
+            counter.textContent = `Shuffles: ${shuffleCount}`;
+        }
+        
+        // Add animation class
         editableTable.classList.add('highlight-animation');
         setTimeout(() => {
             if (isShuffling) {
