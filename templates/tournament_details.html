@@ -2715,25 +2715,25 @@
                     }
                 }
             });
-        } else if (newSeed > originalSeed) {
-            // Moving to a higher seed: decrement seeds in between
-            allInputs.forEach(otherInput => {
-                if (otherInput !== input) {
-                    const otherSeed = parseInt(otherInput.value);
-                    if (!isNaN(otherSeed) && otherSeed > originalSeed && otherSeed <= newSeed) {
-                        otherInput.value = otherSeed - 1;
-                        otherInput.dataset.originalSeed = otherSeed - 1;
-                    }
-                }
-            });
         } else if (newSeed < originalSeed) {
-            // Moving to a lower seed: increment seeds in between
+            // Moving to a lower seed (e.g., 8 to 3): increment seeds in between
             allInputs.forEach(otherInput => {
                 if (otherInput !== input) {
                     const otherSeed = parseInt(otherInput.value);
                     if (!isNaN(otherSeed) && otherSeed >= newSeed && otherSeed < originalSeed) {
                         otherInput.value = otherSeed + 1;
                         otherInput.dataset.originalSeed = otherSeed + 1;
+                    }
+                }
+            });
+        } else if (newSeed > originalSeed) {
+            // Moving to a higher seed (e.g., 3 to 8): decrement seeds in between
+            allInputs.forEach(otherInput => {
+                if (otherInput !== input) {
+                    const otherSeed = parseInt(otherInput.value);
+                    if (!isNaN(otherSeed) && otherSeed <= newSeed && otherSeed > originalSeed) {
+                        otherInput.value = otherSeed - 1;
+                        otherInput.dataset.originalSeed = otherSeed - 1;
                     }
                 }
             });
