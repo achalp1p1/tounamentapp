@@ -2629,7 +2629,8 @@
                                         <input type="number" 
                                                class="form-control seeding-input" 
                                                value="${seedingValue}" 
-                                               min="1" 
+                                               min="1"
+                                               max="${playersWithRankings.length}"
                                                name="seedings[]"
                                                data-player-id="${player.player_id}"
                                                data-original-seed="${seedingValue}"
@@ -2660,7 +2661,8 @@
                                         <input type="number" 
                                                class="form-control seeding-input" 
                                                value="${player.seeding || ''}" 
-                                               min="1" 
+                                               min="1"
+                                               max="${data.players.length}"
                                                name="seedings[]"
                                                data-player-id="${player.player_id}"
                                                data-original-seed="${player.seeding || ''}"
@@ -2696,8 +2698,18 @@
         const newSeed = parseInt(input.value);
         const originalSeed = parseInt(input.dataset.originalSeed);
         
-        if (isNaN(newSeed) || newSeed < 1) {
+        // Get total number of players
+        const totalPlayers = document.querySelectorAll('.seeding-input').length;
+        
+        if (isNaN(newSeed) || newSeed < 1 || newSeed > totalPlayers) {
             input.value = originalSeed || '';
+            const messageBox = document.getElementById('messageBox');
+            messageBox.className = 'message error-message';
+            messageBox.textContent = `Seeding must be between 1 and ${totalPlayers}`;
+            messageBox.style.display = 'block';
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 3000);
             return;
         }
 
@@ -2746,13 +2758,16 @@
     // Function to save seeding
     function saveSeeding(event) {
         event.preventDefault();
-        const form = event.target;
         const formData = new FormData();
         const category = document.getElementById('seedingCategorySelect').value;
         
-        // Get all seeding inputs
-        const seedingInputs = form.querySelectorAll('input[name="seedings[]"]');
+        // Get all seeding inputs from the entire document
+        const seedingInputs = document.querySelectorAll('.seeding-input');
+        
+        // Debug log to check what we're sending
+        console.log('Saving seeding values:');
         seedingInputs.forEach(input => {
+            console.log(`Player ID: ${input.dataset.playerId}, Seeding: ${input.value}`);
             formData.append('player_ids[]', input.dataset.playerId);
             formData.append('seedings[]', input.value);
         });
@@ -2764,21 +2779,34 @@
         saveButton.disabled = true;
         messageBox.style.display = 'none';
 
+        // Log the form data being sent
+        console.log('FormData contents:');
+        for (let pair of formData.entries()) {
+            console.log(pair[0] + ': ' + pair[1]);
+        }
+
         fetch(`/tournament/{{ tournament["Tournament Id"] }}/update_seeding`, {
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Server response status:', response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log('Server response:', data);
             if (data.success) {
                 messageBox.className = 'message success-message';
                 messageBox.textContent = 'Seeding updated successfully!';
                 messageBox.style.display = 'block';
                 
-                // Refresh the entire page after a short delay to show the success message
+                // Hide the success message after 3 seconds
                 setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
+                    messageBox.style.display = 'none';
+                }, 3000);
+                
+                // Re-enable the save button
+                saveButton.disabled = false;
             } else if (data.message && data.message.includes('No matching records found')) {
                 // Ignore the "No matching records" error if we already got a success message
                 return;

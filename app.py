@@ -1097,37 +1097,26 @@ def tournament_update_seeding(tournament_id):
 
             # Update seedings
             updates_made = 0
+            
+            # First, create a mapping of player_id to new seeding
+            seeding_updates = {}
+            print("\nProcessing seeding updates:")
             for i, player_id in enumerate(player_ids):
-                new_seeding = seedings[i]
-                if not new_seeding:  # Skip if no seeding provided
-                    continue
+                if seedings[i]:  # Only include non-empty seedings
+                    seeding_updates[player_id] = seedings[i]
+                    print(f"Will update Player ID {player_id} to seeding {seedings[i]}")
 
-                # Find the player's current registration
-                current_reg = None
-                for reg in category_players:
-                    if reg['Player ID'] == player_id:
-                        current_reg = reg
-                        break
-
-                if current_reg:
-                    old_seeding = current_reg.get('Seeding', '')
-                    if old_seeding and str(old_seeding).isdigit():
-                        old_seeding = int(old_seeding)
-                        new_seeding = int(new_seeding)
-
-                        # If new seeding is lower than old seeding, increment higher seeds
-                        if new_seeding < old_seeding:
-                            for reg in category_players:
-                                current_seed = reg.get('Seeding', '')
-                                if current_seed and str(current_seed).isdigit():
-                                    current_seed = int(current_seed)
-                                    if current_seed >= new_seeding and current_seed < old_seeding:
-                                        reg['Seeding'] = str(current_seed + 1)
-                                        updates_made += 1
-
-                    # Update the player's seeding
-                    current_reg['Seeding'] = new_seeding
+            # Update each registration with its new seeding
+            print("\nApplying updates to registrations:")
+            for reg in registrations:
+                if (reg['Tournament Id'] == tournament_id and 
+                    reg['Category'] == category and 
+                    reg['Player ID'] in seeding_updates):
+                    old_seeding = reg.get('Seeding', '')
+                    new_seeding = seeding_updates[reg['Player ID']]
+                    reg['Seeding'] = new_seeding
                     updates_made += 1
+                    print(f"Updated Player ID {reg['Player ID']} seeding from {old_seeding} to {new_seeding}")
 
             print(f"\nUpdates made: {updates_made}")
 
