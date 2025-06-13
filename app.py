@@ -1085,28 +1085,49 @@ def tournament_update_seeding(tournament_id):
                 print(f"\nTotal registrations read: {len(registrations)}")
                 print(f"CSV Headers: {fieldnames}")
 
+            # First, collect all players in the same category and tournament
+            category_players = []
+            for reg in registrations:
+                if (reg['Tournament Id'] == tournament_id and 
+                    reg['Category'] == category):
+                    category_players.append(reg)
+
+            # Sort players by current seeding
+            category_players.sort(key=lambda x: int(x.get('Seeding', '999999')) if str(x.get('Seeding', '')).isdigit() else 999999)
+
             # Update seedings
             updates_made = 0
             for i, player_id in enumerate(player_ids):
-                seeding = seedings[i]
-                print(f"\nProcessing player {i+1}:")
-                print(f"Player ID: {player_id}")
-                print(f"New Seeding: {seeding}")
-                
-                for reg in registrations:
-                    # Print exact values being compared
-                    print(f"\nComparing registration:")
-                    print(f"Tournament Id: '{reg['Tournament Id']}' == '{tournament_id}' : {reg['Tournament Id'] == tournament_id}")
-                    print(f"Player ID: '{reg['Player ID']}' == '{player_id}' : {reg['Player ID'] == player_id}")
-                    print(f"Category: '{reg['Category']}' == '{category}' : {reg['Category'] == category}")
-                    
-                    if (reg['Tournament Id'] == tournament_id and 
-                        reg['Player ID'] == player_id and 
-                        reg['Category'] == category):
-                        print(f"Match found! Updating seeding from {reg.get('Seeding', '')} to {seeding}")
-                        reg['Seeding'] = seeding if seeding else ''
-                        updates_made += 1
-                        break  # Exit loop once update is made
+                new_seeding = seedings[i]
+                if not new_seeding:  # Skip if no seeding provided
+                    continue
+
+                # Find the player's current registration
+                current_reg = None
+                for reg in category_players:
+                    if reg['Player ID'] == player_id:
+                        current_reg = reg
+                        break
+
+                if current_reg:
+                    old_seeding = current_reg.get('Seeding', '')
+                    if old_seeding and str(old_seeding).isdigit():
+                        old_seeding = int(old_seeding)
+                        new_seeding = int(new_seeding)
+
+                        # If new seeding is lower than old seeding, increment higher seeds
+                        if new_seeding < old_seeding:
+                            for reg in category_players:
+                                current_seed = reg.get('Seeding', '')
+                                if current_seed and str(current_seed).isdigit():
+                                    current_seed = int(current_seed)
+                                    if current_seed >= new_seeding and current_seed < old_seeding:
+                                        reg['Seeding'] = str(current_seed + 1)
+                                        updates_made += 1
+
+                    # Update the player's seeding
+                    current_reg['Seeding'] = new_seeding
+                    updates_made += 1
 
             print(f"\nUpdates made: {updates_made}")
 
