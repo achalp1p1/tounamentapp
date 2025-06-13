@@ -2694,23 +2694,44 @@
     function handleSeedingChange(event) {
         const input = event.target;
         const newSeed = parseInt(input.value);
-        const originalSeed = input.dataset.originalSeed;
+        const originalSeed = parseInt(input.dataset.originalSeed);
         
         if (isNaN(newSeed) || newSeed < 1) {
-            input.value = originalSeed;
+            input.value = originalSeed || '';
             return;
         }
 
-        // Only increment other seeds if this player was previously unseeded
+        // Get all seeding inputs
+        const allInputs = document.querySelectorAll('.seeding-input');
+        
         if (!originalSeed) {
-            // Get all seeding inputs
-            const allInputs = document.querySelectorAll('.seeding-input');
-            
-            // Increment seeds of players with seeding >= newSeed
+            // If player was previously unseeded, increment seeds of players with seeding >= newSeed
             allInputs.forEach(otherInput => {
                 if (otherInput !== input) {
                     const otherSeed = parseInt(otherInput.value);
                     if (!isNaN(otherSeed) && otherSeed >= newSeed) {
+                        otherInput.value = otherSeed + 1;
+                        otherInput.dataset.originalSeed = otherSeed + 1;
+                    }
+                }
+            });
+        } else if (newSeed > originalSeed) {
+            // Moving to a higher seed: decrement seeds in between
+            allInputs.forEach(otherInput => {
+                if (otherInput !== input) {
+                    const otherSeed = parseInt(otherInput.value);
+                    if (!isNaN(otherSeed) && otherSeed > originalSeed && otherSeed <= newSeed) {
+                        otherInput.value = otherSeed - 1;
+                        otherInput.dataset.originalSeed = otherSeed - 1;
+                    }
+                }
+            });
+        } else if (newSeed < originalSeed) {
+            // Moving to a lower seed: increment seeds in between
+            allInputs.forEach(otherInput => {
+                if (otherInput !== input) {
+                    const otherSeed = parseInt(otherInput.value);
+                    if (!isNaN(otherSeed) && otherSeed >= newSeed && otherSeed < originalSeed) {
                         otherInput.value = otherSeed + 1;
                         otherInput.dataset.originalSeed = otherSeed + 1;
                     }
