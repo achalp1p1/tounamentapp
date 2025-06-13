@@ -2774,10 +2774,11 @@
                 messageBox.className = 'message success-message';
                 messageBox.textContent = 'Seeding updated successfully!';
                 messageBox.style.display = 'block';
-                // Clear the success message after 3 seconds
+                
+                // Refresh the entire page after a short delay to show the success message
                 setTimeout(() => {
-                    messageBox.style.display = 'none';
-                }, 3000);
+                    window.location.reload();
+                }, 1000);
             } else if (data.message && data.message.includes('No matching records found')) {
                 // Ignore the "No matching records" error if we already got a success message
                 return;
@@ -2785,8 +2786,8 @@
                 messageBox.className = 'message error-message';
                 messageBox.textContent = 'Error: ' + data.message;
                 messageBox.style.display = 'block';
+                saveButton.disabled = false;
             }
-            saveButton.disabled = false;
         })
         .catch(error => {
             messageBox.className = 'message error-message';
