@@ -2694,10 +2694,28 @@
     function handleSeedingChange(event) {
         const input = event.target;
         const newSeed = parseInt(input.value);
+        const originalSeed = input.dataset.originalSeed;
         
         if (isNaN(newSeed) || newSeed < 1) {
-            input.value = input.dataset.originalSeed;
+            input.value = originalSeed;
             return;
+        }
+
+        // Only increment other seeds if this player was previously unseeded
+        if (!originalSeed) {
+            // Get all seeding inputs
+            const allInputs = document.querySelectorAll('.seeding-input');
+            
+            // Increment seeds of players with seeding >= newSeed
+            allInputs.forEach(otherInput => {
+                if (otherInput !== input) {
+                    const otherSeed = parseInt(otherInput.value);
+                    if (!isNaN(otherSeed) && otherSeed >= newSeed) {
+                        otherInput.value = otherSeed + 1;
+                        otherInput.dataset.originalSeed = otherSeed + 1;
+                    }
+                }
+            });
         }
 
         // Update the original seed value
