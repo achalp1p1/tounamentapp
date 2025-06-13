@@ -2549,17 +2549,22 @@
                                 let currentRank = null;
                                 let sameRankCount = 0;
 
-                                // Sort players by ranking
+                                // Sort players by ranking, putting players without ranks at the end
                                 const players = Array.from(seedingInputs).map(input => {
                                     const row = input.closest('tr');
+                                    const rankText = row.cells[1].textContent.trim();
                                     return {
                                         input: input,
-                                        rank: parseInt(row.cells[1].textContent) || 999999
+                                        rank: rankText ? parseInt(rankText) : null
                                     };
-                                }).sort((a, b) => a.rank - b.rank);
+                                });
+
+                                // Separate players with and without rankings
+                                const rankedPlayers = players.filter(p => p.rank !== null).sort((a, b) => a.rank - b.rank);
+                                const unrankedPlayers = players.filter(p => p.rank === null);
 
                                 // Assign seeding based on ranking
-                                players.forEach((player, index) => {
+                                rankedPlayers.forEach((player, index) => {
                                     if (player.rank !== currentRank) {
                                         currentSeeding = index + 1;
                                         currentRank = player.rank;
@@ -2575,6 +2580,14 @@
                                     player.input.dispatchEvent(event);
                                 });
 
+                                // Clear seeding for unranked players
+                                unrankedPlayers.forEach(player => {
+                                    player.input.value = '';
+                                    player.input.dataset.originalSeed = '';
+                                    const event = new Event('change');
+                                    player.input.dispatchEvent(event);
+                                });
+
                                 // Show success message
                                 const messageBox = document.getElementById('messageBox');
                                 messageBox.className = 'message success-message';
@@ -2585,16 +2598,17 @@
                                 }, 3000);
                             });
 
-                            // Generate default seeding based on rankings only for players without existing seeding
+                                                            // Generate default seeding based on rankings only for players without existing seeding
                             let currentSeeding = 1;
                             let currentRank = null;
                             let sameRankCount = 0;
 
                             playersWithRankings.forEach((player, index) => {
-                                const rank = parseInt(player.ranking) || 999999;
+                                const rank = parseInt(player.ranking);
+                                let seedingValue = '';
                                 
-                                // Only calculate default seeding if player doesn't have existing seeding
-                                if (!player.seeding) {
+                                // Only calculate default seeding if player has a valid rank and doesn't have existing seeding
+                                if (!player.seeding && !isNaN(rank)) {
                                     if (rank !== currentRank) {
                                         currentSeeding = index + 1;
                                         currentRank = rank;
@@ -2602,20 +2616,23 @@
                                     } else {
                                         sameRankCount++;
                                     }
+                                    seedingValue = currentSeeding;
+                                } else if (player.seeding) {
+                                    seedingValue = player.seeding;
                                 }
 
                                 const row = document.createElement('tr');
                                 row.innerHTML = `
                                     <td style="${cellStyle}">${player.name}</td>
-                                    <td style="${cellStyle}">${player.ranking}</td>
+                                    <td style="${cellStyle}">${player.ranking || ''}</td>
                                     <td style="${cellStyle}">
                                         <input type="number" 
                                                class="form-control seeding-input" 
-                                               value="${player.seeding || currentSeeding}" 
+                                               value="${seedingValue}" 
                                                min="1" 
                                                name="seedings[]"
                                                data-player-id="${player.player_id}"
-                                               data-original-seed="${player.seeding || currentSeeding}"
+                                               data-original-seed="${seedingValue}"
                                                style="width: 80px;">
                                     </td>
                                 `;
