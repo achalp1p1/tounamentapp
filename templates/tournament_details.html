@@ -2696,6 +2696,44 @@
             });
     }
 
+    // Function to adjust seedings to remove gaps while preserving duplicates
+    function adjustSeedings() {
+        const allInputs = Array.from(document.querySelectorAll('.seeding-input'));
+        const validInputs = allInputs.filter(input => input.value.trim() !== '');
+        
+        // Sort inputs by their current seeding value
+        validInputs.sort((a, b) => {
+            const seedA = parseInt(a.value) || 0;
+            const seedB = parseInt(b.value) || 0;
+            return seedA - seedB;
+        });
+
+        let currentSeed = 1;
+        let lastSeed = 0;
+        let duplicateCount = 0;
+
+        validInputs.forEach((input, index) => {
+            const thisSeed = parseInt(input.value);
+            
+            if (index > 0 && thisSeed === parseInt(validInputs[index - 1].value)) {
+                // Keep duplicate seedings as is
+                input.value = thisSeed;
+                input.dataset.originalSeed = thisSeed;
+                duplicateCount++;
+            } else {
+                // Adjust seeding to remove gaps
+                if (duplicateCount > 0) {
+                    currentSeed += duplicateCount;
+                    duplicateCount = 0;
+                }
+                input.value = currentSeed;
+                input.dataset.originalSeed = currentSeed;
+                currentSeed++;
+            }
+            lastSeed = parseInt(input.value);
+        });
+    }
+
     // Function to handle seeding changes
     function handleSeedingChange(event) {
         const input = event.target;
@@ -2708,21 +2746,8 @@
         
         // If the input is empty, handle removing seeding
         if (newSeedStr === '') {
-            if (originalSeed) {
-                // When removing a seed, decrement all higher seeds by 1
-                const allInputs = document.querySelectorAll('.seeding-input');
-                allInputs.forEach(otherInput => {
-                    if (otherInput !== input) {
-                        const otherSeed = parseInt(otherInput.value);
-                        if (!isNaN(otherSeed) && otherSeed > originalSeed) {
-                            otherInput.value = otherSeed - 1;
-                            otherInput.dataset.originalSeed = otherSeed - 1;
-                        }
-                    }
-                });
-            }
-            // Clear the original seed value
             input.dataset.originalSeed = '';
+            adjustSeedings();
             return;
         }
         
@@ -2739,8 +2764,11 @@
             return;
         }
 
-        // Simply update the seed value without affecting other players
+        // Update the seed value
         input.dataset.originalSeed = newSeed;
+        
+        // Adjust all seedings to remove gaps
+        adjustSeedings();
     }
 
     // Function to save seeding
