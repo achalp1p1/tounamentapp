@@ -1102,9 +1102,9 @@ def tournament_update_seeding(tournament_id):
             seeding_updates = {}
             print("\nProcessing seeding updates:")
             for i, player_id in enumerate(player_ids):
-                if seedings[i]:  # Only include non-empty seedings
-                    seeding_updates[player_id] = seedings[i]
-                    print(f"Will update Player ID {player_id} to seeding {seedings[i]}")
+                # Include all seedings, even empty ones
+                seeding_updates[player_id] = seedings[i] if seedings[i].strip() else ''
+                print(f"Will update Player ID {player_id} to seeding {seedings[i]}")
 
             # Update each registration with its new seeding
             print("\nApplying updates to registrations:")
