@@ -1261,6 +1261,118 @@
             background-color: #f8f9fa;
             user-select: none;
         }
+
+        /* Clash Resolution Styles */
+        .clash-status {
+            background-color: #f8d7da !important;
+            color: #721c24 !important;
+            border: 1px solid #f5c6cb;
+        }
+
+        .no-clash-status {
+            background-color: #d4edda !important;
+            color: #155724 !important;
+            border: 1px solid #c3e6cb;
+        }
+
+        /* Seed Range Colors */
+        .seed-range-top {
+            background-color: #fff3cd !important;
+            border-left: 4px solid #ffc107;
+        }
+
+        .seed-range-upper {
+            background-color: #d1ecf1 !important;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .seed-range-mid {
+            background-color: #d4edda !important;
+            border-left: 4px solid #28a745;
+        }
+
+        .seed-range-lower {
+            background-color: #f8d7da !important;
+            border-left: 4px solid #dc3545;
+        }
+
+        .seed-range-unseeded {
+            background-color: #f5f5f5 !important;
+            border-left: 4px solid #9e9e9e;
+        }
+
+        /* Seed Range Colors - Dynamic classes based on seeding_ranges.json */
+        .seed-range-top-seeds {
+            background-color: #fff3cd !important;
+            border-left: 4px solid #ffc107;
+        }
+
+        .seed-range-upper-seeds {
+            background-color: #e3f2fd !important;
+            border-left: 4px solid #2196f3;
+        }
+
+        .seed-range-mid-seeds {
+            background-color: #e8f5e8 !important;
+            border-left: 4px solid #4caf50;
+        }
+
+        .seed-range-lower-seeds {
+            background-color: #ffebee !important;
+            border-left: 4px solid #f44336;
+        }
+
+        .seed-range-unseeded {
+            background-color: #f5f5f5 !important;
+            border-left: 4px solid #9e9e9e;
+        }
+
+        /* Override old classes with new distinct colors */
+        .seed-range-top-seeds {
+            background-color: #fff3cd !important;
+            border-left: 4px solid #ffc107;
+        }
+
+        .seed-range-upper-seeds {
+            background-color: #e3f2fd !important;
+            border-left: 4px solid #2196f3;
+        }
+
+        .seed-range-mid-seeds {
+            background-color: #e8f5e8 !important;
+            border-left: 4px solid #4caf50;
+        }
+
+        .seed-range-lower-seeds {
+            background-color: #ffebee !important;
+            border-left: 4px solid #f44336;
+        }
+
+        /* Ensure these colors are applied with higher specificity */
+        tr.seed-range-top-seeds {
+            background-color: #fff3cd !important;
+            border-left: 4px solid #ffc107;
+        }
+
+        tr.seed-range-upper-seeds {
+            background-color: #e3f2fd !important;
+            border-left: 4px solid #2196f3;
+        }
+
+        tr.seed-range-mid-seeds {
+            background-color: #e8f5e8 !important;
+            border-left: 4px solid #4caf50;
+        }
+
+        tr.seed-range-lower-seeds {
+            background-color: #ffebee !important;
+            border-left: 4px solid #f44336;
+        }
+
+        tr.seed-range-unseeded {
+            background-color: #f5f5f5 !important;
+            border-left: 4px solid #9e9e9e;
+        }
     </style>
 </head>
 <body>
@@ -1767,8 +1879,8 @@
                                 <table class="players-table" style="width: 100%; border-collapse: collapse;">
                                     <thead>
                                         <tr>
+                                            <th style="width: 60px; background: #f5f5f5; padding: 12px; text-align: center; font-weight: 500; border-bottom: 2px solid #ddd;">S.No.</th>
                                             <th style="background: #f5f5f5; padding: 12px; text-align: left; font-weight: 500; border-bottom: 2px solid #ddd;">Player Name</th>
-                                            <th style="width: 120px; background: #f5f5f5; padding: 12px; text-align: left; font-weight: 500; border-bottom: 2px solid #ddd;">Rank</th>
                                             <th style="width: 120px; background: #f5f5f5; padding: 12px; text-align: left; font-weight: 500; border-bottom: 2px solid #ddd;">Seed</th>
                                         </tr>
                                     </thead>
@@ -3104,29 +3216,85 @@
         // First fetch the seeding ranges
         fetch('/get_seeding_ranges')
             .then(response => response.json())
-            .then(data => {
-                if (!data.success) {
+            .then(seedRangesData => {
+                if (!seedRangesData.success) {
                     console.error('Failed to get seeding ranges');
                     return;
                 }
-                seedRanges = data.seeding_ranges;
-                
-                // Start the actual shuffling process
-                isShuffling = true;
-                shuffleCount = 0;
-                
-                // Update UI
-                document.getElementById('create-draw-btn').style.display = 'none';
-                document.getElementById('stop-shuffle-btn').style.display = 'block';
-                document.getElementById('save-draw-btn').style.display = 'none';
-                document.getElementById('shuffleCounter').style.display = 'block';
-                document.getElementById('shuffleCount').textContent = '0';
-                
-                // Start shuffling with the first iteration
-                performShuffle();
+                const seedRanges = seedRangesData.seeding_ranges;
+                console.log('Loaded seed ranges from JSON:', seedRanges);
+
+                // Now fetch players with rankings
+                fetch(`/tournament/${tournamentId}/get_category_players/${category}?fields=full`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Fetch rankings for the category
+                            fetch('/get_rankings')
+                                .then(response => response.json())
+                                .then(rankingsData => {
+                                    console.log('Received rankings data:', rankingsData);
+                                    
+                                    // Add ranking to each player and sort by ranking
+                                    const playersWithRankings = data.players.map(player => ({
+                                        ...player,
+                                        ranking: getPlayerRanking(player.player_id, category, rankingsData),
+                                        originalSeed: player.seeding || ''
+                                    }));
+
+                                    // Sort players by seed (ascending)
+                                    playersWithRankings.sort((a, b) => {
+                                        const seedA = parseInt(a.seeding) || 999999;
+                                        const seedB = parseInt(b.seeding) || 999999;
+                                        return seedA - seedB;
+                                    });
+
+                                    // Clear the table
+                                    tbody.innerHTML = '';
+
+                                    // Add players to the table
+                                    playersWithRankings.forEach((player, index) => {
+                                        const row = document.createElement('tr');
+                                        const seedRangeClass = getSeedRangeClass(index + 1, seedRanges);
+                                        row.className = seedRangeClass;
+                                        row.innerHTML = `
+                                            <td style="${cellStyle}; text-align: center;">${index + 1}</td>
+                                            <td style="${cellStyle}">${player.name}</td>
+                                            <td style="${cellStyle}">${player.seeding || ''}</td>
+                                        `;
+                                        tbody.appendChild(row);
+                                    });
+                                })
+                                .catch(error => {
+                                    console.error('Error fetching rankings:', error);
+                                    // If rankings fetch fails, still show players without rankings
+                                    tbody.innerHTML = '';
+                                    data.players.forEach((player, index) => {
+                                        const row = document.createElement('tr');
+                                        const seedRangeClass = getSeedRangeClass(index + 1, seedRanges);
+                                        row.className = seedRangeClass;
+                                        row.innerHTML = `
+                                            <td style="${cellStyle}; text-align: center;">${index + 1}</td>
+                                            <td style="${cellStyle}">${player.name}</td>
+                                            <td style="${cellStyle}">${player.seeding || ''}</td>
+                                        `;
+                                        tbody.appendChild(row);
+                                    });
+                                });
+                        } else {
+                            console.error('Failed to load players:', data.message);
+                            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px; color: red;">Error loading players</td></tr>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading players:', error);
+                        tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px; color: red;">Error loading players</td></tr>';
+                    });
             })
             .catch(error => {
-                console.error('Error getting seeding ranges:', error);
+                console.error('Error fetching seed ranges:', error);
+                // If seed ranges fetch fails, show players without colors
+                loadPlayersWithoutSeedRanges(category);
             });
     }
 
@@ -3357,39 +3525,120 @@
         tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">Loading players...</td></tr>';
         document.getElementById('clashContainer').style.display = 'block';
 
-        // Fetch players with rankings
+        // First fetch the seed ranges
+        fetch('/get_seeding_ranges')
+            .then(response => response.json())
+            .then(seedRangesData => {
+                if (!seedRangesData.success) {
+                    console.error('Failed to get seeding ranges');
+                    return;
+                }
+                const seedRanges = seedRangesData.seeding_ranges;
+                console.log('Loaded seed ranges from JSON:', seedRanges);
+
+                // Now fetch players with rankings
+                fetch(`/tournament/${tournamentId}/get_category_players/${category}?fields=full`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Fetch rankings for the category
+                            fetch('/get_rankings')
+                                .then(response => response.json())
+                                .then(rankingsData => {
+                                    console.log('Received rankings data:', rankingsData);
+                                    
+                                    // Add ranking to each player and sort by ranking
+                                    const playersWithRankings = data.players.map(player => ({
+                                        ...player,
+                                        ranking: getPlayerRanking(player.player_id, category, rankingsData),
+                                        originalSeed: player.seeding || ''
+                                    }));
+
+                                    // Sort players by seed (ascending)
+                                    playersWithRankings.sort((a, b) => {
+                                        const seedA = parseInt(a.seeding) || 999999;
+                                        const seedB = parseInt(b.seeding) || 999999;
+                                        return seedA - seedB;
+                                    });
+
+                                    // Clear the table
+                                    tbody.innerHTML = '';
+
+                                    // Add players to the table
+                                    playersWithRankings.forEach((player, index) => {
+                                        const row = document.createElement('tr');
+                                        const seedRangeClass = getSeedRangeClass(index + 1, seedRanges);
+                                        row.className = seedRangeClass;
+                                        row.innerHTML = `
+                                            <td style="${cellStyle}; text-align: center;">${index + 1}</td>
+                                            <td style="${cellStyle}">${player.name}</td>
+                                            <td style="${cellStyle}">${player.seeding || ''}</td>
+                                        `;
+                                        tbody.appendChild(row);
+                                    });
+                                })
+                                .catch(error => {
+                                    console.error('Error fetching rankings:', error);
+                                    // If rankings fetch fails, still show players without rankings
+                                    tbody.innerHTML = '';
+                                    data.players.forEach((player, index) => {
+                                        const row = document.createElement('tr');
+                                        const seedRangeClass = getSeedRangeClass(index + 1, seedRanges);
+                                        row.className = seedRangeClass;
+                                        row.innerHTML = `
+                                            <td style="${cellStyle}; text-align: center;">${index + 1}</td>
+                                            <td style="${cellStyle}">${player.name}</td>
+                                            <td style="${cellStyle}">${player.seeding || ''}</td>
+                                        `;
+                                        tbody.appendChild(row);
+                                    });
+                                });
+                        } else {
+                            console.error('Failed to load players:', data.message);
+                            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px; color: red;">Error loading players</td></tr>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading players:', error);
+                        tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px; color: red;">Error loading players</td></tr>';
+                    });
+            })
+            .catch(error => {
+                console.error('Error fetching seed ranges:', error);
+                // If seed ranges fetch fails, show players without colors
+                loadPlayersWithoutSeedRanges(category);
+            });
+    }
+
+    // Fallback function to load players without seed range colors
+    function loadPlayersWithoutSeedRanges(category) {
+        const tbody = document.getElementById('clashTableBody');
+        
         fetch(`/tournament/${tournamentId}/get_category_players/${category}?fields=full`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Fetch rankings for the category
                     fetch('/get_rankings')
                         .then(response => response.json())
                         .then(rankingsData => {
-                            console.log('Received rankings data:', rankingsData);
-                            
-                            // Add ranking to each player and sort by ranking
                             const playersWithRankings = data.players.map(player => ({
                                 ...player,
-                                ranking: getPlayerRanking(player.player_id, category, rankingsData)
+                                ranking: getPlayerRanking(player.player_id, category, rankingsData),
+                                originalSeed: player.seeding || ''
                             }));
 
-                            // Sort players by seed (ascending)
                             playersWithRankings.sort((a, b) => {
                                 const seedA = parseInt(a.seeding) || 999999;
                                 const seedB = parseInt(b.seeding) || 999999;
                                 return seedA - seedB;
                             });
 
-                            // Clear the table
                             tbody.innerHTML = '';
-
-                            // Add players to the table
-                            playersWithRankings.forEach(player => {
+                            playersWithRankings.forEach((player, index) => {
                                 const row = document.createElement('tr');
                                 row.innerHTML = `
+                                    <td style="${cellStyle}; text-align: center;">${index + 1}</td>
                                     <td style="${cellStyle}">${player.name}</td>
-                                    <td style="${cellStyle}">${player.ranking || ''}</td>
                                     <td style="${cellStyle}">${player.seeding || ''}</td>
                                 `;
                                 tbody.appendChild(row);
@@ -3397,13 +3646,12 @@
                         })
                         .catch(error => {
                             console.error('Error fetching rankings:', error);
-                            // If rankings fetch fails, still show players without rankings
                             tbody.innerHTML = '';
-                            data.players.forEach(player => {
+                            data.players.forEach((player, index) => {
                                 const row = document.createElement('tr');
                                 row.innerHTML = `
+                                    <td style="${cellStyle}; text-align: center;">${index + 1}</td>
                                     <td style="${cellStyle}">${player.name}</td>
-                                    <td style="${cellStyle}"></td>
                                     <td style="${cellStyle}">${player.seeding || ''}</td>
                                 `;
                                 tbody.appendChild(row);
@@ -3418,6 +3666,24 @@
                 console.error('Error loading players:', error);
                 tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px; color: red;">Error loading players</td></tr>';
             });
+    }
+
+    // Function to get seed range class based on S.No.
+    function getSeedRangeClass(serialNumber, seedRanges) {
+        const seedNumber = parseInt(serialNumber);
+        
+        // Find the matching seed range
+        for (const range of seedRanges) {
+            if (seedNumber >= range.min && seedNumber <= range.max) {
+                // Convert description to CSS class name
+                const className = 'seed-range-' + range.description.toLowerCase().replace(/\s+/g, '-');
+                console.log(`S.No. ${seedNumber} matches range ${range.min}-${range.max} (${range.description}) -> CSS class: ${className}`);
+                return className;
+            }
+        }
+        
+        console.log(`S.No. ${seedNumber} - no matching range found, using default styling`);
+        return ''; // Default styling if no range matches
     }
     </script>
 
