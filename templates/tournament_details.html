@@ -8,6 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="{{ url_for('static', filename='js/clash_resolution.js') }}"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
         body { min-height: 100vh; background: #f0f2f5; display: flex; flex-direction: column; }
@@ -1485,7 +1486,7 @@
             </div>
         {% endif %}
 
-        <div class="content">
+        <div class="content" data-tournament-id="{{ tournament['Tournament Id'] }}">
             <div class="tab-header">
                 <button class="tab-button active" onclick="showTab('info')" id="tab-info">
                     <i class="fas fa-info-circle"></i>Info
@@ -1978,16 +1979,15 @@
                                     </tbody>
                                 </table>
                                 
+                                <!-- Clash Resolution Mode Toggle -->
+                                <div id="clashModeToggle" style="margin: 20px 0 10px 0; text-align: right;">
+                                    <label style="font-weight: 500; margin-right: 10px;">Resolution Mode:</label>
+                                    <button id="autoModeBtn" class="resolve-clash-btn" style="background-color: #2196f3;" onclick="setClashMode('auto')">Automatic</button>
+                                    <button id="manualModeBtn" class="resolve-clash-btn" style="background-color: #9c27b0;" onclick="setClashMode('manual')">Manual</button>
+                                </div>
+
                                 <!-- Clash Summary Container -->
                                 <div id="clashSummary" class="clash-summary" style="display: none;">
-                                    <h4><i class="fas fa-exclamation-triangle"></i> Seeding Clashes Detected</h4>
-                                    <div id="clashItems">
-                                        <!-- Clash items will be populated here -->
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                         <!-- Step 3 Content -->
                         <div id="step3Content" class="step-content-area" style="display: none;">
                             <h3 style="color: #1e3c72; margin-bottom: 20px;">Create Draws</h3>
@@ -3902,17 +3902,56 @@
     // Function to show clash summary
     function showClashSummary(clashes) {
         const clashSummary = document.getElementById('clashSummary');
-        clashSummary.innerHTML = '';
+        const clashItems = document.getElementById('clashItems');
+        
+        clashItems.innerHTML = '';
+        
+        // Add overall clash resolution options
+        const overallResolutionDiv = document.createElement('div');
+        overallResolutionDiv.className = 'clash-item';
+        overallResolutionDiv.style.backgroundColor = '#e8f5e8';
+        overallResolutionDiv.innerHTML = `
+            <div style="margin-bottom: 15px;">
+                <strong style="color: #2e7d32;">🎯 Overall Clash Resolution Options:</strong>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="resolve-clash-btn" style="background-color: #2196f3;" onclick="autoResolveAllClashes()">
+                    🔄 Auto-Resolve All Clashes
+                </button>
+                <button class="resolve-clash-btn" style="background-color: #ff9800;" onclick="shuffleClashPlayers()">
+                    🎲 Shuffle Clash Players
+                </button>
+                <button class="resolve-clash-btn" style="background-color: #9c27b0;" onclick="showPaperChitResolution()">
+                    📄 Paper Chit Resolution
+                </button>
+            </div>
+        `;
+        clashItems.appendChild(overallResolutionDiv);
         
         clashes.forEach(clash => {
             const clashItem = document.createElement('div');
             clashItem.className = 'clash-item';
+            
+            const playerNames = clash.players.map(p => p.player.name).join(', ');
+            const ranges = clash.ranges.join(' and ');
+            
             clashItem.innerHTML = `
-                <strong>${clash.player.name}</strong> (Seed: ${clash.player.seeding}) has a seeding clash.
-                Suggested resolution: ${clash.suggestedSeeds.join(', ')}
+                <div>
+                    <strong>Seed ${clash.seed}</strong> is used by <strong>${playerNames}</strong> 
+                    across different ranges: <strong>${ranges}</strong>
+                </div>
+                <div style="margin-top: 8px;">
+                    <strong>Individual Resolution:</strong> 
+                    ${clash.suggestedSeeds.map(seed => 
+                        `<button class="resolve-clash-btn" onclick="resolveClash('${clash.seed}', ${seed})">Use Seed ${seed}</button>`
+                    ).join(' ')}
+                </div>
             `;
-            clashSummary.appendChild(clashItem);
+            
+            clashItems.appendChild(clashItem);
         });
+        
+        clashSummary.style.display = 'block';
     }
 
     // Function to detect seeding clashes across range boundaries
