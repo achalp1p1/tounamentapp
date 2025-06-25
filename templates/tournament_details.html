@@ -2709,28 +2709,33 @@
         });
 
         let currentSeed = 1;
-        let lastSeed = 0;
+        let lastSeed = null;
         let duplicateCount = 0;
+        let duplicateValue = null;
 
         validInputs.forEach((input, index) => {
             const thisSeed = parseInt(input.value);
             
-            if (index > 0 && thisSeed === parseInt(validInputs[index - 1].value)) {
-                // Keep duplicate seedings as is
-                input.value = thisSeed;
-                input.dataset.originalSeed = thisSeed;
+            if (lastSeed === null) {
+                // First player
+                input.value = currentSeed.toString();
+                input.dataset.originalSeed = currentSeed.toString();
+                lastSeed = thisSeed;
+                duplicateValue = currentSeed;
+            } else if (thisSeed === lastSeed) {
+                // Handle duplicate seeding
+                input.value = duplicateValue.toString();
+                input.dataset.originalSeed = duplicateValue.toString();
                 duplicateCount++;
             } else {
-                // Adjust seeding to remove gaps
-                if (duplicateCount > 0) {
-                    currentSeed += duplicateCount;
-                    duplicateCount = 0;
-                }
-                input.value = currentSeed;
-                input.dataset.originalSeed = currentSeed;
-                currentSeed++;
+                // New seeding value
+                currentSeed = currentSeed + duplicateCount + 1;
+                input.value = currentSeed.toString();
+                input.dataset.originalSeed = currentSeed.toString();
+                lastSeed = thisSeed;
+                duplicateValue = currentSeed;
+                duplicateCount = 0;
             }
-            lastSeed = parseInt(input.value);
         });
     }
 
@@ -2764,10 +2769,36 @@
             return;
         }
 
+        // Get all seeding inputs and their values
+        const allInputs = Array.from(document.querySelectorAll('.seeding-input'));
+        const validInputs = allInputs.filter(inp => inp.value.trim() !== '');
+        
+        // If moving to a lower seed, increment all seeds greater than the new seed
+        if (originalSeed && newSeed < originalSeed) {
+            validInputs.forEach(inp => {
+                const currentSeed = parseInt(inp.value);
+                if (currentSeed > newSeed && currentSeed < originalSeed && inp !== input) {
+                    inp.value = (currentSeed + 1).toString();
+                    inp.dataset.originalSeed = inp.value;
+                }
+            });
+        }
+        // If moving to a higher seed, decrement seeds that were less than new seed
+        else if (originalSeed && newSeed > originalSeed) {
+            validInputs.forEach(inp => {
+                const currentSeed = parseInt(inp.value);
+                if (currentSeed < newSeed && currentSeed > originalSeed && inp !== input) {
+                    inp.value = (currentSeed - 1).toString();
+                    inp.dataset.originalSeed = inp.value;
+                }
+            });
+        }
+
         // Update the seed value
+        input.value = newSeed;
         input.dataset.originalSeed = newSeed;
         
-        // Adjust all seedings to remove gaps
+        // Adjust all seedings to remove gaps while preserving duplicates
         adjustSeedings();
     }
 
