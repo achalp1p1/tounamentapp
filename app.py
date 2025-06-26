@@ -909,17 +909,33 @@ def tournament_info(tournament_id):
             if category in tournament_categories:
                 boys_entries[category] = []
 
-        # Read registrations from tournament_draw.csv
-        if os.path.exists('Tournament_draw.csv'):
-            with open('Tournament_draw.csv', 'r') as f:
+        # Read registrations from tournament_registrations.csv (same as Step 2)
+        print(f"Reading from tournament_registrations.csv for tournament {tournament_id}")
+        if os.path.exists('tournament_registrations.csv'):
+            with open('tournament_registrations.csv', 'r', newline='', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
                 for reg in reader:
-                    if reg['TournamentId'] == tournament_id:
+                    if (reg['Tournament Id'] == tournament_id and 
+                        reg['Status'].lower() == 'active'):
+                        
+                        # Get player details from players_data.csv
+                        player_name = ""
+                        school_institution = ""
+                        with open('players_data.csv', 'r', newline='', encoding='utf-8') as pf:
+                            preader = csv.DictReader(pf)
+                            for prow in preader:
+                                if prow['Player ID'] == reg['Player ID']:
+                                    player_name = prow['Name']
+                                    school_institution = prow.get('School/Institution', '')
+                                    break
+                        
                         entry = {
-                            'Name': reg['Player Name'],
-                            'School/Institution': reg['School/Institution'],
+                            'Name': player_name,
+                            'School/Institution': school_institution,
                             'Seeding': reg.get('Seeding', '')
                         }
+                        
+                        print(f"Found player: {player_name}, Category: {reg['Category']}, Seeding: '{reg.get('Seeding', '')}'")
                         
                         category = reg['Category']
                         if category in girls_categories and category in tournament_categories:
@@ -1010,26 +1026,13 @@ def register_player(tournament_id):
                 'Player ID': player_id,
                 'Registration Date': datetime.now().strftime('%Y-%m-%d'),
                 'Category': category,
-                'Status': 'Active'
+                'Status': 'Active',
+                'Seeding': ''  # Initialize with empty seeding
             }
             
             with open('tournament_registrations.csv', 'a', newline='', encoding='utf-8') as file:
                 writer = csv.DictWriter(file, fieldnames=registration_data.keys())
                 writer.writerow(registration_data)
-
-            # Add entry to tournament_draw.csv
-            draw_entry = {
-                'Rank': '',
-                'Seeding': '',
-                'TournamentId': tournament_id,
-                'Player Name': player_details['Name'],
-                'School/Institution': player_details['School/Institution'],
-                'Category': category
-            }
-            
-            with open('Tournament_draw.csv', 'a', newline='', encoding='utf-8') as file:
-                writer = csv.DictWriter(file, fieldnames=draw_entry.keys())
-                writer.writerow(draw_entry)
 
         # Redirect to the Entries tab with success message
         return redirect(url_for('tournament_info', 
@@ -1166,6 +1169,12 @@ def get_category_players(tournament_id, category):
     # Get the requested fields
     fields = request.args.get('fields', 'basic')  # default to 'basic'
     players = []
+    
+    print(f"\n=== get_category_players called ===")
+    print(f"Tournament ID: {tournament_id}")
+    print(f"Category: {category}")
+    print(f"Fields: {fields}")
+    
     with open(TOURNAMENT_REGISTRATIONS_CSV, 'r', newline='', encoding='utf-8') as file:
         reader = csv.DictReader(file)
         for row in reader:
@@ -1174,6 +1183,8 @@ def get_category_players(tournament_id, category):
                 row['Status'].lower() == 'active'):
                 player_id = row['Player ID']
                 seeding = row.get('Seeding', '')
+                print(f"Found registration: Player ID={player_id}, Seeding={seeding}")
+                
                 with open('players_data.csv', 'r', newline='', encoding='utf-8') as pf:
                     preader = csv.DictReader(pf)
                     for prow in preader:
@@ -1186,7 +1197,14 @@ def get_category_players(tournament_id, category):
                             if fields == 'full':
                                 player['school'] = prow.get('School/Institution', '')
                             players.append(player)
+                            print(f"Added player: {prow['Name']}, Seeding: {seeding}")
                             break
+    
+    print(f"Total players returned: {len(players)}")
+    print("Final player data:")
+    for player in players:
+        print(f"  {player['name']}: seeding = '{player['seeding']}'")
+    
     return jsonify({'success': True, 'players': players})
 
 # Helper function to get tournament details
@@ -1535,51 +1553,55 @@ def save_tournament_draw():
         tournament_id = data['tournamentId']
         category = data['category']
         
-        # Create the CSV file if it doesn't exist
-        file_exists = os.path.exists('Tournament_draw.csv')
+        print(f"\n=== Saving tournament draw ===")
+        print(f"Tournament ID: {tournament_id}")
+        print(f"Category: {category}")
+        print(f"Number of players: {len(draw_data)}")
         
-        with open('Tournament_draw.csv', 'a', newline='', encoding='utf-8') as file:
-            fieldnames = ['Rank', 'Seeding', 'TournamentId', 'Player Name', 'School/Institution', 'Category']
-            writer = csv.DictWriter(file, fieldnames=fieldnames)
+        # Read all registrations
+        registrations = []
+        with open(TOURNAMENT_REGISTRATIONS_CSV, 'r', newline='', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            fieldnames = reader.fieldnames
+            registrations = list(reader)
+            print(f"Total registrations read: {len(registrations)}")
+
+        # Update seeding for the specific category
+        updates_made = 0
+        for draw_row in draw_data:
+            player_name = draw_row['name']
+            new_seeding = draw_row['seeding']
             
-            # Write header if file doesn't exist
-            if not file_exists:
-                writer.writeheader()
-            
-            # First, remove any existing data for this tournament and category
-            if file_exists:
-                temp_rows = []
-                with open('Tournament_draw.csv', 'r', newline='', encoding='utf-8') as read_file:
-                    reader = csv.DictReader(read_file)
-                    for row in reader:
-                        # Keep rows that are not for this tournament and category
-                        if not (row['TournamentId'] == tournament_id and row['Category'] == category):
-                            temp_rows.append(row)
-                
-                # Rewrite the file with filtered rows
-                with open('Tournament_draw.csv', 'w', newline='', encoding='utf-8') as write_file:
-                    temp_writer = csv.DictWriter(write_file, fieldnames=fieldnames)
-                    temp_writer.writeheader()
-                    temp_writer.writerows(temp_rows)
-                
-                # Reopen the file for appending new rows
-                file = open('Tournament_draw.csv', 'a', newline='', encoding='utf-8')
+            # Find the corresponding registration and update seeding
+            for reg in registrations:
+                if (reg['Tournament Id'] == tournament_id and 
+                    reg['Category'] == category):
+                    
+                    # Get player name from players_data.csv
+                    with open('players_data.csv', 'r', newline='', encoding='utf-8') as pf:
+                        preader = csv.DictReader(pf)
+                        for prow in preader:
+                            if prow['Player ID'] == reg['Player ID']:
+                                if prow['Name'] == player_name:
+                                    old_seeding = reg.get('Seeding', '')
+                                    reg['Seeding'] = new_seeding
+                                    updates_made += 1
+                                    print(f"Updated {player_name}: seeding from '{old_seeding}' to '{new_seeding}'")
+                                break
+
+        print(f"Updates made: {updates_made}")
+
+        if updates_made > 0:
+            # Write back to file
+            with open(TOURNAMENT_REGISTRATIONS_CSV, 'w', newline='', encoding='utf-8') as file:
                 writer = csv.DictWriter(file, fieldnames=fieldnames)
-            
-            # Write the new draw data
-            for row in draw_data:
-                writer.writerow({
-                    'Rank': row['rank'],
-                    'Seeding': row['seeding'],
-                    'TournamentId': row['tournamentId'],
-                    'Player Name': row['name'],
-                    'School/Institution': row['school'],
-                    'Category': row['category']
-                })
-                
-            file.close()
-        
-        return jsonify({'success': True, 'message': 'Draw saved successfully!'})
+                writer.writeheader()
+                writer.writerows(registrations)
+            print("Successfully wrote updates to tournament_registrations.csv")
+            return jsonify({'success': True, 'message': f'Draw saved successfully! Updated {updates_made} records'})
+        else:
+            print("No matching records found to update")
+            return jsonify({'success': False, 'message': 'No matching records found to update'})
     
     except Exception as e:
         print(f"Error saving tournament draw: {str(e)}")

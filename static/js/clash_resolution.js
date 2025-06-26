@@ -2,6 +2,20 @@
 
 let clashResolutionMode = 'auto'; // 'auto' or 'manual'
 
+// Helper functions to get current tournament and category
+function getCurrentTournamentId() {
+    // Extract tournament ID from the current URL
+    const url = window.location.pathname;
+    const match = url.match(/\/tournament\/(\d+)/);
+    return match ? match[1] : null;
+}
+
+function getCurrentCategory() {
+    // Get the currently selected category from the clash category select
+    const clashCategorySelect = document.getElementById('clashCategorySelect');
+    return clashCategorySelect ? clashCategorySelect.value : '';
+}
+
 function setClashMode(mode) {
     clashResolutionMode = mode;
     // Update button styles
@@ -108,7 +122,7 @@ if (typeof document !== 'undefined') {
 // Function to auto-resolve all clashes
 async function autoResolveAllClashes() {
     const category = document.getElementById('clashCategorySelect').value;
-    const tournamentId = document.querySelector('[data-tournament-id]').getAttribute('data-tournament-id');
+    const tournamentId = getCurrentTournamentId();
     
     try {
         // Get current players and clashes
@@ -133,6 +147,10 @@ async function autoResolveAllClashes() {
             return;
         }
         
+        // Collect all updates for batch processing
+        const playerIds = [];
+        const seedings = [];
+        
         // Auto-resolve each clash
         let resolvedCount = 0;
         for (const clash of clashes) {
@@ -143,15 +161,40 @@ async function autoResolveAllClashes() {
                     const player = clash.players[i].player;
                     const newSeed = availableSeeds[i % availableSeeds.length];
                     
-                    // Update the player's seeding
-                    await updatePlayerSeeding(tournamentId, category, player.player_id, newSeed);
+                    // Collect for batch update
+                    playerIds.push(player.player_id);
+                    seedings.push(newSeed.toString());
                     resolvedCount++;
                 }
             }
         }
         
-        alert(`Auto-resolved ${resolvedCount} clash players`);
-        loadClashPlayers(); // Reload to show updated state
+        // Perform batch update
+        if (playerIds.length > 0) {
+            const formData = new FormData();
+            formData.append('category', category);
+            
+            playerIds.forEach(playerId => {
+                formData.append('player_ids[]', playerId);
+            });
+            
+            seedings.forEach(seeding => {
+                formData.append('seedings[]', seeding);
+            });
+            
+            const updateResponse = await fetch(`/tournament/${tournamentId}/update_seeding`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const updateResult = await updateResponse.json();
+            if (updateResult.success) {
+                alert(`Auto-resolved ${resolvedCount} clash players`);
+                loadClashPlayers(); // Reload to show updated state
+            } else {
+                alert('Failed to save auto-resolved changes: ' + updateResult.message);
+            }
+        }
         
     } catch (error) {
         console.error('Error auto-resolving clashes:', error);
@@ -162,7 +205,7 @@ async function autoResolveAllClashes() {
 // Function to shuffle clash players
 async function shuffleClashPlayers() {
     const category = document.getElementById('clashCategorySelect').value;
-    const tournamentId = document.querySelector('[data-tournament-id]').getAttribute('data-tournament-id');
+    const tournamentId = getCurrentTournamentId();
     
     try {
         // Get current players and clashes
@@ -201,18 +244,48 @@ async function shuffleClashPlayers() {
             [clashPlayers[i], clashPlayers[j]] = [clashPlayers[j], clashPlayers[i]];
         }
         
+        // Collect all updates for batch processing
+        const playerIds = [];
+        const seedings = [];
+        
         // Assign new seeds to shuffled players
         let resolvedCount = 0;
         for (let i = 0; i < clashPlayers.length; i++) {
             const player = clashPlayers[i];
             const newSeed = i + 1; // Assign sequential seeds
             
-            await updatePlayerSeeding(tournamentId, category, player.player_id, newSeed);
+            // Collect for batch update
+            playerIds.push(player.player_id);
+            seedings.push(newSeed.toString());
             resolvedCount++;
         }
         
-        alert(`Shuffled and resolved ${resolvedCount} clash players`);
-        loadClashPlayers(); // Reload to show updated state
+        // Perform batch update
+        if (playerIds.length > 0) {
+            const formData = new FormData();
+            formData.append('category', category);
+            
+            playerIds.forEach(playerId => {
+                formData.append('player_ids[]', playerId);
+            });
+            
+            seedings.forEach(seeding => {
+                formData.append('seedings[]', seeding);
+            });
+            
+            const updateResponse = await fetch(`/tournament/${tournamentId}/update_seeding`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const updateResult = await updateResponse.json();
+            if (updateResult.success) {
+                alert(`Shuffled and resolved ${resolvedCount} clash players`);
+                loadClashPlayers(); // Reload to show updated state
+            } else {
+                alert('Failed to save shuffled changes: ' + updateResult.message);
+            }
+        }
         
     } catch (error) {
         console.error('Error shuffling clash players:', error);
@@ -223,7 +296,7 @@ async function shuffleClashPlayers() {
 // Function to show paper chit resolution
 function showPaperChitResolution() {
     const category = document.getElementById('clashCategorySelect').value;
-    const tournamentId = document.querySelector('[data-tournament-id]').getAttribute('data-tournament-id');
+    const tournamentId = getCurrentTournamentId();
     
     // Create paper chit resolution modal
     const modal = document.createElement('div');
@@ -279,7 +352,7 @@ function showPaperChitResolution() {
 // Function to load players for paper chit resolution
 async function loadPaperChitPlayers() {
     const category = document.getElementById('clashCategorySelect').value;
-    const tournamentId = document.querySelector('[data-tournament-id]').getAttribute('data-tournament-id');
+    const tournamentId = getCurrentTournamentId();
     
     try {
         const response = await fetch(`/tournament/${tournamentId}/get_category_players/${category}?fields=full`);
@@ -339,27 +412,50 @@ async function loadPaperChitPlayers() {
 // Function to apply paper chit results
 async function applyPaperChitResults() {
     const category = document.getElementById('clashCategorySelect').value;
-    const tournamentId = document.querySelector('[data-tournament-id]').getAttribute('data-tournament-id');
+    const tournamentId = getCurrentTournamentId();
     
     try {
         // Get all paper chit seed inputs
         const seedInputs = document.querySelectorAll('[id^="paperChitSeed_"]');
-        let updatedCount = 0;
+        const playerIds = [];
+        const seedings = [];
         
         for (const input of seedInputs) {
             const playerId = input.id.replace('paperChitSeed_', '');
             const newSeed = input.value.trim();
             
             if (newSeed && !isNaN(newSeed)) {
-                await updatePlayerSeeding(tournamentId, category, playerId, parseInt(newSeed));
-                updatedCount++;
+                playerIds.push(playerId);
+                seedings.push(newSeed);
             }
         }
         
-        if (updatedCount > 0) {
-            alert(`Applied paper chit results for ${updatedCount} players`);
-            closePaperChitModal();
-            loadClashPlayers(); // Reload to show updated state
+        if (playerIds.length > 0) {
+            // Perform batch update
+            const formData = new FormData();
+            formData.append('category', category);
+            
+            playerIds.forEach(playerId => {
+                formData.append('player_ids[]', playerId);
+            });
+            
+            seedings.forEach(seeding => {
+                formData.append('seedings[]', seeding);
+            });
+            
+            const updateResponse = await fetch(`/tournament/${tournamentId}/update_seeding`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const updateResult = await updateResponse.json();
+            if (updateResult.success) {
+                alert(`Applied paper chit results for ${playerIds.length} players`);
+                closePaperChitModal();
+                loadClashPlayers(); // Reload to show updated state
+            } else {
+                alert('Failed to save paper chit results: ' + updateResult.message);
+            }
         } else {
             alert('No valid seed values found. Please enter new seeds for the players.');
         }
@@ -584,15 +680,21 @@ async function saveAllSeedChanges() {
         
         // Create form data
         const formData = new FormData();
-        formData.append('tournament_id', tournamentId);
         formData.append('category', category);
-        formData.append('player_ids', JSON.stringify(playerIds));
-        formData.append('seedings', JSON.stringify(seedings));
+        
+        // Add each player ID and seeding as separate form fields
+        playerIds.forEach(playerId => {
+            formData.append('player_ids[]', playerId);
+        });
+        
+        seedings.forEach(seeding => {
+            formData.append('seedings[]', seeding);
+        });
         
         console.log('Form data created, sending to backend...');
         
-        // Send to backend
-        const response = await fetch('/tournament_update_seeding', {
+        // Send to backend with correct URL
+        const response = await fetch(`/tournament/${tournamentId}/update_seeding`, {
             method: 'POST',
             body: formData
         });
@@ -611,10 +713,10 @@ async function saveAllSeedChanges() {
             alert('Seed changes saved successfully!');
             
             // Refresh the data to show updated values
-            await loadCategoryPlayers();
+            await loadClashPlayers();
         } else {
-            console.error('Save failed:', result.error);
-            alert('Failed to save seed changes: ' + result.error);
+            console.error('Save failed:', result.message);
+            alert('Failed to save seed changes: ' + result.message);
         }
     } catch (error) {
         console.error('Error saving seed changes:', error);
