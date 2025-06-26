@@ -3381,7 +3381,7 @@
                                                         if(newSeed && !isNaN(newSeed)){
                                                             const tournamentId = document.querySelector('[data-tournament-id]').getAttribute('data-tournament-id');
                                                             const category = document.getElementById('clashCategorySelect').value;
-                                                            updatePlayerSeeding(tournamentId, category, '${player.player_id}', parseInt(newSeed)).then(()=>{loadClashPlayers();});
+                                                            updatePlayerSeeding(tournamentId, category, '${player.player_id}', parseInt(newSeed)).then(()=>{sortTableBySeed();});
                                                         }
                                                     })(event)">
                                             `;
@@ -3760,7 +3760,7 @@
                                                         if(newSeed && !isNaN(newSeed)){
                                                             const tournamentId = document.querySelector('[data-tournament-id]').getAttribute('data-tournament-id');
                                                             const category = document.getElementById('clashCategorySelect').value;
-                                                            updatePlayerSeeding(tournamentId, category, '${player.player_id}', parseInt(newSeed)).then(()=>{loadClashPlayers();});
+                                                            updatePlayerSeeding(tournamentId, category, '${player.player_id}', parseInt(newSeed)).then(()=>{sortTableBySeed();});
                                                         }
                                                     })(event)">
                                             `;
@@ -4765,6 +4765,92 @@
             document.getElementById('swapPopup').style.display = 'none';
             document.getElementById('popupOverlay').style.display = 'none';
         });
+
+        // Function to sort table rows by seed while preserving S.No. column
+        function sortTableBySeed() {
+            const tbody = document.getElementById('clashTableBody');
+            if (!tbody) return;
+            
+            const rows = Array.from(tbody.getElementsByTagName('tr'));
+            if (rows.length === 0) return;
+            
+            // Create array of row data with seed values for sorting
+            const rowData = rows.map((row, index) => {
+                const seedCell = row.cells[2]; // Seed column (3rd column, index 2)
+                let seedValue = 999999; // Default for unseeded players
+                
+                // Extract seed value from the cell
+                if (seedCell.innerHTML.includes('<input')) {
+                    // If it's an input, get the value
+                    const input = seedCell.querySelector('input');
+                    seedValue = input ? (parseInt(input.value) || 999999) : 999999;
+                } else {
+                    // If it's plain text, parse the text content
+                    seedValue = parseInt(seedCell.textContent.trim()) || 999999;
+                }
+                
+                return {
+                    row: row,
+                    seed: seedValue,
+                    originalIndex: index
+                };
+            });
+            
+            // Sort by seed value (ascending)
+            rowData.sort((a, b) => a.seed - b.seed);
+            
+            // Reorder the rows in the table
+            rowData.forEach((data, newIndex) => {
+                // Keep the original S.No. (first column) unchanged
+                const snoCell = data.row.cells[0];
+                snoCell.textContent = (data.originalIndex + 1).toString();
+                
+                // Move the row to its new position
+                tbody.appendChild(data.row);
+            });
+            
+            // Update clash detection after sorting
+            setTimeout(() => {
+                const category = document.getElementById('clashCategorySelect').value;
+                if (category) {
+                    // Re-detect clashes and update the display
+                    fetch('/get_seeding_ranges')
+                        .then(response => response.json())
+                        .then(seedRangesData => {
+                            if (seedRangesData.success) {
+                                const seedRanges = seedRangesData.seeding_ranges;
+                                fetch(`/tournament/${tournamentId}/get_category_players/${category}?fields=full`)
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            const playersWithRankings = data.players.map(player => ({
+                                                ...player,
+                                                ranking: getPlayerRanking(player.player_id, category, {}),
+                                                originalSeed: player.seeding || ''
+                                            }));
+                                            
+                                            // Sort players by seed (ascending)
+                                            playersWithRankings.sort((a, b) => {
+                                                const seedA = parseInt(a.seeding) || 999999;
+                                                const seedB = parseInt(b.seeding) || 999999;
+                                                return seedA - seedB;
+                                            });
+                                            
+                                            // Update clash detection
+                                            const clashes = detectSeedingClashes(playersWithRankings, seedRanges);
+                                            if (clashes.length > 0) {
+                                                showClashSummary(clashes);
+                                            } else {
+                                                const clashSummary = document.getElementById('clashSummary');
+                                                clashSummary.style.display = 'none';
+                                            }
+                                        }
+                                    });
+                            }
+                        });
+                }
+            }, 100);
+        }
     });
     </script>
 
