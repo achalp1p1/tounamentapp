@@ -3344,6 +3344,21 @@
                                         const clashInfo = detectSeedingClash(player, playersWithRankings, index, seedRanges);
                                         let clashClass = '';
                                         let clashTooltip = '';
+                                        let isClashPlayer = false;
+                                        
+                                        // Build a set of clash player IDs from detectSeedingClashes
+                                        if (typeof window.clashPlayersSet === 'undefined') {
+                                            const clashes = detectSeedingClashes(playersWithRankings, seedRanges);
+                                            window.clashPlayersSet = new Set();
+                                            clashes.forEach(clash => {
+                                                clash.players.forEach(pinfo => {
+                                                    window.clashPlayersSet.add(pinfo.player.player_id);
+                                                });
+                                            });
+                                        }
+                                        if (window.clashPlayersSet.has(player.player_id)) {
+                                            isClashPlayer = true;
+                                        }
                                         
                                         if (clashInfo.hasClash) {
                                             clashClass = 'seeding-clash-row';
@@ -3355,10 +3370,29 @@
                                             row.title = clashTooltip;
                                         }
                                         
+                                        // Render seed as input if clash, else as text
+                                        let seedCellHtml = '';
+                                        if (isClashPlayer) {
+                                            seedCellHtml = `
+                                                <span title="Clash!" style="color: #f44336; font-weight: bold;">⚠️</span>
+                                                <input type="number" value="${player.seeding || ''}" min="1" style="width: 60px; margin-left: 5px;"
+                                                    onchange="(function(e){
+                                                        const newSeed = e.target.value;
+                                                        if(newSeed && !isNaN(newSeed)){
+                                                            const tournamentId = document.querySelector('[data-tournament-id]').getAttribute('data-tournament-id');
+                                                            const category = document.getElementById('clashCategorySelect').value;
+                                                            updatePlayerSeeding(tournamentId, category, '${player.player_id}', parseInt(newSeed)).then(()=>{loadClashPlayers();});
+                                                        }
+                                                    })(event)">
+                                            `;
+                                        } else {
+                                            seedCellHtml = `${player.seeding || ''}`;
+                                        }
+                                        
                                         row.innerHTML = `
                                             <td style="${cellStyle}; text-align: center;">${index + 1}</td>
                                             <td style="${cellStyle}">${player.name}</td>
-                                            <td style="${cellStyle}">${player.seeding || ''}</td>
+                                            <td style="${cellStyle}">${seedCellHtml}</td>
                                         `;
                                         tbody.appendChild(row);
                                     });
@@ -3689,6 +3723,21 @@
                                         const clashInfo = detectSeedingClash(player, playersWithRankings, index, seedRanges);
                                         let clashClass = '';
                                         let clashTooltip = '';
+                                        let isClashPlayer = false;
+                                        
+                                        // Build a set of clash player IDs from detectSeedingClashes
+                                        if (typeof window.clashPlayersSet === 'undefined') {
+                                            const clashes = detectSeedingClashes(playersWithRankings, seedRanges);
+                                            window.clashPlayersSet = new Set();
+                                            clashes.forEach(clash => {
+                                                clash.players.forEach(pinfo => {
+                                                    window.clashPlayersSet.add(pinfo.player.player_id);
+                                                });
+                                            });
+                                        }
+                                        if (window.clashPlayersSet.has(player.player_id)) {
+                                            isClashPlayer = true;
+                                        }
                                         
                                         if (clashInfo.hasClash) {
                                             clashClass = 'seeding-clash-row';
@@ -3700,10 +3749,29 @@
                                             row.title = clashTooltip;
                                         }
                                         
+                                        // Render seed as input if clash, else as text
+                                        let seedCellHtml = '';
+                                        if (isClashPlayer) {
+                                            seedCellHtml = `
+                                                <span title="Clash!" style="color: #f44336; font-weight: bold;">⚠️</span>
+                                                <input type="number" value="${player.seeding || ''}" min="1" style="width: 60px; margin-left: 5px;"
+                                                    onchange="(function(e){
+                                                        const newSeed = e.target.value;
+                                                        if(newSeed && !isNaN(newSeed)){
+                                                            const tournamentId = document.querySelector('[data-tournament-id]').getAttribute('data-tournament-id');
+                                                            const category = document.getElementById('clashCategorySelect').value;
+                                                            updatePlayerSeeding(tournamentId, category, '${player.player_id}', parseInt(newSeed)).then(()=>{loadClashPlayers();});
+                                                        }
+                                                    })(event)">
+                                            `;
+                                        } else {
+                                            seedCellHtml = `${player.seeding || ''}`;
+                                        }
+                                        
                                         row.innerHTML = `
                                             <td style="${cellStyle}; text-align: center;">${index + 1}</td>
                                             <td style="${cellStyle}">${player.name}</td>
-                                            <td style="${cellStyle}">${player.seeding || ''}</td>
+                                            <td style="${cellStyle}">${seedCellHtml}</td>
                                         `;
                                         tbody.appendChild(row);
                                     });
