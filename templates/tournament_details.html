@@ -1986,6 +1986,13 @@
                                     <button id="manualModeBtn" class="resolve-clash-btn" style="background-color: #9c27b0;" onclick="setClashMode('manual')">Manual</button>
                                 </div>
 
+                                <!-- Save Seeds Button -->
+                                <div style="margin: 20px 0; text-align: center;">
+                                    <button id="saveSeedsBtn" class="submit-button" style="background-color: #4caf50; color: white; padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: 500;" onclick="saveAllSeedChanges()">
+                                        <i class="fas fa-save"></i> Save All Seed Changes
+                                    </button>
+                                </div>
+
                                 <!-- Clash Summary Container -->
                                 <div id="clashSummary" class="clash-summary" style="display: none;">
                         <!-- Step 3 Content -->
@@ -3379,9 +3386,8 @@
                                                     onchange="(function(e){
                                                         const newSeed = e.target.value;
                                                         if(newSeed && !isNaN(newSeed)){
-                                                            const tournamentId = document.querySelector('[data-tournament-id]').getAttribute('data-tournament-id');
-                                                            const category = document.getElementById('clashCategorySelect').value;
-                                                            updatePlayerSeeding(tournamentId, category, '${player.player_id}', parseInt(newSeed)).then(()=>{sortTableBySeed();});
+                                                            // Sort table rows by seed after update
+                                                            sortTableBySeed();
                                                         }
                                                     })(event)">
                                             `;
@@ -3758,9 +3764,8 @@
                                                     onchange="(function(e){
                                                         const newSeed = e.target.value;
                                                         if(newSeed && !isNaN(newSeed)){
-                                                            const tournamentId = document.querySelector('[data-tournament-id]').getAttribute('data-tournament-id');
-                                                            const category = document.getElementById('clashCategorySelect').value;
-                                                            updatePlayerSeeding(tournamentId, category, '${player.player_id}', parseInt(newSeed)).then(()=>{sortTableBySeed();});
+                                                            // Sort table rows by seed after update
+                                                            sortTableBySeed();
                                                         }
                                                     })(event)">
                                             `;
@@ -4799,57 +4804,131 @@
             // Sort by seed value (ascending)
             rowData.sort((a, b) => a.seed - b.seed);
             
-            // Reorder the rows in the table
+            // Clear the table and re-add rows in sorted order
+            tbody.innerHTML = '';
             rowData.forEach((data, newIndex) => {
                 // Keep the original S.No. (first column) unchanged
                 const snoCell = data.row.cells[0];
                 snoCell.textContent = (data.originalIndex + 1).toString();
                 
-                // Move the row to its new position
+                // Add the row back to the table
                 tbody.appendChild(data.row);
             });
             
-            // Update clash detection after sorting
-            setTimeout(() => {
-                const category = document.getElementById('clashCategorySelect').value;
-                if (category) {
-                    // Re-detect clashes and update the display
-                    fetch('/get_seeding_ranges')
-                        .then(response => response.json())
-                        .then(seedRangesData => {
-                            if (seedRangesData.success) {
-                                const seedRanges = seedRangesData.seeding_ranges;
-                                fetch(`/tournament/${tournamentId}/get_category_players/${category}?fields=full`)
-                                    .then(response => response.json())
-                                    .then(data => {
-                                        if (data.success) {
-                                            const playersWithRankings = data.players.map(player => ({
-                                                ...player,
-                                                ranking: getPlayerRanking(player.player_id, category, {}),
-                                                originalSeed: player.seeding || ''
-                                            }));
-                                            
-                                            // Sort players by seed (ascending)
-                                            playersWithRankings.sort((a, b) => {
-                                                const seedA = parseInt(a.seeding) || 999999;
-                                                const seedB = parseInt(b.seeding) || 999999;
-                                                return seedA - seedB;
-                                            });
-                                            
-                                            // Update clash detection
-                                            const clashes = detectSeedingClashes(playersWithRankings, seedRanges);
-                                            if (clashes.length > 0) {
-                                                showClashSummary(clashes);
-                                            } else {
-                                                const clashSummary = document.getElementById('clashSummary');
-                                                clashSummary.style.display = 'none';
-                                            }
-                                        }
-                                    });
-                            }
-                        });
+            // Update clash detection based on current input values
+            updateClashDetection();
+        }
+
+        // Function to update clash detection based on current input values
+        function updateClashDetection() {
+            const tbody = document.getElementById('clashTableBody');
+            if (!tbody) return;
+            
+            const rows = Array.from(tbody.getElementsByTagName('tr'));
+            const currentPlayers = [];
+            
+            // Extract current player data from the table
+            rows.forEach((row, index) => {
+                const nameCell = row.cells[1];
+                const seedCell = row.cells[2];
+                let seedValue = '';
+                
+                // Get seed value from input or text
+                if (seedCell.innerHTML.includes('<input')) {
+                    const input = seedCell.querySelector('input');
+                    seedValue = input ? input.value : '';
+                } else {
+                    seedValue = seedCell.textContent.trim();
                 }
-            }, 100);
+                
+                // Extract player_id from the input if it exists
+                let playerId = '';
+                if (seedCell.innerHTML.includes('player_id')) {
+                    const match = seedCell.innerHTML.match(/player_id', '([^']+)'/);
+                    if (match) {
+                        playerId = match[1];
+                    }
+                }
+                
+                currentPlayers.push({
+                    name: nameCell.textContent.trim(),
+                    seeding: seedValue,
+                    player_id: playerId,
+                    originalIndex: index
+                });
+            });
+            
+            // Fetch seed ranges and detect clashes
+            fetch('/get_seeding_ranges')
+                .then(response => response.json())
+                .then(seedRangesData => {
+                    if (seedRangesData.success) {
+                        const seedRanges = seedRangesData.seeding_ranges;
+                        const clashes = detectSeedingClashes(currentPlayers, seedRanges);
+                        
+                        if (clashes.length > 0) {
+                            showClashSummary(clashes);
+                        } else {
+                            const clashSummary = document.getElementById('clashSummary');
+                            if (clashSummary) {
+                                clashSummary.style.display = 'none';
+                            }
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating clash detection:', error);
+                });
+        }
+
+        // Function to save all seed changes
+        async function saveAllSeedChanges() {
+            const tbody = document.getElementById('clashTableBody');
+            if (!tbody) return;
+            
+            const rows = Array.from(tbody.getElementsByTagName('tr'));
+            const tournamentId = document.querySelector('[data-tournament-id]').getAttribute('data-tournament-id');
+            const category = document.getElementById('clashCategorySelect').value;
+            
+            if (!category) {
+                alert('Please select a category first');
+                return;
+            }
+            
+            let updatedCount = 0;
+            const updatePromises = [];
+            
+            rows.forEach((row) => {
+                const seedCell = row.cells[2];
+                
+                // Only process rows with input fields (clash players)
+                if (seedCell.innerHTML.includes('<input')) {
+                    const input = seedCell.querySelector('input');
+                    const newSeed = input ? input.value.trim() : '';
+                    
+                    if (newSeed && !isNaN(newSeed)) {
+                        // Extract player_id from the input
+                        const match = seedCell.innerHTML.match(/player_id', '([^']+)'/);
+                        if (match) {
+                            const playerId = match[1];
+                            const promise = updatePlayerSeeding(tournamentId, category, playerId, parseInt(newSeed));
+                            updatePromises.push(promise);
+                        }
+                    }
+                }
+            });
+            
+            try {
+                await Promise.all(updatePromises);
+                updatedCount = updatePromises.length;
+                alert(`Successfully saved ${updatedCount} seed changes!`);
+                
+                // Reload the table to reflect saved changes
+                loadClashPlayers();
+            } catch (error) {
+                console.error('Error saving seed changes:', error);
+                alert('Error saving seed changes. Please try again.');
+            }
         }
     });
     </script>
