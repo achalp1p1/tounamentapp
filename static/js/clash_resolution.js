@@ -381,24 +381,52 @@ function closePaperChitModal() {
 // Helper function to update player seeding
 async function updatePlayerSeeding(tournamentId, category, playerId, newSeed) {
     try {
-        const response = await fetch(`/tournament/${tournamentId}/resolve_clash`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                category: category,
-                player_id: playerId,
-                new_seeding: newSeed
-            })
-        });
+        console.log(`updatePlayerSeeding called: tournamentId=${tournamentId}, category=${category}, playerId=${playerId}, newSeed=${newSeed}`);
         
-        const result = await response.json();
-        if (!result.success) {
-            throw new Error(result.message);
+        const formData = new FormData();
+        formData.append('tournament_id', tournamentId);
+        formData.append('category', category);
+        formData.append('player_ids[]', playerId);
+        formData.append('seedings[]', newSeed.toString());
+        
+        console.log('FormData contents:');
+        for (let [key, value] of formData.entries()) {
+            console.log(`${key}: ${value}`);
         }
         
-        return result;
+        const url = `/tournament/${tournamentId}/update_seeding`;
+        console.log('Making request to:', url);
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData
+        });
+        
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        
+        const responseText = await response.text();
+        console.log('Response text:', responseText);
+        
+        // Try to parse as JSON
+        let result;
+        try {
+            result = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error('Failed to parse response as JSON:', parseError);
+            console.error('Response was:', responseText);
+            throw new Error('Server returned invalid JSON response');
+        }
+        
+        console.log('Update result:', result);
+        
+        if (result.success) {
+            console.log('Successfully updated player seeding');
+            return result;
+        } else {
+            console.error('Failed to update player seeding:', result.message);
+            throw new Error(result.message);
+        }
     } catch (error) {
         console.error('Error updating player seeding:', error);
         throw error;
@@ -517,4 +545,79 @@ function generateSuggestedSeeds(clashSeed, allPlayers) {
     }
     
     return suggestions;
+}
+
+async function saveAllSeedChanges() {
+    try {
+        console.log('Starting saveAllSeedChanges...');
+        
+        // Get all editable seed inputs
+        const seedInputs = document.querySelectorAll('.seed-input[data-player-id]');
+        console.log(`Found ${seedInputs.length} seed inputs to save`);
+        
+        const playerIds = [];
+        const seedings = [];
+        
+        // Collect all player IDs and their new seedings
+        seedInputs.forEach(input => {
+            const playerId = input.getAttribute('data-player-id');
+            const newSeeding = input.value.trim();
+            
+            playerIds.push(playerId);
+            seedings.push(newSeeding);
+            
+            console.log(`Will save: Player ID "${playerId}" -> Seeding "${newSeeding}"`);
+        });
+        
+        if (playerIds.length === 0) {
+            console.log('No seed inputs found to save');
+            return;
+        }
+        
+        // Get current tournament and category
+        const tournamentId = getCurrentTournamentId();
+        const category = getCurrentCategory();
+        
+        console.log(`Saving for Tournament ID: "${tournamentId}", Category: "${category}"`);
+        console.log(`Player IDs being sent: ${JSON.stringify(playerIds)}`);
+        console.log(`Seedings being sent: ${JSON.stringify(seedings)}`);
+        
+        // Create form data
+        const formData = new FormData();
+        formData.append('tournament_id', tournamentId);
+        formData.append('category', category);
+        formData.append('player_ids', JSON.stringify(playerIds));
+        formData.append('seedings', JSON.stringify(seedings));
+        
+        console.log('Form data created, sending to backend...');
+        
+        // Send to backend
+        const response = await fetch('/tournament_update_seeding', {
+            method: 'POST',
+            body: formData
+        });
+        
+        console.log('Backend response received:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log('Backend result:', result);
+        
+        if (result.success) {
+            console.log('Save successful!');
+            alert('Seed changes saved successfully!');
+            
+            // Refresh the data to show updated values
+            await loadCategoryPlayers();
+        } else {
+            console.error('Save failed:', result.error);
+            alert('Failed to save seed changes: ' + result.error);
+        }
+    } catch (error) {
+        console.error('Error saving seed changes:', error);
+        alert('Error saving seed changes: ' + error.message);
+    }
 } 

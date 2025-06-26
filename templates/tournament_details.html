@@ -1984,17 +1984,20 @@
                                     <label style="font-weight: 500; margin-right: 10px;">Resolution Mode:</label>
                                     <button id="autoModeBtn" class="resolve-clash-btn" style="background-color: #2196f3;" onclick="setClashMode('auto')">Automatic</button>
                                     <button id="manualModeBtn" class="resolve-clash-btn" style="background-color: #9c27b0;" onclick="setClashMode('manual')">Manual</button>
-                                </div>
-
-                                <!-- Save Seeds Button -->
-                                <div style="margin: 20px 0; text-align: center;">
-                                    <button id="saveSeedsBtn" class="submit-button" style="background-color: #4caf50; color: white; padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: 500;" onclick="saveAllSeedChanges()">
-                                        <i class="fas fa-save"></i> Save All Seed Changes
+                                    <button id="saveSeedsBtn" class="resolve-clash-btn" style="background-color: #4caf50; margin-left: 10px;" onclick="saveAllSeedChanges()">
+                                        <i class="fas fa-save"></i> Save Seeds
                                     </button>
                                 </div>
 
                                 <!-- Clash Summary Container -->
                                 <div id="clashSummary" class="clash-summary" style="display: none;">
+                                    <h4>Seeding Clashes Detected</h4>
+                                    <div id="clashItems">
+                                        <!-- Clash items will be generated here -->
+                                    </div>
+                                </div>
+                        </div>
+
                         <!-- Step 3 Content -->
                         <div id="step3Content" class="step-content-area" style="display: none;">
                             <h3 style="color: #1e3c72; margin-bottom: 20px;">Create Draws</h3>
@@ -2723,6 +2726,8 @@
     // Function to load players for seeding
     function loadPlayers() {
         const category = document.getElementById('seedingCategorySelect').value;
+        console.log('loadPlayers called with category:', category);
+        
         if (!category) {
             document.getElementById('playersContainer').style.display = 'none';
             return;
@@ -2733,10 +2738,20 @@
         tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">Loading players...</td></tr>';
         document.getElementById('playersContainer').style.display = 'block';
 
-        fetch(`/tournament/${tournamentId}/get_category_players/${category}?fields=full`)
+        const url = `/tournament/${tournamentId}/get_category_players/${category}?fields=full&t=${Date.now()}`;
+        console.log('Fetching players from:', url);
+        
+        fetch(url)
             .then(response => response.json())
             .then(data => {
+                console.log('Received players data:', data);
                 if (data.success) {
+                    // Debug: Show seeding values
+                    console.log('Player seeding values from database:');
+                    data.players.forEach(player => {
+                        console.log(`${player.name}: seeding = ${player.seeding}`);
+                    });
+                    
                     // Clear the table
                     tbody.innerHTML = '';
 
@@ -2752,12 +2767,35 @@
                                 ranking: getPlayerRanking(player.player_id, category, rankingsData)
                             }));
 
-                            // Sort players by ranking (ascending)
-                            playersWithRankings.sort((a, b) => {
-                                const rankA = parseInt(a.ranking) || 999999;
-                                const rankB = parseInt(b.ranking) || 999999;
-                                return rankA - rankB;
-                            });
+                            // Check if any players have seeds
+                            const hasSeeds = playersWithRankings.some(player => player.seeding && player.seeding.trim() !== '');
+                            
+                            if (hasSeeds) {
+                                // If seeds exist, sort by existing seeding first, then by ranking for unseeded players
+                                playersWithRankings.sort((a, b) => {
+                                    const seedA = parseInt(a.seeding) || 999999;
+                                    const seedB = parseInt(b.seeding) || 999999;
+                                    
+                                    // If both have seeds, sort by seed
+                                    if (seedA !== 999999 && seedB !== 999999) {
+                                        return seedA - seedB;
+                                    }
+                                    // If only one has seed, prioritize the seeded one
+                                    if (seedA !== 999999) return -1;
+                                    if (seedB !== 999999) return 1;
+                                    // If neither has seed, sort by ranking
+                                    const rankA = parseInt(a.ranking) || 999999;
+                                    const rankB = parseInt(b.ranking) || 999999;
+                                    return rankA - rankB;
+                                });
+                            } else {
+                                // If no seeds exist, sort by ranking (ascending)
+                                playersWithRankings.sort((a, b) => {
+                                    const rankA = parseInt(a.ranking) || 999999;
+                                    const rankB = parseInt(b.ranking) || 999999;
+                                    return rankA - rankB;
+                                });
+                            }
 
                             // Show the reset seeds button
                             document.getElementById('resetSeedsButton').style.display = 'block';
@@ -2769,6 +2807,11 @@
 
                             // Add event listener for reset seeds button
                             newResetButton.addEventListener('click', function() {
+                                // Ask for confirmation before resetting
+                                if (!confirm('Are you sure you want to reset all seeds based on rankings? This will overwrite any manual changes you have made.')) {
+                                    return;
+                                }
+                                
                                 const seedingInputs = document.querySelectorAll('.seeding-input');
                                 const players = Array.from(seedingInputs).map(input => {
                                     const row = input.closest('tr');
@@ -3001,6 +3044,52 @@
         
         // Adjust all seedings to remove gaps while preserving duplicates
         adjustSeedings();
+        
+        // Auto-sort the table by seed values
+        sortTableBySeed();
+    }
+
+    // Function to sort table by seed values
+    function sortTableBySeed() {
+        const tbody = document.getElementById('playersTableBody');
+        if (!tbody) return;
+        
+        const rows = Array.from(tbody.getElementsByTagName('tr'));
+        
+        // Get all rows with their seed values and rankings
+        const rowsWithData = rows.map(row => {
+            const seedInput = row.querySelector('.seeding-input');
+            const seedValue = seedInput ? (parseInt(seedInput.value) || 999999) : 999999;
+            const rankCell = row.cells[1]; // Second column contains ranking
+            const rankValue = rankCell ? (parseInt(rankCell.textContent) || 999999) : 999999;
+            return { row, seed: seedValue, rank: rankValue };
+        });
+        
+        // Check if any players have seeds
+        const hasSeeds = rowsWithData.some(rowData => rowData.seed !== 999999);
+        
+        if (hasSeeds) {
+            // If seeds exist, sort by seed value
+            rowsWithData.sort((a, b) => {
+                if (a.seed === 999999 && b.seed === 999999) return 0;
+                if (a.seed === 999999) return 1;
+                if (b.seed === 999999) return -1;
+                return a.seed - b.seed;
+            });
+        } else {
+            // If no seeds exist, sort by ranking
+            rowsWithData.sort((a, b) => {
+                if (a.rank === 999999 && b.rank === 999999) return 0;
+                if (a.rank === 999999) return 1;
+                if (b.rank === 999999) return -1;
+                return a.rank - b.rank;
+            });
+        }
+        
+        // Reorder the rows in the table
+        rowsWithData.forEach(({ row }) => {
+            tbody.appendChild(row);
+        });
     }
 
     // Function to save seeding
@@ -3008,6 +3097,7 @@
         event.preventDefault();
         const formData = new FormData();
         const category = document.getElementById('seedingCategorySelect').value;
+        const tournamentId = document.querySelector('[data-tournament-id]').getAttribute('data-tournament-id');
         
         // Get all seeding inputs from the entire document
         const seedingInputs = document.querySelectorAll('.seeding-input');
@@ -3033,43 +3123,42 @@
             console.log(pair[0] + ': ' + pair[1]);
         }
 
-        fetch(`/tournament/{{ tournament["Tournament Id"] }}/update_seeding`, {
+        // Use the same endpoint as Step 2 to ensure consistency
+        fetch(`/tournament/${tournamentId}/update_seeding`, {
             method: 'POST',
             body: formData
         })
-        .then(response => {
-            console.log('Server response status:', response.status);
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            console.log('Server response:', data);
+            saveButton.disabled = false;
+            
             if (data.success) {
                 messageBox.className = 'message success-message';
-                messageBox.textContent = 'Seeding updated successfully!';
-                messageBox.style.display = 'block';
+                messageBox.textContent = data.message || 'Seeding saved successfully!';
                 
-                // Hide the success message after 3 seconds
-                setTimeout(() => {
-                    messageBox.style.display = 'none';
-                }, 3000);
-                
-                // Re-enable the save button
-                saveButton.disabled = false;
-            } else if (data.message && data.message.includes('No matching records found')) {
-                // Ignore the "No matching records" error if we already got a success message
-                return;
+                // Update original seed values to reflect saved state
+                seedingInputs.forEach(input => {
+                    input.dataset.originalSeed = input.value;
+                });
             } else {
                 messageBox.className = 'message error-message';
-                messageBox.textContent = 'Error: ' + data.message;
-                messageBox.style.display = 'block';
-                saveButton.disabled = false;
+                messageBox.textContent = data.message || 'Error saving seeding. Please try again.';
             }
+            
+            messageBox.style.display = 'block';
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 5000);
         })
         .catch(error => {
-            messageBox.className = 'message error-message';
-            messageBox.textContent = 'Error updating seeding';
-            messageBox.style.display = 'block';
+            console.error('Error saving seeding:', error);
             saveButton.disabled = false;
+            messageBox.className = 'message error-message';
+            messageBox.textContent = 'Error saving seeding. Please try again.';
+            messageBox.style.display = 'block';
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 5000);
         });
     }
 
@@ -3110,12 +3199,62 @@
 
         // Initialize event listeners for the current step
         if (stepNumber === 1) {
+            // Auto-refresh players when switching to Step 1
             const seedingCategorySelect = document.getElementById('seedingCategorySelect');
+            const clashCategorySelect = document.getElementById('clashCategorySelect');
+            
+            console.log('Switching to Step 1 - Update Seeding');
+            console.log('Clash category value:', clashCategorySelect ? clashCategorySelect.value : 'null');
+            console.log('Seeding category value:', seedingCategorySelect ? seedingCategorySelect.value : 'null');
+            
+            // Sync category selection between Step 2 and Step 1
+            if (clashCategorySelect && clashCategorySelect.value && seedingCategorySelect) {
+                // If Step 2 has a category selected, use it in Step 1
+                if (seedingCategorySelect.value !== clashCategorySelect.value) {
+                    console.log('Syncing category from Step 2 to Step 1:', clashCategorySelect.value);
+                    seedingCategorySelect.value = clashCategorySelect.value;
+                }
+                // Force refresh players with the selected category (clear cache)
+                console.log('Force refreshing players for Step 1 with category:', seedingCategorySelect.value);
+                // Clear any cached data and reload
+                const tbody = document.getElementById('playersTableBody');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px; color: #1e3c72;">Refreshing data...</td></tr>';
+                }
+                // Add a small delay to ensure the UI updates before loading fresh data
+                setTimeout(() => {
+                    loadPlayers();
+                }, 100);
+            } else if (seedingCategorySelect && seedingCategorySelect.value) {
+                // If Step 1 already has a category selected, refresh the data
+                console.log('Refreshing players for Step 1 with existing category:', seedingCategorySelect.value);
+                loadPlayers();
+            } else {
+                console.log('No category selected in either step');
+            }
+            
             if (seedingCategorySelect) {
                 seedingCategorySelect.removeEventListener('change', loadPlayers);
                 seedingCategorySelect.addEventListener('change', loadPlayers);
             }
         } else if (stepNumber === 2) {
+            // Auto-refresh clash players when switching to Step 2
+            const clashCategorySelect = document.getElementById('clashCategorySelect');
+            const seedingCategorySelect = document.getElementById('seedingCategorySelect');
+            
+            // Sync category selection between Step 1 and Step 2
+            if (seedingCategorySelect && seedingCategorySelect.value && clashCategorySelect) {
+                // If Step 1 has a category selected, use it in Step 2
+                if (clashCategorySelect.value !== seedingCategorySelect.value) {
+                    clashCategorySelect.value = seedingCategorySelect.value;
+                }
+                // Load clash players with the selected category
+                loadClashPlayers();
+            } else if (clashCategorySelect && clashCategorySelect.value) {
+                // If Step 2 already has a category selected, refresh the data
+                loadClashPlayers();
+            }
+            
             const drawCategorySelect = document.getElementById('drawCategorySelect');
             if (drawCategorySelect) {
                 drawCategorySelect.removeEventListener('change', handleCategoryChange);
@@ -3137,7 +3276,7 @@
             document.getElementById('status-message').style.display = 'none';
             
             // Fetch players for the selected category
-            const url = `/tournament/{{ tournament['Tournament Id'] }}/get_category_players/${encodeURIComponent(category)}?fields=full`;
+            const url = `/tournament/{{ tournament['Tournament Id'] }}/get_category_players/${encodeURIComponent(category)}?fields=full&t=${Date.now()}`;
             console.log('Fetching players from:', url);
             
             fetch(url)
@@ -3314,7 +3453,7 @@
                 console.log('Loaded seed ranges from JSON:', seedRanges);
 
                 // Now fetch players with rankings
-                fetch(`/tournament/${tournamentId}/get_category_players/${category}?fields=full`)
+                fetch(`/tournament/${tournamentId}/get_category_players/${category}?fields=full&t=${Date.now()}`)
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
@@ -3341,6 +3480,16 @@
                                     // Clear the table
                                     tbody.innerHTML = '';
 
+                                    // Build clash players set once before processing players
+                                    const initialClashes = detectSeedingClashes(playersWithRankings, seedRanges);
+                                    window.clashPlayersSet = new Set();
+                                    initialClashes.forEach(clash => {
+                                        clash.players.forEach(pinfo => {
+                                            window.clashPlayersSet.add(pinfo.player.player_id);
+                                        });
+                                    });
+                                    console.log('Clash players set created:', Array.from(window.clashPlayersSet));
+
                                     // Add players to the table
                                     playersWithRankings.forEach((player, index) => {
                                         const row = document.createElement('tr');
@@ -3353,16 +3502,6 @@
                                         let clashTooltip = '';
                                         let isClashPlayer = false;
                                         
-                                        // Build a set of clash player IDs from detectSeedingClashes
-                                        if (typeof window.clashPlayersSet === 'undefined') {
-                                            const clashes = detectSeedingClashes(playersWithRankings, seedRanges);
-                                            window.clashPlayersSet = new Set();
-                                            clashes.forEach(clash => {
-                                                clash.players.forEach(pinfo => {
-                                                    window.clashPlayersSet.add(pinfo.player.player_id);
-                                                });
-                                            });
-                                        }
                                         if (window.clashPlayersSet.has(player.player_id)) {
                                             isClashPlayer = true;
                                         }
@@ -3383,6 +3522,7 @@
                                             seedCellHtml = `
                                                 <span title="Clash!" style="color: #f44336; font-weight: bold;">⚠️</span>
                                                 <input type="number" value="${player.seeding || ''}" min="1" style="width: 60px; margin-left: 5px;"
+                                                    data-player-id="${player.player_id}"
                                                     onchange="(function(e){
                                                         const newSeed = e.target.value;
                                                         if(newSeed && !isNaN(newSeed)){
@@ -3692,7 +3832,7 @@
                 console.log('Loaded seed ranges from JSON:', seedRanges);
 
                 // Now fetch players with rankings
-                fetch(`/tournament/${tournamentId}/get_category_players/${category}?fields=full`)
+                fetch(`/tournament/${tournamentId}/get_category_players/${category}?fields=full&t=${Date.now()}`)
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
@@ -3719,6 +3859,16 @@
                                     // Clear the table
                                     tbody.innerHTML = '';
 
+                                    // Build clash players set once before processing players
+                                    const initialClashes = detectSeedingClashes(playersWithRankings, seedRanges);
+                                    window.clashPlayersSet = new Set();
+                                    initialClashes.forEach(clash => {
+                                        clash.players.forEach(pinfo => {
+                                            window.clashPlayersSet.add(pinfo.player.player_id);
+                                        });
+                                    });
+                                    console.log('Clash players set created:', Array.from(window.clashPlayersSet));
+
                                     // Add players to the table
                                     playersWithRankings.forEach((player, index) => {
                                         const row = document.createElement('tr');
@@ -3731,16 +3881,6 @@
                                         let clashTooltip = '';
                                         let isClashPlayer = false;
                                         
-                                        // Build a set of clash player IDs from detectSeedingClashes
-                                        if (typeof window.clashPlayersSet === 'undefined') {
-                                            const clashes = detectSeedingClashes(playersWithRankings, seedRanges);
-                                            window.clashPlayersSet = new Set();
-                                            clashes.forEach(clash => {
-                                                clash.players.forEach(pinfo => {
-                                                    window.clashPlayersSet.add(pinfo.player.player_id);
-                                                });
-                                            });
-                                        }
                                         if (window.clashPlayersSet.has(player.player_id)) {
                                             isClashPlayer = true;
                                         }
@@ -3761,6 +3901,7 @@
                                             seedCellHtml = `
                                                 <span title="Clash!" style="color: #f44336; font-weight: bold;">⚠️</span>
                                                 <input type="number" value="${player.seeding || ''}" min="1" style="width: 60px; margin-left: 5px;"
+                                                    data-player-id="${player.player_id}"
                                                     onchange="(function(e){
                                                         const newSeed = e.target.value;
                                                         if(newSeed && !isNaN(newSeed)){
@@ -3835,7 +3976,7 @@
     function loadPlayersWithoutSeedRanges(category) {
         const tbody = document.getElementById('clashTableBody');
         
-        fetch(`/tournament/${tournamentId}/get_category_players/${category}?fields=full`)
+        fetch(`/tournament/${tournamentId}/get_category_players/${category}?fields=full&t=${Date.now()}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -4773,11 +4914,20 @@
 
         // Function to sort table rows by seed while preserving S.No. column
         function sortTableBySeed() {
+            console.log('sortTableBySeed called');
             const tbody = document.getElementById('clashTableBody');
-            if (!tbody) return;
+            if (!tbody) {
+                console.error('clashTableBody not found');
+                return;
+            }
             
             const rows = Array.from(tbody.getElementsByTagName('tr'));
-            if (rows.length === 0) return;
+            if (rows.length === 0) {
+                console.log('No rows found');
+                return;
+            }
+            
+            console.log('Found rows:', rows.length);
             
             // Create array of row data with seed values for sorting
             const rowData = rows.map((row, index) => {
@@ -4794,6 +4944,8 @@
                     seedValue = parseInt(seedCell.textContent.trim()) || 999999;
                 }
                 
+                console.log(`Row ${index}: seed value = ${seedValue}`);
+                
                 return {
                     row: row,
                     seed: seedValue,
@@ -4803,6 +4955,7 @@
             
             // Sort by seed value (ascending)
             rowData.sort((a, b) => a.seed - b.seed);
+            console.log('Sorted rowData:', rowData.map(d => ({ seed: d.seed, originalIndex: d.originalIndex })));
             
             // Clear the table and re-add rows in sorted order
             tbody.innerHTML = '';
@@ -4814,6 +4967,8 @@
                 // Add the row back to the table
                 tbody.appendChild(data.row);
             });
+            
+            console.log('Table sorted successfully');
             
             // Update clash detection based on current input values
             updateClashDetection();
@@ -4883,12 +5038,20 @@
 
         // Function to save all seed changes
         async function saveAllSeedChanges() {
+            console.log('saveAllSeedChanges called');
             const tbody = document.getElementById('clashTableBody');
-            if (!tbody) return;
+            if (!tbody) {
+                console.error('clashTableBody not found');
+                return;
+            }
             
             const rows = Array.from(tbody.getElementsByTagName('tr'));
+            console.log('Found rows:', rows.length);
+            
             const tournamentId = document.querySelector('[data-tournament-id]').getAttribute('data-tournament-id');
             const category = document.getElementById('clashCategorySelect').value;
+            
+            console.log('Tournament ID:', tournamentId, 'Category:', category);
             
             if (!category) {
                 alert('Please select a category first');
@@ -4898,36 +5061,111 @@
             let updatedCount = 0;
             const updatePromises = [];
             
-            rows.forEach((row) => {
+            rows.forEach((row, index) => {
                 const seedCell = row.cells[2];
+                console.log(`Row ${index}:`, seedCell.innerHTML);
                 
                 // Only process rows with input fields (clash players)
                 if (seedCell.innerHTML.includes('<input')) {
                     const input = seedCell.querySelector('input');
                     const newSeed = input ? input.value.trim() : '';
+                    console.log(`Row ${index} has input, seed value:`, newSeed);
                     
                     if (newSeed && !isNaN(newSeed)) {
-                        // Extract player_id from the input
-                        const match = seedCell.innerHTML.match(/player_id', '([^']+)'/);
-                        if (match) {
-                            const playerId = match[1];
-                            const promise = updatePlayerSeeding(tournamentId, category, playerId, parseInt(newSeed));
-                            updatePromises.push(promise);
+                        // Extract player_id from the input's data attribute
+                        const playerId = input.getAttribute('data-player-id');
+                        if (playerId) {
+                            console.log(`Row ${index} player_id:`, playerId, 'new seed:', newSeed);
+                            
+                            // Check if updatePlayerSeeding function exists
+                            if (typeof updatePlayerSeeding === 'function') {
+                                const promise = updatePlayerSeeding(tournamentId, category, playerId, parseInt(newSeed));
+                                updatePromises.push(promise);
+                            } else {
+                                console.error('updatePlayerSeeding function not found');
+                                alert('Error: updatePlayerSeeding function not available');
+                                return;
+                            }
+                        } else {
+                            console.error(`Row ${index}: Could not extract player_id from data-player-id attribute`);
                         }
                     }
                 }
             });
             
+            console.log('Update promises:', updatePromises.length);
+            
+            if (updatePromises.length === 0) {
+                alert('No seed changes found to save');
+                return;
+            }
+            
             try {
                 await Promise.all(updatePromises);
                 updatedCount = updatePromises.length;
+                console.log('Successfully saved', updatedCount, 'seed changes');
                 alert(`Successfully saved ${updatedCount} seed changes!`);
                 
-                // Reload the table to reflect saved changes
-                loadClashPlayers();
+                // Don't reload the table to preserve user's manual changes
+                // The values are already saved to the database, so no need to reload
+                console.log('Seed changes saved successfully. Table not reloaded to preserve current state.');
             } catch (error) {
                 console.error('Error saving seed changes:', error);
                 alert('Error saving seed changes. Please try again.');
+            }
+        }
+
+        // Global function for updating individual player seeding
+        async function updatePlayerSeeding(tournamentId, category, playerId, newSeed) {
+            console.log('updatePlayerSeeding called:', tournamentId, category, playerId, newSeed);
+            
+            const formData = new FormData();
+            formData.append('category', category);
+            formData.append('player_ids[]', playerId);
+            formData.append('seedings[]', newSeed.toString());
+            
+            console.log('FormData contents:');
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}: ${value}`);
+            }
+            
+            const url = `/tournament/${tournamentId}/update_seeding`;
+            console.log('Making request to:', url);
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                const responseText = await response.text();
+                console.log('Response text:', responseText);
+                
+                // Try to parse as JSON
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error('Failed to parse response as JSON:', parseError);
+                    console.error('Response was:', responseText);
+                    throw new Error('Server returned invalid JSON response');
+                }
+                
+                console.log('Update result:', result);
+                
+                if (result.success) {
+                    console.log('Successfully updated player seeding');
+                    return result;
+                } else {
+                    console.error('Failed to update player seeding:', result.message);
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                console.error('Error updating player seeding:', error);
+                throw error;
             }
         }
     });
@@ -5000,5 +5238,145 @@
     <div class="shuffle-counter" id="shuffleCounter" style="display: none;">
         Shuffles: <span id="shuffleCount">0</span>
     </div>
+
+    <script>
+        // Global function for sorting table by seed
+        function sortTableBySeed() {
+            console.log('sortTableBySeed called');
+            const tbody = document.getElementById('clashTableBody');
+            if (!tbody) {
+                console.error('clashTableBody not found');
+                return;
+            }
+            
+            const rows = Array.from(tbody.getElementsByTagName('tr'));
+            if (rows.length === 0) {
+                console.log('No rows found');
+                return;
+            }
+            
+            console.log('Found rows:', rows.length);
+            
+            // Create array of row data with seed values for sorting
+            const rowData = rows.map((row, index) => {
+                const seedCell = row.cells[2]; // Seed column (3rd column, index 2)
+                let seedValue = 999999; // Default for unseeded players
+                
+                // Extract seed value from the cell
+                if (seedCell.innerHTML.includes('<input')) {
+                    // If it's an input, get the value
+                    const input = seedCell.querySelector('input');
+                    seedValue = input ? (parseInt(input.value) || 999999) : 999999;
+                } else {
+                    // If it's plain text, parse the text content
+                    seedValue = parseInt(seedCell.textContent.trim()) || 999999;
+                }
+                
+                console.log(`Row ${index}: seed value = ${seedValue}`);
+                
+                return {
+                    row: row,
+                    seed: seedValue,
+                    originalIndex: index
+                };
+            });
+            
+            // Sort by seed value (ascending)
+            rowData.sort((a, b) => a.seed - b.seed);
+            console.log('Sorted rowData:', rowData.map(d => ({ seed: d.seed, originalIndex: d.originalIndex })));
+            
+            // Clear the table and re-add rows in sorted order
+            tbody.innerHTML = '';
+            rowData.forEach((data, newIndex) => {
+                // Keep the original S.No. (first column) unchanged
+                const snoCell = data.row.cells[0];
+                snoCell.textContent = (data.originalIndex + 1).toString();
+                
+                // Add the row back to the table
+                tbody.appendChild(data.row);
+            });
+            
+            console.log('Table sorted successfully');
+        }
+
+        // Global function for saving all seed changes
+        async function saveAllSeedChanges() {
+            console.log('saveAllSeedChanges called');
+            const tbody = document.getElementById('clashTableBody');
+            if (!tbody) {
+                console.error('clashTableBody not found');
+                return;
+            }
+            
+            const rows = Array.from(tbody.getElementsByTagName('tr'));
+            console.log('Found rows:', rows.length);
+            
+            const tournamentId = document.querySelector('[data-tournament-id]').getAttribute('data-tournament-id');
+            const category = document.getElementById('clashCategorySelect').value;
+            
+            console.log('Tournament ID:', tournamentId, 'Category:', category);
+            
+            if (!category) {
+                alert('Please select a category first');
+                return;
+            }
+            
+            let updatedCount = 0;
+            const updatePromises = [];
+            
+            rows.forEach((row, index) => {
+                const seedCell = row.cells[2];
+                console.log(`Row ${index}:`, seedCell.innerHTML);
+                
+                // Only process rows with input fields (clash players)
+                if (seedCell.innerHTML.includes('<input')) {
+                    const input = seedCell.querySelector('input');
+                    const newSeed = input ? input.value.trim() : '';
+                    console.log(`Row ${index} has input, seed value:`, newSeed);
+                    
+                    if (newSeed && !isNaN(newSeed)) {
+                        // Extract player_id from the input's data attribute
+                        const playerId = input.getAttribute('data-player-id');
+                        if (playerId) {
+                            console.log(`Row ${index} player_id:`, playerId, 'new seed:', newSeed);
+                            
+                            // Check if updatePlayerSeeding function exists
+                            if (typeof updatePlayerSeeding === 'function') {
+                                const promise = updatePlayerSeeding(tournamentId, category, playerId, parseInt(newSeed));
+                                updatePromises.push(promise);
+                            } else {
+                                console.error('updatePlayerSeeding function not found');
+                                alert('Error: updatePlayerSeeding function not available');
+                                return;
+                            }
+                        } else {
+                            console.error(`Row ${index}: Could not extract player_id from data-player-id attribute`);
+                        }
+                    }
+                }
+            });
+            
+            console.log('Update promises:', updatePromises.length);
+            
+            if (updatePromises.length === 0) {
+                alert('No seed changes found to save');
+                return;
+            }
+            
+            try {
+                await Promise.all(updatePromises);
+                updatedCount = updatePromises.length;
+                console.log('Successfully saved', updatedCount, 'seed changes');
+                alert(`Successfully saved ${updatedCount} seed changes!`);
+                
+                // Don't reload the table to preserve user's manual changes
+                // The values are already saved to the database, so no need to reload
+                console.log('Seed changes saved successfully. Table not reloaded to preserve current state.');
+            } catch (error) {
+                console.error('Error saving seed changes:', error);
+                alert('Error saving seed changes. Please try again.');
+            }
+        }
+    </script>
 </body>
 </html>
