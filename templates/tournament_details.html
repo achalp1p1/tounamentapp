@@ -2767,8 +2767,12 @@
                             // Add ranking to each player and sort by ranking
                             const playersWithRankings = data.players.map(player => ({
                                 ...player,
-                                ranking: getPlayerRanking(player.player_id, category, rankingsData)
+                                ranking: getPlayerRanking(player.player_id, category, rankingsData),
+                                originalSeed: player.seeding || ''
                             }));
+
+                            // Store globally for validation
+                            window.currentPlayersWithRankings = playersWithRankings;
 
                             // Check if any players have seeds
                             const hasSeeds = playersWithRankings.some(player => player.seeding && player.seeding.trim() !== '');
@@ -3473,6 +3477,9 @@
                                         originalSeed: player.seeding || ''
                                     }));
 
+                                    // Store globally for validation
+                                    window.currentPlayersWithRankings = playersWithRankings;
+
                                     // Sort players by seed (ascending)
                                     playersWithRankings.sort((a, b) => {
                                         const seedA = parseInt(a.seeding) || 999999;
@@ -3522,15 +3529,24 @@
                                         // Render seed as input if clash, else as text
                                         let seedCellHtml = '';
                                         if (isClashPlayer) {
+                                            // Get valid range for this clash group
+                                            const validRange = getValidSeedRangeForClash(playersWithRankings, player.seeding);
                                             seedCellHtml = `
                                                 <span title="Clash!" style="color: #f44336; font-weight: bold;">⚠️</span>
-                                                <input type="number" class="seed-input" value="${player.seeding || ''}" min="1" style="width: 60px; margin-left: 5px;"
+                                                <input type="number" class="seed-input" value="${player.seeding || ''}" 
+                                                    min="${validRange.min}" max="${validRange.max}" 
+                                                    style="width: 60px; margin-left: 5px;"
                                                     data-player-id="${player.player_id}"
+                                                    data-valid-min="${validRange.min}"
+                                                    data-valid-max="${validRange.max}"
                                                     onchange="(function(e){
                                                         const newSeed = e.target.value;
                                                         if(newSeed && !isNaN(newSeed)){
-                                                            // Sort table rows by seed after update
-                                                            sortTableBySeed();
+                                                            // Validate the input
+                                                            if(validateSeedInput(e.target)){
+                                                                // Sort table rows by seed after update
+                                                                sortTableBySeed();
+                                                            }
                                                         }
                                                     })(event)">
                                             `;
@@ -3852,6 +3868,9 @@
                                         originalSeed: player.seeding || ''
                                     }));
 
+                                    // Store globally for validation
+                                    window.currentPlayersWithRankings = playersWithRankings;
+
                                     // Sort players by seed (ascending)
                                     playersWithRankings.sort((a, b) => {
                                         const seedA = parseInt(a.seeding) || 999999;
@@ -3901,15 +3920,24 @@
                                         // Render seed as input if clash, else as text
                                         let seedCellHtml = '';
                                         if (isClashPlayer) {
+                                            // Get valid range for this clash group
+                                            const validRange = getValidSeedRangeForClash(playersWithRankings, player.seeding);
                                             seedCellHtml = `
                                                 <span title="Clash!" style="color: #f44336; font-weight: bold;">⚠️</span>
-                                                <input type="number" class="seed-input" value="${player.seeding || ''}" min="1" style="width: 60px; margin-left: 5px;"
+                                                <input type="number" class="seed-input" value="${player.seeding || ''}" 
+                                                    min="${validRange.min}" max="${validRange.max}" 
+                                                    style="width: 60px; margin-left: 5px;"
                                                     data-player-id="${player.player_id}"
+                                                    data-valid-min="${validRange.min}"
+                                                    data-valid-max="${validRange.max}"
                                                     onchange="(function(e){
                                                         const newSeed = e.target.value;
                                                         if(newSeed && !isNaN(newSeed)){
-                                                            // Sort table rows by seed after update
-                                                            sortTableBySeed();
+                                                            // Validate the input
+                                                            if(validateSeedInput(e.target)){
+                                                                // Sort table rows by seed after update
+                                                                sortTableBySeed();
+                                                            }
                                                         }
                                                     })(event)">
                                             `;
@@ -5172,7 +5200,53 @@
             console.log('Table sorted successfully');
         }
 
-        
+        // Function to get valid seed range for a clash group
+        function getValidSeedRangeForClash(playersWithRankings, currentSeed) {
+            // Find all players with the same seed value
+            const clashPlayers = playersWithRankings.filter(p => parseInt(p.seeding) === parseInt(currentSeed));
+            
+            if (clashPlayers.length === 0) {
+                return { min: 1, max: playersWithRankings.length };
+            }
+            
+            // Get the S.No. values (index + 1) of all clash players
+            const clashSNoValues = clashPlayers.map((player, index) => {
+                const playerIndex = playersWithRankings.findIndex(p => p.player_id === player.player_id);
+                return playerIndex + 1;
+            });
+            
+            // Return the min and max S.No. values as the valid range
+            const min = Math.min(...clashSNoValues);
+            const max = Math.max(...clashSNoValues);
+            
+            console.log(`Clash group for seed ${currentSeed}: S.No. range ${min}-${max} (${clashPlayers.length} players)`);
+            return { min, max };
+        }
+
+        // Function to validate seed input against clash group range
+        function validateSeedInput(input) {
+            const newSeed = parseInt(input.value);
+            const playerId = input.getAttribute('data-player-id');
+            
+            // Use global players data
+            const playersWithRankings = window.currentPlayersWithRankings;
+            if (!playersWithRankings) return true;
+            
+            // Find the current player's seed
+            const currentPlayer = playersWithRankings.find(p => p.player_id === playerId);
+            if (!currentPlayer) return true;
+            
+            const currentSeed = parseInt(currentPlayer.seeding);
+            const validRange = getValidSeedRangeForClash(playersWithRankings, currentSeed);
+            
+            if (newSeed < validRange.min || newSeed > validRange.max) {
+                showErrorMessage(`Invalid seed value. Valid range for this clash group is ${validRange.min}-${validRange.max}`);
+                input.value = currentSeed; // Reset to original value
+                return false;
+            }
+            
+            return true;
+        }
     </script>
 </body>
 </html>
