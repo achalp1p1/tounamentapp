@@ -1,4 +1,5 @@
-// Clash Resolution Functions
+// Clash Resolution Functions - Centralized Module
+// This file contains all clash resolution logic to avoid duplication
 
 let clashResolutionMode = 'auto'; // 'auto' or 'manual'
 
@@ -16,11 +17,67 @@ function getCurrentCategory() {
     return clashCategorySelect ? clashCategorySelect.value : '';
 }
 
+// Common batch update function to reduce code duplication
+async function batchUpdateSeedings(playerIds, seedings, category, tournamentId) {
+    try {
+        if (playerIds.length === 0) {
+            console.log('No seed inputs found to save');
+            return { success: false, message: 'No seed inputs found to save' };
+        }
+
+        console.log(`Saving for Tournament ID: "${tournamentId}", Category: "${category}"`);
+        console.log(`Player IDs being sent: ${JSON.stringify(playerIds)}`);
+        console.log(`Seedings being sent: ${JSON.stringify(seedings)}`);
+
+        // Create form data
+        const formData = new FormData();
+        formData.append('category', category);
+
+        // Add each player ID and seeding as separate form fields
+        playerIds.forEach(playerId => {
+            formData.append('player_ids[]', playerId);
+        });
+
+        seedings.forEach(seeding => {
+            formData.append('seedings[]', seeding);
+        });
+
+        console.log('Form data created, sending to backend...');
+
+        // Send to backend
+        const response = await fetch(`/tournament/${tournamentId}/update_seeding`, {
+            method: 'POST',
+            body: formData
+        });
+
+        console.log('Backend response received:', response.status);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('Backend result:', result);
+
+        return result;
+    } catch (error) {
+        console.error('Error in batch update:', error);
+        return { success: false, message: error.message };
+    }
+}
+
 function setClashMode(mode) {
     clashResolutionMode = mode;
     // Update button styles
-    document.getElementById('autoModeBtn').style.backgroundColor = (mode === 'auto') ? '#2196f3' : '#bdbdbd';
-    document.getElementById('manualModeBtn').style.backgroundColor = (mode === 'manual') ? '#9c27b0' : '#bdbdbd';
+    const autoModeBtn = document.getElementById('autoModeBtn');
+    const manualModeBtn = document.getElementById('manualModeBtn');
+    
+    if (autoModeBtn) {
+        autoModeBtn.style.backgroundColor = (mode === 'auto') ? '#2196f3' : '#bdbdbd';
+    }
+    if (manualModeBtn) {
+        manualModeBtn.style.backgroundColor = (mode === 'manual') ? '#9c27b0' : '#bdbdbd';
+    }
     
     // Re-render the clash summary with the current mode
     if (window.currentClashes) {
@@ -39,6 +96,11 @@ function showClashSummary(clashes) {
     window.currentClashes = clashes; // Save for mode switching
     const clashSummary = document.getElementById('clashSummary');
     const clashItems = document.getElementById('clashItems');
+    
+    if (!clashSummary || !clashItems) {
+        console.error('Clash summary elements not found');
+        return;
+    }
     
     clashItems.innerHTML = '';
     
@@ -104,19 +166,15 @@ function showClashSummary(clashes) {
             clashItems.appendChild(clashItem);
         } else if (clashResolutionMode === 'manual') {
             // In manual mode, only show the details, not the individual auto buttons
-            clashItem.querySelector('div:last-child').style.display = 'none';
+            const lastDiv = clashItem.querySelector('div:last-child');
+            if (lastDiv) {
+                lastDiv.style.display = 'none';
+            }
             clashItems.appendChild(clashItem);
         }
     });
     
     clashSummary.style.display = 'block';
-}
-
-// Set default mode on page load
-if (typeof document !== 'undefined') {
-    document.addEventListener('DOMContentLoaded', function() {
-        setClashMode('auto');
-    });
 }
 
 // Function to auto-resolve all clashes
@@ -169,31 +227,13 @@ async function autoResolveAllClashes() {
             }
         }
         
-        // Perform batch update
-        if (playerIds.length > 0) {
-            const formData = new FormData();
-            formData.append('category', category);
-            
-            playerIds.forEach(playerId => {
-                formData.append('player_ids[]', playerId);
-            });
-            
-            seedings.forEach(seeding => {
-                formData.append('seedings[]', seeding);
-            });
-            
-            const updateResponse = await fetch(`/tournament/${tournamentId}/update_seeding`, {
-                method: 'POST',
-                body: formData
-            });
-            
-            const updateResult = await updateResponse.json();
-            if (updateResult.success) {
-                alert(`Auto-resolved ${resolvedCount} clash players`);
-                loadClashPlayers(); // Reload to show updated state
-            } else {
-                alert('Failed to save auto-resolved changes: ' + updateResult.message);
-            }
+        // Perform batch update using common function
+        const result = await batchUpdateSeedings(playerIds, seedings, category, tournamentId);
+        if (result.success) {
+            alert(`Auto-resolved ${resolvedCount} clash players`);
+            loadClashPlayers(); // Reload to show updated state
+        } else {
+            alert('Failed to save auto-resolved changes: ' + result.message);
         }
         
     } catch (error) {
@@ -260,31 +300,13 @@ async function shuffleClashPlayers() {
             resolvedCount++;
         }
         
-        // Perform batch update
-        if (playerIds.length > 0) {
-            const formData = new FormData();
-            formData.append('category', category);
-            
-            playerIds.forEach(playerId => {
-                formData.append('player_ids[]', playerId);
-            });
-            
-            seedings.forEach(seeding => {
-                formData.append('seedings[]', seeding);
-            });
-            
-            const updateResponse = await fetch(`/tournament/${tournamentId}/update_seeding`, {
-                method: 'POST',
-                body: formData
-            });
-            
-            const updateResult = await updateResponse.json();
-            if (updateResult.success) {
-                alert(`Shuffled and resolved ${resolvedCount} clash players`);
-                loadClashPlayers(); // Reload to show updated state
-            } else {
-                alert('Failed to save shuffled changes: ' + updateResult.message);
-            }
+        // Perform batch update using common function
+        const result = await batchUpdateSeedings(playerIds, seedings, category, tournamentId);
+        if (result.success) {
+            alert(`Shuffled and resolved ${resolvedCount} clash players`);
+            loadClashPlayers(); // Reload to show updated state
+        } else {
+            alert('Failed to save shuffled changes: ' + result.message);
         }
         
     } catch (error) {
@@ -372,6 +394,11 @@ async function loadPaperChitPlayers() {
         const clashes = detectSeedingClashes(players, seedRanges);
         
         const paperChitPlayers = document.getElementById('paperChitPlayers');
+        if (!paperChitPlayers) {
+            console.error('Paper chit players container not found');
+            return;
+        }
+        
         paperChitPlayers.innerHTML = '';
         
         if (clashes.length === 0) {
@@ -431,30 +458,14 @@ async function applyPaperChitResults() {
         }
         
         if (playerIds.length > 0) {
-            // Perform batch update
-            const formData = new FormData();
-            formData.append('category', category);
-            
-            playerIds.forEach(playerId => {
-                formData.append('player_ids[]', playerId);
-            });
-            
-            seedings.forEach(seeding => {
-                formData.append('seedings[]', seeding);
-            });
-            
-            const updateResponse = await fetch(`/tournament/${tournamentId}/update_seeding`, {
-                method: 'POST',
-                body: formData
-            });
-            
-            const updateResult = await updateResponse.json();
-            if (updateResult.success) {
+            // Perform batch update using common function
+            const result = await batchUpdateSeedings(playerIds, seedings, category, tournamentId);
+            if (result.success) {
                 alert(`Applied paper chit results for ${playerIds.length} players`);
                 closePaperChitModal();
                 loadClashPlayers(); // Reload to show updated state
             } else {
-                alert('Failed to save paper chit results: ' + updateResult.message);
+                alert('Failed to save paper chit results: ' + result.message);
             }
         } else {
             alert('No valid seed values found. Please enter new seeds for the players.');
@@ -479,42 +490,7 @@ async function updatePlayerSeeding(tournamentId, category, playerId, newSeed) {
     try {
         console.log(`updatePlayerSeeding called: tournamentId=${tournamentId}, category=${category}, playerId=${playerId}, newSeed=${newSeed}`);
         
-        const formData = new FormData();
-        formData.append('tournament_id', tournamentId);
-        formData.append('category', category);
-        formData.append('player_ids[]', playerId);
-        formData.append('seedings[]', newSeed.toString());
-        
-        console.log('FormData contents:');
-        for (let [key, value] of formData.entries()) {
-            console.log(`${key}: ${value}`);
-        }
-        
-        const url = `/tournament/${tournamentId}/update_seeding`;
-        console.log('Making request to:', url);
-        
-        const response = await fetch(url, {
-            method: 'POST',
-            body: formData
-        });
-        
-        console.log('Response status:', response.status);
-        console.log('Response headers:', response.headers);
-        
-        const responseText = await response.text();
-        console.log('Response text:', responseText);
-        
-        // Try to parse as JSON
-        let result;
-        try {
-            result = JSON.parse(responseText);
-        } catch (parseError) {
-            console.error('Failed to parse response as JSON:', parseError);
-            console.error('Response was:', responseText);
-            throw new Error('Server returned invalid JSON response');
-        }
-        
-        console.log('Update result:', result);
+        const result = await batchUpdateSeedings([playerId], [newSeed.toString()], category, tournamentId);
         
         if (result.success) {
             console.log('Successfully updated player seeding');
@@ -532,13 +508,18 @@ async function updatePlayerSeeding(tournamentId, category, playerId, newSeed) {
 // Function to resolve a clash by updating seed values
 function resolveClash(oldSeed, newSeed) {
     const tbody = document.getElementById('clashTableBody');
+    if (!tbody) {
+        console.error('Clash table body not found');
+        return;
+    }
+    
     const rows = tbody.getElementsByTagName('tr');
     
     // Find all rows with the old seed and update them
     for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
         const seedCell = row.cells[2]; // Seed column
-        if (seedCell.textContent.trim() === oldSeed) {
+        if (seedCell && seedCell.textContent.trim() === oldSeed) {
             seedCell.textContent = newSeed;
             row.classList.remove('seeding-clash');
             row.title = '';
@@ -643,6 +624,28 @@ function generateSuggestedSeeds(clashSeed, allPlayers) {
     return suggestions;
 }
 
+// Function to highlight clashes in the table
+function highlightClashes(clashes) {
+    const tbody = document.getElementById('clashTableBody');
+    if (!tbody) {
+        console.error('Clash table body not found');
+        return;
+    }
+    
+    const rows = tbody.getElementsByTagName('tr');
+    
+    clashes.forEach(clash => {
+        clash.players.forEach(playerInfo => {
+            const row = rows[playerInfo.index];
+            if (row) {
+                row.classList.add('seeding-clash');
+                // Add tooltip with clash information
+                row.title = `Seeding clash detected! Seed ${clash.seed} appears in multiple ranges: ${clash.ranges.join(', ')}`;
+            }
+        });
+    });
+}
+
 async function saveAllSeedChanges() {
     try {
         console.log('Starting saveAllSeedChanges...');
@@ -665,48 +668,12 @@ async function saveAllSeedChanges() {
             console.log(`Will save: Player ID "${playerId}" -> Seeding "${newSeeding}"`);
         });
         
-        if (playerIds.length === 0) {
-            console.log('No seed inputs found to save');
-            return;
-        }
-        
         // Get current tournament and category
         const tournamentId = getCurrentTournamentId();
         const category = getCurrentCategory();
         
-        console.log(`Saving for Tournament ID: "${tournamentId}", Category: "${category}"`);
-        console.log(`Player IDs being sent: ${JSON.stringify(playerIds)}`);
-        console.log(`Seedings being sent: ${JSON.stringify(seedings)}`);
-        
-        // Create form data
-        const formData = new FormData();
-        formData.append('category', category);
-        
-        // Add each player ID and seeding as separate form fields
-        playerIds.forEach(playerId => {
-            formData.append('player_ids[]', playerId);
-        });
-        
-        seedings.forEach(seeding => {
-            formData.append('seedings[]', seeding);
-        });
-        
-        console.log('Form data created, sending to backend...');
-        
-        // Send to backend with correct URL
-        const response = await fetch(`/tournament/${tournamentId}/update_seeding`, {
-            method: 'POST',
-            body: formData
-        });
-        
-        console.log('Backend response received:', response.status);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const result = await response.json();
-        console.log('Backend result:', result);
+        // Use common batch update function
+        const result = await batchUpdateSeedings(playerIds, seedings, category, tournamentId);
         
         if (result.success) {
             console.log('Save successful!');
@@ -722,4 +689,11 @@ async function saveAllSeedChanges() {
         console.error('Error saving seed changes:', error);
         alert('Error saving seed changes: ' + error.message);
     }
+}
+
+// Set default mode on page load
+if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', function() {
+        setClashMode('auto');
+    });
 } 

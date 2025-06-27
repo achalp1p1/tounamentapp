@@ -3521,7 +3521,7 @@
                                         if (isClashPlayer) {
                                             seedCellHtml = `
                                                 <span title="Clash!" style="color: #f44336; font-weight: bold;">⚠️</span>
-                                                <input type="number" value="${player.seeding || ''}" min="1" style="width: 60px; margin-left: 5px;"
+                                                <input type="number" class="seed-input" value="${player.seeding || ''}" min="1" style="width: 60px; margin-left: 5px;"
                                                     data-player-id="${player.player_id}"
                                                     onchange="(function(e){
                                                         const newSeed = e.target.value;
@@ -3900,7 +3900,7 @@
                                         if (isClashPlayer) {
                                             seedCellHtml = `
                                                 <span title="Clash!" style="color: #f44336; font-weight: bold;">⚠️</span>
-                                                <input type="number" value="${player.seeding || ''}" min="1" style="width: 60px; margin-left: 5px;"
+                                                <input type="number" class="seed-input" value="${player.seeding || ''}" min="1" style="width: 60px; margin-left: 5px;"
                                                     data-player-id="${player.player_id}"
                                                     onchange="(function(e){
                                                         const newSeed = e.target.value;
@@ -5036,138 +5036,8 @@
                 });
         }
 
-        // Function to save all seed changes
-        async function saveAllSeedChanges() {
-            console.log('saveAllSeedChanges called');
-            const tbody = document.getElementById('clashTableBody');
-            if (!tbody) {
-                console.error('clashTableBody not found');
-                return;
-            }
-            
-            const rows = Array.from(tbody.getElementsByTagName('tr'));
-            console.log('Found rows:', rows.length);
-            
-            const tournamentId = document.querySelector('[data-tournament-id]').getAttribute('data-tournament-id');
-            const category = document.getElementById('clashCategorySelect').value;
-            
-            console.log('Tournament ID:', tournamentId, 'Category:', category);
-            
-            if (!category) {
-                alert('Please select a category first');
-                return;
-            }
-            
-            let updatedCount = 0;
-            const updatePromises = [];
-            
-            rows.forEach((row, index) => {
-                const seedCell = row.cells[2];
-                console.log(`Row ${index}:`, seedCell.innerHTML);
-                
-                // Only process rows with input fields (clash players)
-                if (seedCell.innerHTML.includes('<input')) {
-                    const input = seedCell.querySelector('input');
-                    const newSeed = input ? input.value.trim() : '';
-                    console.log(`Row ${index} has input, seed value:`, newSeed);
-                    
-                    if (newSeed && !isNaN(newSeed)) {
-                        // Extract player_id from the input's data attribute
-                        const playerId = input.getAttribute('data-player-id');
-                        if (playerId) {
-                            console.log(`Row ${index} player_id:`, playerId, 'new seed:', newSeed);
-                            
-                            // Check if updatePlayerSeeding function exists
-                            if (typeof updatePlayerSeeding === 'function') {
-                                const promise = updatePlayerSeeding(tournamentId, category, playerId, parseInt(newSeed));
-                                updatePromises.push(promise);
-                            } else {
-                                console.error('updatePlayerSeeding function not found');
-                                alert('Error: updatePlayerSeeding function not available');
-                                return;
-                            }
-                        } else {
-                            console.error(`Row ${index}: Could not extract player_id from data-player-id attribute`);
-                        }
-                    }
-                }
-            });
-            
-            console.log('Update promises:', updatePromises.length);
-            
-            if (updatePromises.length === 0) {
-                alert('No seed changes found to save');
-                return;
-            }
-            
-            try {
-                await Promise.all(updatePromises);
-                updatedCount = updatePromises.length;
-                console.log('Successfully saved', updatedCount, 'seed changes');
-                alert(`Successfully saved ${updatedCount} seed changes!`);
-                
-                // Don't reload the table to preserve user's manual changes
-                // The values are already saved to the database, so no need to reload
-                console.log('Seed changes saved successfully. Table not reloaded to preserve current state.');
-            } catch (error) {
-                console.error('Error saving seed changes:', error);
-                alert('Error saving seed changes. Please try again.');
-            }
-        }
-
         // Global function for updating individual player seeding
-        async function updatePlayerSeeding(tournamentId, category, playerId, newSeed) {
-            console.log('updatePlayerSeeding called:', tournamentId, category, playerId, newSeed);
-            
-            const formData = new FormData();
-            formData.append('category', category);
-            formData.append('player_ids[]', playerId);
-            formData.append('seedings[]', newSeed.toString());
-            
-            console.log('FormData contents:');
-            for (let [key, value] of formData.entries()) {
-                console.log(`${key}: ${value}`);
-            }
-            
-            const url = `/tournament/${tournamentId}/update_seeding`;
-            console.log('Making request to:', url);
-            
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                console.log('Response status:', response.status);
-                console.log('Response headers:', response.headers);
-                
-                const responseText = await response.text();
-                console.log('Response text:', responseText);
-                
-                // Try to parse as JSON
-                let result;
-                try {
-                    result = JSON.parse(responseText);
-                } catch (parseError) {
-                    console.error('Failed to parse response as JSON:', parseError);
-                    console.error('Response was:', responseText);
-                    throw new Error('Server returned invalid JSON response');
-                }
-                
-                console.log('Update result:', result);
-                
-                if (result.success) {
-                    console.log('Successfully updated player seeding');
-                    return result;
-                } else {
-                    console.error('Failed to update player seeding:', result.message);
-                    throw new Error(result.message);
-                }
-            } catch (error) {
-                console.error('Error updating player seeding:', error);
-                throw error;
-            }
-        }
+        
     });
     </script>
 
@@ -5299,84 +5169,7 @@
             console.log('Table sorted successfully');
         }
 
-        // Global function for saving all seed changes
-        async function saveAllSeedChanges() {
-            console.log('saveAllSeedChanges called');
-            const tbody = document.getElementById('clashTableBody');
-            if (!tbody) {
-                console.error('clashTableBody not found');
-                return;
-            }
-            
-            const rows = Array.from(tbody.getElementsByTagName('tr'));
-            console.log('Found rows:', rows.length);
-            
-            const tournamentId = document.querySelector('[data-tournament-id]').getAttribute('data-tournament-id');
-            const category = document.getElementById('clashCategorySelect').value;
-            
-            console.log('Tournament ID:', tournamentId, 'Category:', category);
-            
-            if (!category) {
-                alert('Please select a category first');
-                return;
-            }
-            
-            let updatedCount = 0;
-            const updatePromises = [];
-            
-            rows.forEach((row, index) => {
-                const seedCell = row.cells[2];
-                console.log(`Row ${index}:`, seedCell.innerHTML);
-                
-                // Only process rows with input fields (clash players)
-                if (seedCell.innerHTML.includes('<input')) {
-                    const input = seedCell.querySelector('input');
-                    const newSeed = input ? input.value.trim() : '';
-                    console.log(`Row ${index} has input, seed value:`, newSeed);
-                    
-                    if (newSeed && !isNaN(newSeed)) {
-                        // Extract player_id from the input's data attribute
-                        const playerId = input.getAttribute('data-player-id');
-                        if (playerId) {
-                            console.log(`Row ${index} player_id:`, playerId, 'new seed:', newSeed);
-                            
-                            // Check if updatePlayerSeeding function exists
-                            if (typeof updatePlayerSeeding === 'function') {
-                                const promise = updatePlayerSeeding(tournamentId, category, playerId, parseInt(newSeed));
-                                updatePromises.push(promise);
-                            } else {
-                                console.error('updatePlayerSeeding function not found');
-                                alert('Error: updatePlayerSeeding function not available');
-                                return;
-                            }
-                        } else {
-                            console.error(`Row ${index}: Could not extract player_id from data-player-id attribute`);
-                        }
-                    }
-                }
-            });
-            
-            console.log('Update promises:', updatePromises.length);
-            
-            if (updatePromises.length === 0) {
-                alert('No seed changes found to save');
-                return;
-            }
-            
-            try {
-                await Promise.all(updatePromises);
-                updatedCount = updatePromises.length;
-                console.log('Successfully saved', updatedCount, 'seed changes');
-                alert(`Successfully saved ${updatedCount} seed changes!`);
-                
-                // Don't reload the table to preserve user's manual changes
-                // The values are already saved to the database, so no need to reload
-                console.log('Seed changes saved successfully. Table not reloaded to preserve current state.');
-            } catch (error) {
-                console.error('Error saving seed changes:', error);
-                alert('Error saving seed changes. Please try again.');
-            }
-        }
+        
     </script>
 </body>
 </html>

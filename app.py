@@ -329,6 +329,31 @@ def player_registration():
     # For GET request
     return render_template('players.html', today_date=datetime.now().strftime('%Y-%m-%d'))
 
+# Helper function to update seeding in a list of records
+# records: list of dicts (player or registration records)
+# seeding_map: dict mapping unique key (e.g., Player ID or (Name, Category)) to new seeding value
+def update_seeding_in_records(records, seeding_map, key_func, seeding_field='Seeding'):
+    """
+    Update seeding in records using a mapping and a key function.
+    Args:
+        records: List of dicts (player or registration records)
+        seeding_map: Dict mapping unique key to new seeding value
+        key_func: Function(record) -> key used in seeding_map
+        seeding_field: Field name for seeding (default 'Seeding')
+    Returns:
+        Number of updates made
+    """
+    updates_made = 0
+    for rec in records:
+        key = key_func(rec)
+        if key in seeding_map:
+            old_seeding = rec.get(seeding_field, '')
+            new_seeding = seeding_map[key]
+            if old_seeding != new_seeding:
+                rec[seeding_field] = new_seeding
+                updates_made += 1
+    return updates_made
+
 @app.route('/save-seeding', methods=['POST'])
 def save_seeding():
     try:
@@ -347,19 +372,22 @@ def save_seeding():
         form_data = request.form.to_dict()
         print(f"Received form data: {form_data}")  # Debug print
 
-        # Update seedings
-        updated_count = 0
+        # Build seeding map: (player_name, category) -> seeding
+        seeding_map = {}
         for key, value in form_data.items():
             if key.startswith('seeding_'):
                 index = int(key.split('_')[1])
                 player_name = request.form.get(f'player_name_{index}')
-                
                 if player_name:
-                    for player in all_players:
-                        if (player['Player Name'] == player_name and 
-                            player['Category'] == category):
-                            player['Seeding'] = value if value.strip() else ''
-                            updated_count += 1
+                    seeding_map[(player_name, category)] = value.strip() if value.strip() else ''
+
+        # Use helper to update seedings
+        updated_count = update_seeding_in_records(
+            all_players,
+            seeding_map,
+            key_func=lambda rec: (rec.get('Player Name'), rec.get('Category')),
+            seeding_field='Seeding'
+        )
 
         print(f"Updated seeding for {updated_count} players")  # Debug print
 
@@ -1066,11 +1094,9 @@ def get_tournament_categories(tournament_id):
 def tournament_update_seeding(tournament_id):
     if request.method == 'POST':
         try:
-            # Log received data
             category = request.form.get('category')
             player_ids = request.form.getlist('player_ids[]')
             seedings = request.form.getlist('seedings[]')
-            
             print("\n=== Seeding Update Request ===")
             print(f"Tournament ID: {tournament_id}")
             print(f"Category: {category}")
@@ -1088,42 +1114,53 @@ def tournament_update_seeding(tournament_id):
                 print(f"\nTotal registrations read: {len(registrations)}")
                 print(f"CSV Headers: {fieldnames}")
 
-            # First, collect all players in the same category and tournament
-            category_players = []
+            # Filter registrations for this specific tournament and category
+            filtered_registrations = []
             for reg in registrations:
                 if (reg['Tournament Id'] == tournament_id and 
-                    reg['Category'] == category):
-                    category_players.append(reg)
-
-            # Sort players by current seeding
-            category_players.sort(key=lambda x: int(x.get('Seeding', '999999')) if str(x.get('Seeding', '')).isdigit() else 999999)
-
-            # Update seedings
-            updates_made = 0
+                    reg['Category'] == category and
+                    reg['Status'].lower() == 'active'):
+                    filtered_registrations.append(reg)
+                    print(f"✓ MATCHED: Added registration for Player ID '{reg.get('Player ID')}'")
+                else:
+                    print(f"✗ NO MATCH: Tournament Id match: {reg.get('Tournament Id') == tournament_id}, Category match: {reg.get('Category') == category}, Status active: {reg.get('Status', '').lower() == 'active'}")
             
-            # First, create a mapping of player_id to new seeding
-            seeding_updates = {}
-            print("\nProcessing seeding updates:")
-            for i, player_id in enumerate(player_ids):
-                # Include all seedings, even empty ones
-                seeding_updates[player_id] = seedings[i] if seedings[i].strip() else ''
-                print(f"Will update Player ID {player_id} to seeding {seedings[i]}")
+            print(f"Filtered registrations for tournament {tournament_id}, category {category}: {len(filtered_registrations)}")
+            
+            # Debug: Show all filtered registrations
+            print("Filtered registrations:")
+            for reg in filtered_registrations:
+                print(f"  Player ID: '{reg.get('Player ID')}', Seeding: '{reg.get('Seeding', '')}'")
 
-            # Update each registration with its new seeding
-            print("\nApplying updates to registrations:")
-            for reg in registrations:
-                if (reg['Tournament Id'] == tournament_id and 
-                    reg['Category'] == category and 
-                    reg['Player ID'] in seeding_updates):
-                    old_seeding = reg.get('Seeding', '')
-                    new_seeding = seeding_updates[reg['Player ID']]
-                    reg['Seeding'] = new_seeding
-                    updates_made += 1
-                    print(f"Updated Player ID {reg['Player ID']} seeding from {old_seeding} to {new_seeding}")
+            # Build seeding map: player_id -> seeding
+            seeding_map = {pid: seed.strip() if seed.strip() else '' for pid, seed in zip(player_ids, seedings)}
+            print(f"Seeding map: {seeding_map}")
+            
+            # Debug: Check if any player IDs in seeding_map exist in filtered_registrations
+            for player_id in seeding_map.keys():
+                found = any(reg.get('Player ID') == player_id for reg in filtered_registrations)
+                print(f"Player ID '{player_id}' found in filtered registrations: {found}")
+
+            # Use helper to update seedings on filtered registrations
+            updates_made = update_seeding_in_records(
+                filtered_registrations,
+                seeding_map,
+                key_func=lambda rec: rec.get('Player ID'),
+                seeding_field='Seeding'
+            )
 
             print(f"\nUpdates made: {updates_made}")
 
             if updates_made > 0:
+                # Update the original registrations list with the changes from filtered_registrations
+                for filtered_reg in filtered_registrations:
+                    for i, reg in enumerate(registrations):
+                        if (reg['Tournament Id'] == filtered_reg['Tournament Id'] and
+                            reg['Category'] == filtered_reg['Category'] and
+                            reg['Player ID'] == filtered_reg['Player ID']):
+                            registrations[i] = filtered_reg
+                            break
+                
                 # Write back to file
                 with open(TOURNAMENT_REGISTRATIONS_CSV, 'w', newline='', encoding='utf-8') as file:
                     writer = csv.DictWriter(file, fieldnames=fieldnames)
