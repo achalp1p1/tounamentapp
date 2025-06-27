@@ -740,6 +740,13 @@
             padding: 12px;
             border-radius: 4px;
             margin-bottom: 20px;
+            animation: flash 0.5s ease-in-out;
+        }
+
+        @keyframes flash {
+            0% { opacity: 0; transform: translateY(-10px); }
+            50% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 1; transform: translateY(0); }
         }
 
         /* Category Checkbox Styles */
@@ -5228,25 +5235,61 @@
             const newSeed = parseInt(input.value);
             const playerId = input.getAttribute('data-player-id');
             
+            console.log('validateSeedInput called:', { newSeed, playerId });
+            
             // Use global players data
             const playersWithRankings = window.currentPlayersWithRankings;
-            if (!playersWithRankings) return true;
+            if (!playersWithRankings) {
+                console.log('No global players data found');
+                return true;
+            }
             
             // Find the current player's seed
             const currentPlayer = playersWithRankings.find(p => p.player_id === playerId);
-            if (!currentPlayer) return true;
+            if (!currentPlayer) {
+                console.log('Current player not found');
+                return true;
+            }
             
             const currentSeed = parseInt(currentPlayer.seeding);
             const validRange = getValidSeedRangeForClash(playersWithRankings, currentSeed);
             
+            console.log('Validation check:', { newSeed, currentSeed, validRange });
+            
             if (newSeed < validRange.min || newSeed > validRange.max) {
-                showErrorMessage(`Invalid seed value. Valid range for this clash group is ${validRange.min}-${validRange.max}`);
+                const errorMessage = `Add valid value (Range ${validRange.min} to ${validRange.max})`;
+                console.log('Validation failed:', errorMessage);
+                
+                // Show error message using local function
+                showLocalErrorMessage(errorMessage);
+                
                 input.value = currentSeed; // Reset to original value
                 return false;
             }
             
+            console.log('Validation passed');
             return true;
         }
+
+        // Function to show error message (local backup)
+        function showLocalErrorMessage(message) {
+            const messageBox = document.getElementById('clashMessageBox');
+            if (messageBox) {
+                messageBox.className = 'message error-message';
+                messageBox.textContent = message;
+                messageBox.style.display = 'block';
+                
+                // Flash the message briefly and then hide it
+                setTimeout(() => {
+                    messageBox.style.display = 'none';
+                }, 2000); // Show for only 2 seconds
+            } else {
+                // Fallback to alert if message box not found
+                alert(message);
+            }
+        }
+
+        // Function to validate seed input against clash group range
     </script>
 </body>
 </html>
