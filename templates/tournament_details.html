@@ -3615,6 +3615,16 @@
                                             for (let v = validRange.min; v <= validRange.max; v++) {
                                                 optionsHtml += `<option value="${v}" ${parseInt(player.seeding) === v ? 'selected' : ''}>${v}</option>`;
                                             }
+                                            
+                                            // Add shuffle button in automatic mode
+                                            let shuffleBtnHtml = '';
+                                            if (window.clashResolutionMode === 'auto') {
+                                                shuffleBtnHtml = `<button class="resolve-clash-btn" style="background-color: #ff9800; margin-left: 5px; font-size: 0.8em;" onclick="shuffleClashGroupByPlayer('${player.player_id}')" title="Shuffle this clash group">🔀</button>`;
+                                                console.log('Adding shuffle button for player:', player.player_id);
+                                            } else {
+                                                console.log('Not adding shuffle button - mode is:', window.clashResolutionMode);
+                                            }
+                                            
                                             seedCellHtml = `
                                                 <span title="Clash!" style="color: #f44336; font-weight: bold;">⚠️</span>
                                                 <select class="seed-input" style="width: 70px; margin-left: 5px;"
@@ -3628,6 +3638,7 @@
                                                     })(event)">
                                                     ${optionsHtml}
                                                 </select>
+                                                ${shuffleBtnHtml}
                                             `;
                                         } else {
                                             seedCellHtml = `${player.seeding || ''}`;
@@ -4006,6 +4017,16 @@
                                             for (let v = validRange.min; v <= validRange.max; v++) {
                                                 optionsHtml += `<option value="${v}" ${parseInt(player.seeding) === v ? 'selected' : ''}>${v}</option>`;
                                             }
+                                            
+                                            // Add shuffle button in automatic mode
+                                            let shuffleBtnHtml = '';
+                                            if (window.clashResolutionMode === 'auto') {
+                                                shuffleBtnHtml = `<button class="resolve-clash-btn" style="background-color: #ff9800; margin-left: 5px; font-size: 0.8em;" onclick="shuffleClashGroupByPlayer('${player.player_id}')" title="Shuffle this clash group">🔀</button>`;
+                                                console.log('Adding shuffle button for player:', player.player_id);
+                                            } else {
+                                                console.log('Not adding shuffle button - mode is:', window.clashResolutionMode);
+                                            }
+                                            
                                             seedCellHtml = `
                                                 <span title="Clash!" style="color: #f44336; font-weight: bold;">⚠️</span>
                                                 <select class="seed-input" style="width: 70px; margin-left: 5px;"
@@ -4019,6 +4040,7 @@
                                                     })(event)">
                                                     ${optionsHtml}
                                                 </select>
+                                                ${shuffleBtnHtml}
                                             `;
                                         } else {
                                             seedCellHtml = `${player.seeding || ''}`;
@@ -5394,6 +5416,8 @@
         // Function to set clash mode
         function setClashMode(mode) {
             window.clashResolutionMode = mode;
+            console.log('Clash mode set to:', mode);
+            console.log('Current mode variable:', window.clashResolutionMode);
             
             // Update toggle switch state
             const switchElem = document.getElementById('clashModeSwitch');
@@ -5403,14 +5427,75 @@
             
             // Re-render the clash summary with the current mode
             if (window.currentClashes) {
+                console.log('Re-rendering clash summary...');
                 showClashSummary(window.currentClashes);
             }
             
             // Re-render the table if players are loaded
             const category = document.getElementById('clashCategorySelect').value;
             if (category) {
+                console.log('Re-rendering table for category:', category);
                 loadClashPlayers();
+            } else {
+                console.log('No category selected, table not re-rendered');
             }
+        }
+
+        // Shuffle function for a clash group by player ID
+        function shuffleClashGroupByPlayer(playerId) {
+            console.log('Shuffling clash group for player:', playerId);
+            if (!window.currentPlayersWithRankings) {
+                console.error('No current players data found');
+                return;
+            }
+            
+            // Find the player and their current seed
+            const player = window.currentPlayersWithRankings.find(p => p.player_id === playerId);
+            if (!player) {
+                console.error('Player not found:', playerId);
+                return;
+            }
+            
+            const currentSeed = parseInt(player.seeding);
+            const validRange = getValidSeedRangeForClash(window.currentPlayersWithRankings, currentSeed);
+            
+            // Find all players in the same clash group
+            const clashPlayers = window.currentPlayersWithRankings.filter(p => parseInt(p.seeding) === currentSeed);
+            
+            // Generate possible seeds for this range
+            const possibleSeeds = [];
+            for (let v = validRange.min; v <= validRange.max; v++) {
+                possibleSeeds.push(v);
+            }
+            
+            // Shuffle the possible seeds
+            for (let i = possibleSeeds.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [possibleSeeds[i], possibleSeeds[j]] = [possibleSeeds[j], possibleSeeds[i]];
+            }
+            
+            // Update the table with shuffled values
+            const tbody = document.getElementById('clashTableBody');
+            if (!tbody) {
+                console.error('Clash table body not found');
+                return;
+            }
+            
+            clashPlayers.forEach((clashPlayer, index) => {
+                const rows = tbody.getElementsByTagName('tr');
+                for (let row of rows) {
+                    const seedCell = row.cells[2];
+                    const select = seedCell.querySelector('select');
+                    if (select && select.getAttribute('data-player-id') === clashPlayer.player_id) {
+                        select.value = possibleSeeds[index];
+                        console.log(`Updated player ${clashPlayer.name} to seed ${possibleSeeds[index]}`);
+                        break;
+                    }
+                }
+            });
+            
+            // Sort the table after shuffling
+            sortTableBySeed();
         }
 
         // Set default mode to Manual on page load
