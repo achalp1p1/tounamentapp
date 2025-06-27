@@ -1984,10 +1984,13 @@
                                     <label style="font-weight: 500; margin-right: 10px;">Resolution Mode:</label>
                                     <button id="autoModeBtn" class="resolve-clash-btn" style="background-color: #2196f3;" onclick="setClashMode('auto')">Automatic</button>
                                     <button id="manualModeBtn" class="resolve-clash-btn" style="background-color: #9c27b0;" onclick="setClashMode('manual')">Manual</button>
-                                    <button id="saveSeedsBtn" class="resolve-clash-btn" style="background-color: #4caf50; margin-left: 10px;" onclick="saveAllSeedChanges()">
+                                    <button id="saveSeedsBtn" class="submit-button" style="max-width: 200px; margin-left: 10px;" onclick="saveAllSeedChanges()">
                                         <i class="fas fa-save"></i> Save Seeds
                                     </button>
                                 </div>
+
+                                <!-- Message Box for Clash Resolution -->
+                                <div id="clashMessageBox" class="message" style="margin-top: 10px; padding: 10px; border-radius: 4px; display: none;"></div>
 
                                 <!-- Clash Summary Container -->
                                 <div id="clashSummary" class="clash-summary" style="display: none;">

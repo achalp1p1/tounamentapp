@@ -693,75 +693,32 @@ async function saveAllSeedChanges() {
 
 // Function to show a simple success message
 function showSuccessMessage(message) {
-    // Create or get existing message element
-    let messageElement = document.getElementById('clashMessage');
-    if (!messageElement) {
-        messageElement = document.createElement('div');
-        messageElement.id = 'clashMessage';
-        messageElement.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background-color: #4caf50;
-            color: white;
-            padding: 15px 20px;
-            border-radius: 5px;
-            font-weight: bold;
-            z-index: 10000;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            transition: opacity 0.3s ease;
-        `;
-        document.body.appendChild(messageElement);
-    }
-    
-    messageElement.textContent = message;
-    messageElement.style.opacity = '1';
-    messageElement.style.display = 'block';
-    
-    // Auto-hide after 3 seconds
-    setTimeout(() => {
-        messageElement.style.opacity = '0';
+    const messageBox = document.getElementById('clashMessageBox');
+    if (messageBox) {
+        messageBox.className = 'message success-message';
+        messageBox.textContent = message;
+        messageBox.style.display = 'block';
+        
+        // Auto-hide after 5 seconds
         setTimeout(() => {
-            messageElement.style.display = 'none';
-        }, 300);
-    }, 3000);
+            messageBox.style.display = 'none';
+        }, 5000);
+    }
 }
 
 // Function to show a simple error message
 function showErrorMessage(message) {
-    // Create or get existing message element
-    let messageElement = document.getElementById('clashMessage');
-    if (!messageElement) {
-        messageElement = document.createElement('div');
-        messageElement.id = 'clashMessage';
-        messageElement.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background-color: #f44336;
-            color: white;
-            padding: 15px 20px;
-            border-radius: 5px;
-            font-weight: bold;
-            z-index: 10000;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            transition: opacity 0.3s ease;
-        `;
-        document.body.appendChild(messageElement);
-    }
-    
-    messageElement.textContent = message;
-    messageElement.style.backgroundColor = '#f44336';
-    messageElement.style.opacity = '1';
-    messageElement.style.display = 'block';
-    
-    // Auto-hide after 5 seconds for errors
-    setTimeout(() => {
-        messageElement.style.opacity = '0';
+    const messageBox = document.getElementById('clashMessageBox');
+    if (messageBox) {
+        messageBox.className = 'message error-message';
+        messageBox.textContent = message;
+        messageBox.style.display = 'block';
+        
+        // Auto-hide after 5 seconds for errors
         setTimeout(() => {
-            messageElement.style.display = 'none';
-        }, 300);
-    }, 5000);
+            messageBox.style.display = 'none';
+        }, 5000);
+    }
 }
 
 // Set default mode on page load
