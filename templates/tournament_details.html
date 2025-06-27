@@ -3538,24 +3538,24 @@
                                         if (isClashPlayer) {
                                             // Get valid range for this clash group
                                             const validRange = getValidSeedRangeForClash(playersWithRankings, player.seeding);
+                                            // Build options for select
+                                            let optionsHtml = '';
+                                            for (let v = validRange.min; v <= validRange.max; v++) {
+                                                optionsHtml += `<option value="${v}" ${parseInt(player.seeding) === v ? 'selected' : ''}>${v}</option>`;
+                                            }
                                             seedCellHtml = `
                                                 <span title="Clash!" style="color: #f44336; font-weight: bold;">⚠️</span>
-                                                <input type="number" class="seed-input" value="${player.seeding || ''}" 
-                                                    min="${validRange.min}" max="${validRange.max}" 
-                                                    style="width: 60px; margin-left: 5px;"
+                                                <select class="seed-input" style="width: 70px; margin-left: 5px;"
                                                     data-player-id="${player.player_id}"
                                                     data-valid-min="${validRange.min}"
                                                     data-valid-max="${validRange.max}"
                                                     onchange="(function(e){
-                                                        const newSeed = e.target.value;
-                                                        if(newSeed && !isNaN(newSeed)){
-                                                            // Validate the input
-                                                            if(validateSeedInput(e.target)){
-                                                                // Sort table rows by seed after update
-                                                                sortTableBySeed();
-                                                            }
+                                                        if(validateSeedInput(e.target)){
+                                                            sortTableBySeed();
                                                         }
                                                     })(event)">
+                                                    ${optionsHtml}
+                                                </select>
                                             `;
                                         } else {
                                             seedCellHtml = `${player.seeding || ''}`;
@@ -3929,24 +3929,24 @@
                                         if (isClashPlayer) {
                                             // Get valid range for this clash group
                                             const validRange = getValidSeedRangeForClash(playersWithRankings, player.seeding);
+                                            // Build options for select
+                                            let optionsHtml = '';
+                                            for (let v = validRange.min; v <= validRange.max; v++) {
+                                                optionsHtml += `<option value="${v}" ${parseInt(player.seeding) === v ? 'selected' : ''}>${v}</option>`;
+                                            }
                                             seedCellHtml = `
                                                 <span title="Clash!" style="color: #f44336; font-weight: bold;">⚠️</span>
-                                                <input type="number" class="seed-input" value="${player.seeding || ''}" 
-                                                    min="${validRange.min}" max="${validRange.max}" 
-                                                    style="width: 60px; margin-left: 5px;"
+                                                <select class="seed-input" style="width: 70px; margin-left: 5px;"
                                                     data-player-id="${player.player_id}"
                                                     data-valid-min="${validRange.min}"
                                                     data-valid-max="${validRange.max}"
                                                     onchange="(function(e){
-                                                        const newSeed = e.target.value;
-                                                        if(newSeed && !isNaN(newSeed)){
-                                                            // Validate the input
-                                                            if(validateSeedInput(e.target)){
-                                                                // Sort table rows by seed after update
-                                                                sortTableBySeed();
-                                                            }
+                                                        if(validateSeedInput(e.target)){
+                                                            sortTableBySeed();
                                                         }
                                                     })(event)">
+                                                    ${optionsHtml}
+                                                </select>
                                             `;
                                         } else {
                                             seedCellHtml = `${player.seeding || ''}`;
@@ -4977,6 +4977,10 @@
                     // If it's an input, get the value
                     const input = seedCell.querySelector('input');
                     seedValue = input ? (parseInt(input.value) || 999999) : 999999;
+                } else if (seedCell.innerHTML.includes('<select')) {
+                    // If it's a select, get the value
+                    const select = seedCell.querySelector('select');
+                    seedValue = select ? (parseInt(select.value) || 999999) : 999999;
                 } else {
                     // If it's plain text, parse the text content
                     seedValue = parseInt(seedCell.textContent.trim()) || 999999;
@@ -5030,6 +5034,9 @@
                 if (seedCell.innerHTML.includes('<input')) {
                     const input = seedCell.querySelector('input');
                     seedValue = input ? input.value : '';
+                } else if (seedCell.innerHTML.includes('<select')) {
+                    const select = seedCell.querySelector('select');
+                    seedValue = select ? select.value : '';
                 } else {
                     seedValue = seedCell.textContent.trim();
                 }
@@ -5175,6 +5182,10 @@
                     // If it's an input, get the value
                     const input = seedCell.querySelector('input');
                     seedValue = input ? (parseInt(input.value) || 999999) : 999999;
+                } else if (seedCell.innerHTML.includes('<select')) {
+                    // If it's a select, get the value
+                    const select = seedCell.querySelector('select');
+                    seedValue = select ? (parseInt(select.value) || 999999) : 999999;
                 } else {
                     // If it's plain text, parse the text content
                     seedValue = parseInt(seedCell.textContent.trim()) || 999999;
