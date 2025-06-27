@@ -1470,6 +1470,38 @@
         tr.seed-range-9 { background-color: #f1f8e9 !important; border-left: 4px solid #8bc34a !important; }
 
         /* Seeding Clash Styles */
+        .switch {
+          position: relative;
+          display: inline-block;
+          width: 50px;
+          height: 24px;
+        }
+        .switch input {display:none;}
+        .slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background-color: #ccc;
+          transition: .4s;
+          border-radius: 24px;
+        }
+        .slider:before {
+          position: absolute;
+          content: "";
+          height: 18px;
+          width: 18px;
+          left: 3px;
+          bottom: 3px;
+          background-color: white;
+          transition: .4s;
+          border-radius: 50%;
+        }
+        input:checked + .slider {
+          background-color: #2196f3;
+        }
+        input:checked + .slider:before {
+          transform: translateX(26px);
+        }
     </style>
 </head>
 <body>
@@ -1987,14 +2019,54 @@
                                 </table>
                                 
                                 <!-- Clash Resolution Mode Toggle -->
-                                <div id="clashModeToggle" style="margin: 20px 0 10px 0; text-align: right;">
-                                    <label style="font-weight: 500; margin-right: 10px;">Resolution Mode:</label>
-                                    <button id="autoModeBtn" class="resolve-clash-btn" style="background-color: #2196f3;" onclick="setClashMode('auto')">Automatic</button>
-                                    <button id="manualModeBtn" class="resolve-clash-btn" style="background-color: #9c27b0;" onclick="setClashMode('manual')">Manual</button>
+                                <div id="clashModeToggle" style="margin: 20px 0 10px 0; text-align: right; display: flex; align-items: center; gap: 16px; justify-content: flex-end;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span id="manualLabel" style="font-weight: 500; color: #9c27b0;">Manual</span>
+                                        <label class="switch">
+                                            <input type="checkbox" id="clashModeSwitch" onchange="toggleClashMode()">
+                                            <span class="slider round"></span>
+                                        </label>
+                                        <span id="autoLabel" style="font-weight: 500; color: #2196f3;">Automatic</span>
+                                    </div>
                                     <button id="saveSeedsBtn" class="submit-button" style="max-width: 200px; margin-left: 10px;" onclick="saveAllSeedChanges()">
                                         <i class="fas fa-save"></i> Save Seeds
                                     </button>
                                 </div>
+
+                                <style>
+                                .switch {
+                                  position: relative;
+                                  display: inline-block;
+                                  width: 50px;
+                                  height: 24px;
+                                }
+                                .switch input {display:none;}
+                                .slider {
+                                  position: absolute;
+                                  cursor: pointer;
+                                  top: 0; left: 0; right: 0; bottom: 0;
+                                  background-color: #ccc;
+                                  transition: .4s;
+                                  border-radius: 24px;
+                                }
+                                .slider:before {
+                                  position: absolute;
+                                  content: "";
+                                  height: 18px;
+                                  width: 18px;
+                                  left: 3px;
+                                  bottom: 3px;
+                                  background-color: white;
+                                  transition: .4s;
+                                  border-radius: 50%;
+                                }
+                                input:checked + .slider {
+                                  background-color: #2196f3;
+                                }
+                                input:checked + .slider:before {
+                                  transform: translateX(26px);
+                                }
+                                </style>
 
                                 <!-- Message Box for Clash Resolution -->
                                 <div id="clashMessageBox" class="message" style="margin-top: 10px; padding: 10px; border-radius: 4px; display: none;"></div>
@@ -4180,17 +4252,23 @@
         `;
         clashItems.appendChild(overallResolutionDiv);
         
-        clashes.forEach(clash => {
+        clashes.forEach((clash, idx) => {
             const clashItem = document.createElement('div');
             clashItem.className = 'clash-item';
             
             const playerNames = clash.players.map(p => p.player.name).join(', ');
             const ranges = clash.ranges.join(' and ');
             
+            let shuffleBtnHtml = '';
+            if (window.clashResolutionMode === 'auto') {
+                shuffleBtnHtml = `<button class="resolve-clash-btn" style="background-color: #ff9800; margin-left: 10px;" onclick="shuffleClashGroup(${idx})" title="Shuffle this group">🔀 Shuffle</button>`;
+            }
+            
             clashItem.innerHTML = `
                 <div>
                     <strong>Seed ${clash.seed}</strong> is used by <strong>${playerNames}</strong> 
                     across different ranges: <strong>${ranges}</strong>
+                    ${shuffleBtnHtml}
                 </div>
                 <div style="margin-top: 8px;">
                     <strong>Individual Resolution:</strong> 
@@ -4204,6 +4282,38 @@
         });
         
         clashSummary.style.display = 'block';
+    }
+
+    // Shuffle function for a single clash group
+    function shuffleClashGroup(clashIdx) {
+        if (!window.currentClashes || !window.currentClashes[clashIdx]) return;
+        const clash = window.currentClashes[clashIdx];
+        // Get all valid values for this group
+        const validPlayerIndices = clash.players.map(p => p.index);
+        const validRange = clash.players.map(p => p.range);
+        // Get min/max from the first player's range (all should be same for group)
+        const min = Math.min(...validRange.map(r => r.min));
+        const max = Math.max(...validRange.map(r => r.max));
+        const possibleSeeds = [];
+        for (let v = min; v <= max; v++) possibleSeeds.push(v);
+        // Shuffle possibleSeeds and assign
+        for (let i = possibleSeeds.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [possibleSeeds[i], possibleSeeds[j]] = [possibleSeeds[j], possibleSeeds[i]];
+        }
+        // Assign to each player in the group
+        const tbody = document.getElementById('clashTableBody');
+        validPlayerIndices.forEach((rowIdx, i) => {
+            const row = tbody.rows[rowIdx];
+            if (row) {
+                const seedCell = row.cells[2];
+                const select = seedCell.querySelector('select');
+                if (select) {
+                    select.value = possibleSeeds[i];
+                }
+            }
+        });
+        sortTableBySeed();
     }
 
     // Function to detect seeding clashes across range boundaries
@@ -4314,39 +4424,6 @@
                 }
             });
         });
-    }
-
-    // Function to show clash summary
-    function showClashSummary(clashes) {
-        const clashSummary = document.getElementById('clashSummary');
-        const clashItems = document.getElementById('clashItems');
-        
-        clashItems.innerHTML = '';
-        
-        clashes.forEach(clash => {
-            const clashItem = document.createElement('div');
-            clashItem.className = 'clash-item';
-            
-            const playerNames = clash.players.map(p => p.player.name).join(', ');
-            const ranges = clash.ranges.join(' and ');
-            
-            clashItem.innerHTML = `
-                <div>
-                    <strong>Seed ${clash.seed}</strong> is used by <strong>${playerNames}</strong> 
-                    across different ranges: <strong>${ranges}</strong>
-                </div>
-                <div style="margin-top: 8px;">
-                    <strong>Suggested resolutions:</strong> 
-                    ${clash.suggestedSeeds.map(seed => 
-                        `<button class="resolve-clash-btn" onclick="resolveClash('${clash.seed}', ${seed})">Use Seed ${seed}</button>`
-                    ).join(' ')}
-                </div>
-            `;
-            
-            clashItems.appendChild(clashItem);
-        });
-        
-        clashSummary.style.display = 'block';
     }
 
     // Function to resolve a clash by updating seed values
@@ -5301,6 +5378,49 @@
         }
 
         // Function to validate seed input against clash group range
+    </script>
+
+    <!-- Add this function to handle the toggle switch -->
+    <script>
+        function toggleClashMode() {
+            const switchElem = document.getElementById('clashModeSwitch');
+            if (switchElem && switchElem.checked) {
+                setClashMode('auto');
+            } else {
+                setClashMode('manual');
+            }
+        }
+
+        // Function to set clash mode
+        function setClashMode(mode) {
+            window.clashResolutionMode = mode;
+            
+            // Update toggle switch state
+            const switchElem = document.getElementById('clashModeSwitch');
+            if (switchElem) {
+                switchElem.checked = (mode === 'auto');
+            }
+            
+            // Re-render the clash summary with the current mode
+            if (window.currentClashes) {
+                showClashSummary(window.currentClashes);
+            }
+            
+            // Re-render the table if players are loaded
+            const category = document.getElementById('clashCategorySelect').value;
+            if (category) {
+                loadClashPlayers();
+            }
+        }
+
+        // Set default mode to Manual on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const switchElem = document.getElementById('clashModeSwitch');
+            if (switchElem) {
+                switchElem.checked = false; // Manual by default
+            }
+            setClashMode('manual');
+        });
     </script>
 </body>
 </html>
