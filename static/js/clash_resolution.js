@@ -230,15 +230,15 @@ async function autoResolveAllClashes() {
         // Perform batch update using common function
         const result = await batchUpdateSeedings(playerIds, seedings, category, tournamentId);
         if (result.success) {
-            alert(`Auto-resolved ${resolvedCount} clash players`);
+            showSuccessMessage(`Auto-resolved ${resolvedCount} clash players`);
             loadClashPlayers(); // Reload to show updated state
         } else {
-            alert('Failed to save auto-resolved changes: ' + result.message);
+            showErrorMessage('Failed to save auto-resolved changes: ' + result.message);
         }
         
     } catch (error) {
         console.error('Error auto-resolving clashes:', error);
-        alert('Error auto-resolving clashes. Please try again.');
+        showErrorMessage('Error auto-resolving clashes. Please try again.');
     }
 }
 
@@ -303,15 +303,15 @@ async function shuffleClashPlayers() {
         // Perform batch update using common function
         const result = await batchUpdateSeedings(playerIds, seedings, category, tournamentId);
         if (result.success) {
-            alert(`Shuffled and resolved ${resolvedCount} clash players`);
+            showSuccessMessage(`Shuffled and resolved ${resolvedCount} clash players`);
             loadClashPlayers(); // Reload to show updated state
         } else {
-            alert('Failed to save shuffled changes: ' + result.message);
+            showErrorMessage('Failed to save shuffled changes: ' + result.message);
         }
         
     } catch (error) {
         console.error('Error shuffling clash players:', error);
-        alert('Error shuffling clash players. Please try again.');
+        showErrorMessage('Error shuffling clash players. Please try again.');
     }
 }
 
@@ -461,19 +461,19 @@ async function applyPaperChitResults() {
             // Perform batch update using common function
             const result = await batchUpdateSeedings(playerIds, seedings, category, tournamentId);
             if (result.success) {
-                alert(`Applied paper chit results for ${playerIds.length} players`);
+                showSuccessMessage(`Applied paper chit results for ${playerIds.length} players`);
                 closePaperChitModal();
                 loadClashPlayers(); // Reload to show updated state
             } else {
-                alert('Failed to save paper chit results: ' + result.message);
+                showErrorMessage('Failed to save paper chit results: ' + result.message);
             }
         } else {
-            alert('No valid seed values found. Please enter new seeds for the players.');
+            showErrorMessage('No valid seed values found. Please enter new seeds for the players.');
         }
         
     } catch (error) {
         console.error('Error applying paper chit results:', error);
-        alert('Error applying paper chit results. Please try again.');
+        showErrorMessage('Error applying paper chit results. Please try again.');
     }
 }
 
@@ -677,18 +677,91 @@ async function saveAllSeedChanges() {
         
         if (result.success) {
             console.log('Save successful!');
-            alert('Seed changes saved successfully!');
+            showSuccessMessage('Changes are saved!');
             
             // Refresh the data to show updated values
             await loadClashPlayers();
         } else {
             console.error('Save failed:', result.message);
-            alert('Failed to save seed changes: ' + result.message);
+            showErrorMessage('Failed to save seed changes: ' + result.message);
         }
     } catch (error) {
         console.error('Error saving seed changes:', error);
-        alert('Error saving seed changes: ' + error.message);
+        showErrorMessage('Error saving seed changes: ' + error.message);
     }
+}
+
+// Function to show a simple success message
+function showSuccessMessage(message) {
+    // Create or get existing message element
+    let messageElement = document.getElementById('clashMessage');
+    if (!messageElement) {
+        messageElement = document.createElement('div');
+        messageElement.id = 'clashMessage';
+        messageElement.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4caf50;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            z-index: 10000;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: opacity 0.3s ease;
+        `;
+        document.body.appendChild(messageElement);
+    }
+    
+    messageElement.textContent = message;
+    messageElement.style.opacity = '1';
+    messageElement.style.display = 'block';
+    
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+        messageElement.style.opacity = '0';
+        setTimeout(() => {
+            messageElement.style.display = 'none';
+        }, 300);
+    }, 3000);
+}
+
+// Function to show a simple error message
+function showErrorMessage(message) {
+    // Create or get existing message element
+    let messageElement = document.getElementById('clashMessage');
+    if (!messageElement) {
+        messageElement = document.createElement('div');
+        messageElement.id = 'clashMessage';
+        messageElement.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #f44336;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            z-index: 10000;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: opacity 0.3s ease;
+        `;
+        document.body.appendChild(messageElement);
+    }
+    
+    messageElement.textContent = message;
+    messageElement.style.backgroundColor = '#f44336';
+    messageElement.style.opacity = '1';
+    messageElement.style.display = 'block';
+    
+    // Auto-hide after 5 seconds for errors
+    setTimeout(() => {
+        messageElement.style.opacity = '0';
+        setTimeout(() => {
+            messageElement.style.display = 'none';
+        }, 300);
+    }, 5000);
 }
 
 // Set default mode on page load
