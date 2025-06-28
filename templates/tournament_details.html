@@ -2923,7 +2923,7 @@
                                     return a.rank - b.rank;
                                 });
 
-                                // Assign seeding based on sorted order
+                                // Assign sequential seeds starting from 1
                                 let currentSeed = 1;
                                 let lastRank = null;
 
@@ -2933,17 +2933,19 @@
                                         player.input.value = '';
                                         player.input.dataset.originalSeed = '';
                                     } else {
+                                        // If this is a new rank (different from the last one), increment the seed
                                         if (player.rank !== lastRank) {
                                             currentSeed = index + 1;
                                         }
+                                        // Assign the current seed (same for players with same rank)
                                         player.input.value = currentSeed.toString();
                                         player.input.dataset.originalSeed = currentSeed.toString();
                                         lastRank = player.rank;
                                     }
                                 });
 
-                                // Adjust seedings to ensure proper order
-                                adjustSeedings();
+                                // Sort the table to show the new order
+                                sortTableBySeed();
 
                                 // Show success message
                                 const messageBox = document.getElementById('messageBox');
