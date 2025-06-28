@@ -3136,10 +3136,15 @@
 
     // Function to sort table by seed values
     function sortTableBySeed() {
+        console.log('sortTableBySeed() function called');
         const tbody = document.getElementById('playersTableBody');
-        if (!tbody) return;
+        if (!tbody) {
+            console.error('playersTableBody not found!');
+            return;
+        }
         
         const rows = Array.from(tbody.getElementsByTagName('tr'));
+        console.log(`Found ${rows.length} rows in the table`);
         
         // Get all rows with their seed values and rankings
         const rowsWithData = rows.map(row => {
@@ -3150,8 +3155,11 @@
             return { row, seed: seedValue, rank: rankValue };
         });
         
+        console.log('Rows with data:', rowsWithData.map(d => ({ seed: d.seed, rank: d.rank })));
+        
         // Check if any players have seeds
         const hasSeeds = rowsWithData.some(rowData => rowData.seed !== 999999);
+        console.log('Has seeds:', hasSeeds);
         
         if (hasSeeds) {
             // If seeds exist, sort by seed value
@@ -3176,6 +3184,9 @@
             tbody.appendChild(row);
         });
         
+        console.log('Table rows reordered successfully');
+        console.log('After sorting:', rowsWithData.map(d => ({ seed: d.seed, rank: d.rank })));
+        
         // FLIP Animation: Show rows actually moving
         requestAnimationFrame(() => {
             // 1. FIRST: Capture current positions
@@ -3191,7 +3202,7 @@
             requestAnimationFrame(() => {
                 const lastRects = {};
                 rowsWithData.forEach((data, index) => {
-                    const playerId = data.row.querySelector('[data-player-id')?.dataset.playerId;
+                    const playerId = data.row.querySelector('[data-player-id]')?.dataset.playerId;
                     if (playerId) {
                         lastRects[playerId] = data.row.getBoundingClientRect();
                     }
@@ -3200,7 +3211,7 @@
                 // 3. INVERT: Move rows back to old positions
                 const moveList = [];
                 rowsWithData.forEach((data, index) => {
-                    const playerId = data.row.querySelector('[data-player-id')?.dataset.playerId;
+                    const playerId = data.row.querySelector('[data-player-id]')?.dataset.playerId;
                     if (playerId && firstRects[playerId] && lastRects[playerId]) {
                         const dy = firstRects[playerId].top - lastRects[playerId].top;
                         if (dy !== 0) {
@@ -3291,6 +3302,21 @@
                 seedingInputs.forEach(input => {
                     input.dataset.originalSeed = input.value;
                 });
+                
+                console.log('Save successful, reloading table data...');
+                
+                // Reload the table data from server to show the updated sorted order
+                const category = document.getElementById('seedingCategorySelect').value;
+                if (category) {
+                    // Force reload players to get the updated data from server
+                    loadPlayers();
+                } else {
+                    // Fallback: try to sort locally
+                    setTimeout(() => {
+                        console.log('Calling sortTableBySeed() as fallback...');
+                        sortTableBySeed();
+                    }, 100);
+                }
             } else {
                 messageBox.className = 'message error-message';
                 messageBox.textContent = data.message || 'Error saving seeding. Please try again.';
