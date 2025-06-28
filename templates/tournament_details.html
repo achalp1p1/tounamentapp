@@ -3236,6 +3236,9 @@
         
         console.log('Table sorted successfully');
         
+        // Update color coding based on new S.No. positions
+        updateColorCodingAfterSort();
+        
         // Update clash detection based on current input values
         updateClashDetection();
     }
@@ -5182,9 +5185,9 @@
             // Clear the table and re-add rows in sorted order
             tbody.innerHTML = '';
             rowData.forEach((data, newIndex) => {
-                // Keep the original S.No. (first column) unchanged
+                // Update S.No. to reflect the new sequential position (1, 2, 3...)
                 const snoCell = data.row.cells[0];
-                snoCell.textContent = (data.originalIndex + 1).toString();
+                snoCell.textContent = (newIndex + 1).toString();
                 
                 // Add the row back to the table
                 tbody.appendChild(data.row);
@@ -5264,6 +5267,9 @@
             });
             
             console.log('Table sorted successfully');
+            
+            // Update color coding based on new S.No. positions
+            updateColorCodingAfterSort();
             
             // Update clash detection based on current input values
             updateClashDetection();
@@ -5471,9 +5477,9 @@
             // Clear the table and re-add rows in sorted order
             tbody.innerHTML = '';
             rowData.forEach((data, newIndex) => {
-                // Keep the original S.No. (first column) unchanged
+                // Update S.No. to reflect the new sequential position (1, 2, 3...)
                 const snoCell = data.row.cells[0];
-                snoCell.textContent = (data.originalIndex + 1).toString();
+                snoCell.textContent = (newIndex + 1).toString();
                 
                 // Add the row back to the table
                 tbody.appendChild(data.row);
@@ -5553,6 +5559,9 @@
             });
             
             console.log('Table sorted successfully');
+            
+            // Update color coding based on new S.No. positions
+            updateColorCodingAfterSort();
             
             // Update clash detection based on current input values
             updateClashDetection();
@@ -5770,6 +5779,42 @@
             }
             setClashMode('manual');
         });
+    </script>
+
+    <script>
+        // Function to update color coding after sorting
+        function updateColorCodingAfterSort() {
+            const tbody = document.getElementById('clashTableBody');
+            if (!tbody) return;
+            
+            const rows = Array.from(tbody.getElementsByTagName('tr'));
+            
+            // Fetch seed ranges to determine color classes
+            fetch('/get_seeding_ranges')
+                .then(response => response.json())
+                .then(seedRangesData => {
+                    if (seedRangesData.success) {
+                        const seedRanges = seedRangesData.seeding_ranges;
+                        
+                        // Update color classes for each row based on its new S.No. position
+                        rows.forEach((row, index) => {
+                            const snoCell = row.cells[0];
+                            const serialNumber = parseInt(snoCell.textContent);
+                            
+                            if (serialNumber) {
+                                const seedRangeClass = getSeedRangeClass(serialNumber, seedRanges);
+                                row.className = seedRangeClass;
+                                console.log(`Row ${index + 1}: S.No. ${serialNumber} -> Color class: ${seedRangeClass}`);
+                            }
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating color coding:', error);
+                });
+        }
+
+        // Function to get valid seed range for a clash group
     </script>
 </body>
 </html>
