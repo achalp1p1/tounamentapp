@@ -1979,6 +1979,8 @@
 
                             <div id="playersContainer" class="players-container" style="margin-top: 20px; display: none;">
                                 <form id="seedingForm" onsubmit="saveSeeding(event)">
+                                    <!-- Message Box for Update Seeding -->
+                                    <div id="messageBox" class="message" style="margin-bottom: 10px; padding: 10px; border-radius: 4px; display: none;"></div>
                                     <table class="players-table" style="width: 100%; border-collapse: collapse;">
                                         <thead>
                                             <tr>
@@ -1992,7 +1994,6 @@
                                         </tbody>
                                     </table>
                                 </form>
-                                <div id="messageBox" class="message" style="margin-top: 10px; padding: 10px; border-radius: 4px; display: none;"></div>
                             </div>
                         </div>
 
@@ -2026,6 +2027,8 @@
                             </div>
 
                             <div id="clashContainer" class="players-container" style="margin-top: 20px; display: none;">
+                                <!-- Message Box for Clash Resolution -->
+                                <div id="clashMessageBox" class="message" style="margin-bottom: 10px; padding: 10px; border-radius: 4px; display: none;"></div>
                                 <table class="players-table" style="width: 100%; border-collapse: collapse;">
                                     <thead>
                                         <tr>
@@ -2073,9 +2076,6 @@
                                   transform: translateX(26px);
                                 }
                                 </style>
-
-                                <!-- Message Box for Clash Resolution -->
-                                <div id="clashMessageBox" class="message" style="margin-top: 10px; padding: 10px; border-radius: 4px; display: none;"></div>
 
                                 <!-- Clash Summary Container -->
                                 <div id="clashSummary" class="clash-summary" style="display: none;">
