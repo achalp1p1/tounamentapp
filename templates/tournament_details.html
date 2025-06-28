@@ -1956,13 +1956,25 @@
                         <!-- Step 1 Content -->
                         <div id="step1Content" class="step-content-area" style="display: none;">
                             <h3 style="color: #1e3c72; margin-bottom: 20px;">Update Seeding</h3>
-                            <div class="form-group">
-                                <select id="seedingCategorySelect" class="form-control" style="max-width: 300px;">
-                                    <option value="">Select a category</option>
-                                    {% for category in categories %}
-                                    <option value="{{ category['Category'] }}">{{ category['Category'] }}</option>
-                                    {% endfor %}
-                                </select>
+                            <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+                                <div class="form-group" style="margin: 0;">
+                                    <select id="seedingCategorySelect" class="form-control" style="max-width: 300px;">
+                                        <option value="">Select a category</option>
+                                        {% for category in categories %}
+                                        <option value="{{ category['Category'] }}">{{ category['Category'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <!-- Update Seeding Buttons -->
+                                <div style="display: flex; align-items: center; gap: 16px;">
+                                    <button type="submit" id="saveButton" class="form-control" style="background-color: #1e3c72; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; height: 38px; min-width: 120px; display: none;" onclick="saveSeeding(event)">
+                                        <i class="fas fa-save"></i> Save
+                                    </button>
+                                    <button type="button" id="resetSeedsButton" class="form-control" style="background-color: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; height: 38px; min-width: 120px; display: none;">
+                                        <i class="fas fa-sync"></i> Reset
+                                    </button>
+                                </div>
                             </div>
 
                             <div id="playersContainer" class="players-container" style="margin-top: 20px; display: none;">
@@ -1979,14 +1991,6 @@
                                             <!-- Players will be loaded here -->
                                         </tbody>
                                     </table>
-                                    <div class="d-flex" style="margin-top: 20px; display: flex !important; flex-direction: row !important;">
-                                        <button type="submit" id="saveButton" class="submit-button" style="max-width: 200px; display: none; flex: 0 0 auto;">
-                                            <i class="fas fa-save"></i> Save
-                                        </button>
-                                        <button type="button" id="resetSeedsButton" class="submit-button" style="max-width: 200px; display: none; background: #dc3545; flex: 0 0 auto; margin-left: 10px;">
-                                            <i class="fas fa-sync"></i> Reset Seeds
-                                        </button>
-                                    </div>
                                 </form>
                                 <div id="messageBox" class="message" style="margin-top: 10px; padding: 10px; border-radius: 4px; display: none;"></div>
                             </div>
@@ -1995,13 +1999,30 @@
                         <!-- Step 2 Content -->
                         <div id="step2Content" class="step-content-area" style="display: none;">
                             <h3 style="color: #1e3c72; margin-bottom: 20px;">Resolve Seeding Clash</h3>
-                            <div class="form-group">
-                                <select id="clashCategorySelect" class="form-control" style="max-width: 300px;">
-                                    <option value="">Select a category</option>
-                                    {% for category in categories %}
-                                    <option value="{{ category['Category'] }}">{{ category['Category'] }}</option>
-                                    {% endfor %}
-                                </select>
+                            <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+                                <div class="form-group" style="margin: 0;">
+                                    <select id="clashCategorySelect" class="form-control" style="max-width: 300px;">
+                                        <option value="">Select a category</option>
+                                        {% for category in categories %}
+                                        <option value="{{ category['Category'] }}">{{ category['Category'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <!-- Clash Resolution Mode Toggle -->
+                                <div id="clashModeToggle" style="display: flex; align-items: center; gap: 16px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span id="manualLabel" style="font-weight: 500; color: #9c27b0;">Manual</span>
+                                        <label class="switch">
+                                            <input type="checkbox" id="clashModeSwitch" onchange="toggleClashMode()">
+                                            <span class="slider round"></span>
+                                        </label>
+                                        <span id="autoLabel" style="font-weight: 500; color: #2196f3;">Automatic</span>
+                                    </div>
+                                    <button id="saveSeedsBtn" class="form-control" style="background-color: #1e3c72; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; height: 38px; min-width: 120px;" onclick="saveAllSeedChanges()">
+                                        <i class="fas fa-save"></i> Save
+                                    </button>
+                                </div>
                             </div>
 
                             <div id="clashContainer" class="players-container" style="margin-top: 20px; display: none;">
@@ -2017,21 +2038,6 @@
                                         <!-- Players will be loaded here -->
                                     </tbody>
                                 </table>
-                                
-                                <!-- Clash Resolution Mode Toggle -->
-                                <div id="clashModeToggle" style="margin: 20px 0 10px 0; text-align: right; display: flex; align-items: center; gap: 16px; justify-content: flex-end;">
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <span id="manualLabel" style="font-weight: 500; color: #9c27b0;">Manual</span>
-                                        <label class="switch">
-                                            <input type="checkbox" id="clashModeSwitch" onchange="toggleClashMode()">
-                                            <span class="slider round"></span>
-                                        </label>
-                                        <span id="autoLabel" style="font-weight: 500; color: #2196f3;">Automatic</span>
-                                    </div>
-                                    <button id="saveSeedsBtn" class="submit-button" style="max-width: 200px; margin-left: 10px;" onclick="saveAllSeedChanges()">
-                                        <i class="fas fa-save"></i> Save Seeds
-                                    </button>
-                                </div>
 
                                 <style>
                                 .switch {
@@ -2078,6 +2084,7 @@
                                         <!-- Clash items will be generated here -->
                                     </div>
                                 </div>
+                            </div>
                         </div>
 
                         <!-- Step 3 Content -->
@@ -2987,20 +2994,12 @@
                             tbody.innerHTML = '';
                             data.players.forEach((player, index) => {
                                 const row = document.createElement('tr');
+                                const seedRangeClass = getSeedRangeClass(index + 1, seedRanges);
+                                row.className = seedRangeClass;
                                 row.innerHTML = `
+                                    <td style="${cellStyle}; text-align: center;">${index + 1}</td>
                                     <td style="${cellStyle}">${player.name}</td>
-                                    <td style="${cellStyle}"></td>
-                                    <td style="${cellStyle}">
-                                        <input type="number" 
-                                               class="form-control seeding-input" 
-                                               value="${player.seeding || ''}" 
-                                               min="1"
-                                               max="${data.players.length}"
-                                               name="seedings[]"
-                                               data-player-id="${player.player_id}"
-                                               data-original-seed="${player.seeding || ''}"
-                                               style="width: 80px;">
-                                    </td>
+                                    <td style="${cellStyle}">${player.seeding || ''}</td>
                                 `;
                                 tbody.appendChild(row);
                             });
