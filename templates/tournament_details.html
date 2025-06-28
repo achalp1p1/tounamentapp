@@ -3619,8 +3619,12 @@
                                             // Add shuffle button in automatic mode
                                             let shuffleBtnHtml = '';
                                             if (window.clashResolutionMode === 'auto') {
-                                                shuffleBtnHtml = `<button class="resolve-clash-btn" style="background-color: #ff9800; margin-left: 5px; font-size: 0.8em;" onclick="shuffleClashGroupByPlayer('${player.player_id}')" title="Shuffle this clash group">🔀</button>`;
-                                                console.log('Adding shuffle button for player:', player.player_id);
+                                                // Get color based on the seed value (not seeding group)
+                                                const currentSeed = parseInt(player.seeding);
+                                                const dynamicColor = getDynamicColorForSeed(currentSeed);
+                                                
+                                                shuffleBtnHtml = `<button class="resolve-clash-btn shuffle-btn" style="background-color: ${dynamicColor}; margin-left: 5px; font-size: 0.9em; padding: 4px 8px;" onclick="shuffleClashGroupByPlayer('${player.player_id}')" title="Shuffle this clash group">🔀</button>`;
+                                                console.log('Adding shuffle button for player:', player.player_id, 'with seed:', currentSeed, 'color:', dynamicColor);
                                             } else {
                                                 console.log('Not adding shuffle button - mode is:', window.clashResolutionMode);
                                             }
@@ -4021,8 +4025,12 @@
                                             // Add shuffle button in automatic mode
                                             let shuffleBtnHtml = '';
                                             if (window.clashResolutionMode === 'auto') {
-                                                shuffleBtnHtml = `<button class="resolve-clash-btn" style="background-color: #ff9800; margin-left: 5px; font-size: 0.8em;" onclick="shuffleClashGroupByPlayer('${player.player_id}')" title="Shuffle this clash group">🔀</button>`;
-                                                console.log('Adding shuffle button for player:', player.player_id);
+                                                // Get color based on the seed value (not seeding group)
+                                                const currentSeed = parseInt(player.seeding);
+                                                const dynamicColor = getDynamicColorForSeed(currentSeed);
+                                                
+                                                shuffleBtnHtml = `<button class="resolve-clash-btn shuffle-btn" style="background-color: ${dynamicColor}; margin-left: 5px; font-size: 0.9em; padding: 4px 8px;" onclick="shuffleClashGroupByPlayer('${player.player_id}')" title="Shuffle this clash group">🔀</button>`;
+                                                console.log('Adding shuffle button for player:', player.player_id, 'with seed:', currentSeed, 'color:', dynamicColor);
                                             } else {
                                                 console.log('Not adding shuffle button - mode is:', window.clashResolutionMode);
                                             }
@@ -5338,6 +5346,29 @@
             
             console.log(`Clash group for seed ${currentSeed}: S.No. range ${min}-${max} (${clashPlayers.length} players)`);
             return { min, max };
+        }
+
+        // Function to get dynamic color for seed value
+        function getDynamicColorForSeed(seedValue) {
+            const colorMap = {
+                1: 'rgba(255, 193, 7, 0.8)',   // Yellow
+                2: 'rgba(33, 150, 243, 0.8)',  // Blue
+                3: 'rgba(76, 175, 80, 0.8)',   // Green
+                4: 'rgba(244, 67, 54, 0.8)',   // Red
+                5: 'rgba(156, 39, 176, 0.8)',  // Purple
+                6: 'rgba(255, 152, 0, 0.8)',   // Orange
+                7: 'rgba(158, 158, 158, 0.8)', // Gray
+                8: 'rgba(0, 150, 136, 0.8)',   // Teal
+                9: 'rgba(233, 30, 99, 0.8)',   // Pink
+                10: 'rgba(139, 195, 74, 0.8)', // Light Green
+                11: 'rgba(255, 87, 34, 0.8)',  // Deep Orange
+                12: 'rgba(121, 85, 72, 0.8)',  // Brown
+                13: 'rgba(96, 125, 139, 0.8)', // Blue Gray
+                14: 'rgba(255, 235, 59, 0.8)', // Lime
+                15: 'rgba(0, 188, 212, 0.8)',  // Cyan
+                16: 'rgba(255, 64, 129, 0.8)'  // Pink
+            };
+            return colorMap[seedValue] || 'rgba(76, 175, 80, 0.8)'; // Default to green for any other seed values
         }
 
         // Function to validate seed input against clash group range
