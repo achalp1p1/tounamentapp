@@ -3175,6 +3175,69 @@
         rowsWithData.forEach(({ row }) => {
             tbody.appendChild(row);
         });
+        
+        // FLIP Animation: Show rows actually moving
+        requestAnimationFrame(() => {
+            // 1. FIRST: Capture current positions
+            const firstRects = {};
+            rowsWithData.forEach((data, index) => {
+                const playerId = data.row.querySelector('[data-player-id]')?.dataset.playerId;
+                if (playerId) {
+                    firstRects[playerId] = data.row.getBoundingClientRect();
+                }
+            });
+            
+            // 2. LAST: Get new positions after DOM update
+            requestAnimationFrame(() => {
+                const lastRects = {};
+                rowsWithData.forEach((data, index) => {
+                    const playerId = data.row.querySelector('[data-player-id')?.dataset.playerId;
+                    if (playerId) {
+                        lastRects[playerId] = data.row.getBoundingClientRect();
+                    }
+                });
+                
+                // 3. INVERT: Move rows back to old positions
+                const moveList = [];
+                rowsWithData.forEach((data, index) => {
+                    const playerId = data.row.querySelector('[data-player-id')?.dataset.playerId;
+                    if (playerId && firstRects[playerId] && lastRects[playerId]) {
+                        const dy = firstRects[playerId].top - lastRects[playerId].top;
+                        if (dy !== 0) {
+                            data.row.style.transition = 'none';
+                            data.row.style.transform = `translateY(${dy}px)`;
+                            data.row.style.backgroundColor = '#ffeb3b';
+                            moveList.push({ row: data.row, dy });
+                        }
+                    }
+                });
+                
+                // 4. PLAY: Animate to new positions sequentially
+                let i = 0;
+                function animateNext() {
+                    if (i >= moveList.length) {
+                        return;
+                    }
+                    const { row } = moveList[i];
+                    row.style.transition = 'transform 800ms cubic-bezier(0.4,0,0.2,1), background-color 800ms ease';
+                    row.style.transform = '';
+                    
+                    // Remove highlight after animation
+                    setTimeout(() => {
+                        row.style.backgroundColor = '';
+                    }, 800);
+                    
+                    i++;
+                    setTimeout(animateNext, 500); // 500ms delay between each row
+                }
+                animateNext();
+            });
+        });
+        
+        console.log('Table sorted successfully');
+        
+        // Update clash detection based on current input values
+        updateClashDetection();
     }
 
     // Function to save seeding
@@ -5105,6 +5168,17 @@
             rowData.sort((a, b) => a.seed - b.seed);
             console.log('Sorted rowData:', rowData.map(d => ({ seed: d.seed, originalIndex: d.originalIndex })));
             
+            // Capture positions BEFORE moving rows
+            const originalPositions = [];
+            rowData.forEach((data, index) => {
+                const rect = data.row.getBoundingClientRect();
+                originalPositions.push({
+                    row: data.row,
+                    top: rect.top,
+                    originalIndex: data.originalIndex
+                });
+            });
+            
             // Clear the table and re-add rows in sorted order
             tbody.innerHTML = '';
             rowData.forEach((data, newIndex) => {
@@ -5114,6 +5188,79 @@
                 
                 // Add the row back to the table
                 tbody.appendChild(data.row);
+            });
+            
+            // FLIP Animation: Show rows actually moving
+            requestAnimationFrame(() => {
+                // Get new positions AFTER moving rows
+                const newPositions = [];
+                rowData.forEach((data, index) => {
+                    const rect = data.row.getBoundingClientRect();
+                    newPositions.push({
+                        row: data.row,
+                        top: rect.top,
+                        newIndex: index
+                    });
+                });
+                
+                // Find rows that actually moved
+                const movedRows = [];
+                originalPositions.forEach((original, index) => {
+                    const newPos = newPositions.find(np => np.row === original.row);
+                    if (newPos && Math.abs(original.top - newPos.top) > 1) { // More than 1px difference
+                        const dy = original.top - newPos.top;
+                        movedRows.push({
+                            row: original.row,
+                            dy: dy,
+                            originalIndex: original.originalIndex,
+                            newIndex: newPos.newIndex
+                        });
+                        console.log(`Row ${original.originalIndex} moved by ${dy}px`);
+                    }
+                });
+                
+                console.log(`Found ${movedRows.length} rows that moved`);
+                
+                if (movedRows.length === 0) {
+                    console.log('No rows moved, skipping animation');
+                    return;
+                }
+                
+                // Step 1: Move rows back to their original positions
+                movedRows.forEach(move => {
+                    move.row.style.transition = 'none';
+                    move.row.style.transform = `translateY(${move.dy}px)`;
+                    move.row.style.backgroundColor = '#ffeb3b';
+                    move.row.style.zIndex = '1000';
+                    move.row.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+                });
+                
+                // Step 2: Animate to new positions sequentially
+                let i = 0;
+                function animateNext() {
+                    if (i >= movedRows.length) {
+                        return;
+                    }
+                    
+                    const move = movedRows[i];
+                    console.log(`Animating row ${move.originalIndex} to position ${move.newIndex}`);
+                    
+                    move.row.style.transition = 'transform 1000ms cubic-bezier(0.4,0,0.2,1), background-color 1000ms ease, box-shadow 1000ms ease';
+                    move.row.style.transform = '';
+                    
+                    // Remove highlight and z-index after animation
+                    setTimeout(() => {
+                        move.row.style.backgroundColor = '';
+                        move.row.style.zIndex = '';
+                        move.row.style.boxShadow = '';
+                    }, 1000);
+                    
+                    i++;
+                    setTimeout(animateNext, 400); // 400ms delay between each row
+                }
+                
+                // Start animation after a small delay
+                setTimeout(animateNext, 100);
             });
             
             console.log('Table sorted successfully');
@@ -5310,6 +5457,17 @@
             rowData.sort((a, b) => a.seed - b.seed);
             console.log('Sorted rowData:', rowData.map(d => ({ seed: d.seed, originalIndex: d.originalIndex })));
             
+            // Capture positions BEFORE moving rows
+            const originalPositions = [];
+            rowData.forEach((data, index) => {
+                const rect = data.row.getBoundingClientRect();
+                originalPositions.push({
+                    row: data.row,
+                    top: rect.top,
+                    originalIndex: data.originalIndex
+                });
+            });
+            
             // Clear the table and re-add rows in sorted order
             tbody.innerHTML = '';
             rowData.forEach((data, newIndex) => {
@@ -5321,7 +5479,83 @@
                 tbody.appendChild(data.row);
             });
             
+            // FLIP Animation: Show rows actually moving
+            requestAnimationFrame(() => {
+                // Get new positions AFTER moving rows
+                const newPositions = [];
+                rowData.forEach((data, index) => {
+                    const rect = data.row.getBoundingClientRect();
+                    newPositions.push({
+                        row: data.row,
+                        top: rect.top,
+                        newIndex: index
+                    });
+                });
+                
+                // Find rows that actually moved
+                const movedRows = [];
+                originalPositions.forEach((original, index) => {
+                    const newPos = newPositions.find(np => np.row === original.row);
+                    if (newPos && Math.abs(original.top - newPos.top) > 1) { // More than 1px difference
+                        const dy = original.top - newPos.top;
+                        movedRows.push({
+                            row: original.row,
+                            dy: dy,
+                            originalIndex: original.originalIndex,
+                            newIndex: newPos.newIndex
+                        });
+                        console.log(`Row ${original.originalIndex} moved by ${dy}px`);
+                    }
+                });
+                
+                console.log(`Found ${movedRows.length} rows that moved`);
+                
+                if (movedRows.length === 0) {
+                    console.log('No rows moved, skipping animation');
+                    return;
+                }
+                
+                // Step 1: Move rows back to their original positions
+                movedRows.forEach(move => {
+                    move.row.style.transition = 'none';
+                    move.row.style.transform = `translateY(${move.dy}px)`;
+                    move.row.style.backgroundColor = '#ffeb3b';
+                    move.row.style.zIndex = '1000';
+                    move.row.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+                });
+                
+                // Step 2: Animate to new positions sequentially
+                let i = 0;
+                function animateNext() {
+                    if (i >= movedRows.length) {
+                        return;
+                    }
+                    
+                    const move = movedRows[i];
+                    console.log(`Animating row ${move.originalIndex} to position ${move.newIndex}`);
+                    
+                    move.row.style.transition = 'transform 1000ms cubic-bezier(0.4,0,0.2,1), background-color 1000ms ease, box-shadow 1000ms ease';
+                    move.row.style.transform = '';
+                    
+                    // Remove highlight and z-index after animation
+                    setTimeout(() => {
+                        move.row.style.backgroundColor = '';
+                        move.row.style.zIndex = '';
+                        move.row.style.boxShadow = '';
+                    }, 1000);
+                    
+                    i++;
+                    setTimeout(animateNext, 400); // 400ms delay between each row
+                }
+                
+                // Start animation after a small delay
+                setTimeout(animateNext, 100);
+            });
+            
             console.log('Table sorted successfully');
+            
+            // Update clash detection based on current input values
+            updateClashDetection();
         }
 
         // Function to get valid seed range for a clash group
