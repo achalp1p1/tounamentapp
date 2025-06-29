@@ -1233,6 +1233,9 @@ def get_category_players(tournament_id, category):
                             }
                             if fields == 'full':
                                 player['school'] = prow.get('School/Institution', '')
+                                player['state'] = prow.get('State', '')
+                                player['district'] = prow.get('District', '')
+                                player['academy'] = prow.get('Academy', '')
                             players.append(player)
                             print(f"Added player: {prow['Name']}, Seeding: {seeding}")
                             break
