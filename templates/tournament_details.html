@@ -6084,9 +6084,9 @@
                                 <td style="padding: 12px;">${player.name}</td>
                                 <td style="padding: 12px;">${groupValue}</td>
                                 <td style="padding: 12px;">
-                                    <select class="form-control" style="width: 100px; padding: 4px;">
-                                        <option value="">Select</option>
-                                        ${Array.from({length: players.length}, (_, i) => i + 1).map(num => 
+                                    <select class="form-control seed-select" style="width: 50px !important; padding: 4px;" data-player-index="${index}" onchange="validateSeedSelection(this)">
+                                        <option value=""></option>
+                                        ${getValidSeedRangeForPosition(index + 1, seedRanges).map(num => 
                                             `<option value="${num}">${num}</option>`
                                         ).join('')}
                                     </select>
@@ -6128,9 +6128,9 @@
                             <td style="padding: 12px;">${player.name}</td>
                             <td style="padding: 12px;">${groupValue}</td>
                             <td style="padding: 12px;">
-                                <select class="form-control" style="width: 100px; padding: 4px;">
-                                    <option value="">Select</option>
-                                    ${Array.from({length: players.length}, (_, i) => i + 1).map(num => 
+                                <select class="form-control seed-select" style="width: 50px !important; padding: 4px;" data-player-index="${index}" onchange="validateSeedSelection(this)">
+                                    <option value=""></option>
+                                    ${getValidSeedRangeForPosition(index + 1, seedRanges).map(num => 
                                         `<option value="${num}">${num}</option>`
                                     ).join('')}
                                 </select>
@@ -6316,6 +6316,64 @@
 
         // Show the first step by default
         showStepContent(1);
+    </script>
+
+    <script>
+        // Function to validate seed selection and prevent duplicates
+        function validateSeedSelection(selectElement) {
+            const selectedValue = selectElement.value;
+            const currentPlayerIndex = parseInt(selectElement.getAttribute('data-player-index'));
+            
+            if (!selectedValue) return; // Allow empty selection
+            
+            // Get all seed selects in the table
+            const allSeedSelects = document.querySelectorAll('.seed-select');
+            let duplicateFound = false;
+            let duplicatePlayerName = '';
+            
+            // Check for duplicates
+            allSeedSelects.forEach((select, index) => {
+                if (index !== currentPlayerIndex && select.value === selectedValue) {
+                    duplicateFound = true;
+                    const row = select.closest('tr');
+                    const nameCell = row.cells[1];
+                    duplicatePlayerName = nameCell.textContent.trim();
+                }
+            });
+            
+            if (duplicateFound) {
+                // Reset to empty and show error message
+                selectElement.value = '';
+                showDrawMessage(`Seed ${selectedValue} is already assigned to ${duplicatePlayerName}. Please select a different seed.`, 'error');
+            }
+        }
+    </script>
+
+    <script>
+        // Function to get valid seed range for a player position based on seeding ranges
+        function getValidSeedRangeForPosition(position, seedRanges) {
+            // Find which seed range this position belongs to
+            for (const range of seedRanges) {
+                if (position >= range.min && position <= range.max) {
+                    // Generate array of valid seed values for this range
+                    const validSeeds = [];
+                    for (let i = range.min; i <= range.max; i++) {
+                        validSeeds.push(i);
+                    }
+                    return validSeeds;
+                }
+            }
+            
+            // If no range found, return the full range
+            const maxSeed = Math.max(...seedRanges.map(r => r.max));
+            const validSeeds = [];
+            for (let i = 1; i <= maxSeed; i++) {
+                validSeeds.push(i);
+            }
+            return validSeeds;
+        }
+
+        // Function to load draw players
     </script>
 </body>
 </html>
