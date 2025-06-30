@@ -1,0 +1,9 @@
+{
+    "required_tables": [
+        "tournaments",
+        "tournament_categories",
+        "players",
+        "tournament_registrations",
+        "tournament_draw"
+    ]
+} 

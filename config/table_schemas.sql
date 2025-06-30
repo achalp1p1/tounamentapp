@@ -2,7 +2,7 @@ SET FOREIGN_KEY_CHECKS=0;
 
 -- Create tournaments table if it doesn't exist
 CREATE TABLE IF NOT EXISTS tournaments (
-    id VARCHAR(10) PRIMARY KEY,
+    tournament_id VARCHAR(10) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     categories TEXT,
     venue VARCHAR(255),
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS tournament_categories (
     second_prize DECIMAL(10,2),
     third_prize DECIMAL(10,2),
     format VARCHAR(50),
-    FOREIGN KEY (tournament_id) REFERENCES tournaments(id)
+    FOREIGN KEY (tournament_id) REFERENCES tournaments(tournament_id)
 );
 
 -- Create players table if it doesn't exist
@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS tournament_registrations (
     category VARCHAR(50),
     status VARCHAR(20),
     seeding INT,
-    FOREIGN KEY (tournament_id) REFERENCES tournaments(id),
+    FOREIGN KEY (tournament_id) REFERENCES tournaments(tournament_id),
     FOREIGN KEY (player_id) REFERENCES players(id)
 );
 
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS tournament_draw (
     category VARCHAR(50) NOT NULL,
     player_rank INT,
     seeding INT,
-    FOREIGN KEY (tournament_id) REFERENCES tournaments(id)
+    FOREIGN KEY (tournament_id) REFERENCES tournaments(tournament_id)
 );
 
 SET FOREIGN_KEY_CHECKS=1; 
