@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Indian Table Tennis Foundation - New Player Registration</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #f8f9fa;
+        }
+
+        .container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 2vh;
+            text-align: center;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: min(32px, 4vh);
+            margin-bottom: 1vh;
+            color: white;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .logo {
+            position: absolute;
+            left: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 48px;
+            width: auto;
+        }
+
+        @media (max-width: 768px) {
+            .logo {
+                height: 36px;
+                left: 16px;
+            }
+        }
+
+        .content {
+            flex: 1;
+            padding: 3vh 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .registration-form {
+            background: white;
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .form-container {
+            display: flex;
+            gap: 32px;
+            margin-top: 20px;
+        }
+
+        .mandatory-fields,
+        .additional-fields {
+            flex: 1;
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease;
+        }
+
+        .mandatory-fields:hover,
+        .additional-fields:hover {
+            transform: translateY(-2px);
+        }
+
+        .section-title {
+            color: #1e3c72;
+            font-size: 1.2em;
+            font-weight: 500;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .required::after {
+            content: " *";
+            color: #dc3545;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            background: #f8f9fa;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #1e3c72;
+            box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+            background: white;
+        }
+
+        textarea {
+            min-height: 60px;
+            max-height: 80px;
+            resize: vertical;
+        }
+
+        button {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            width: auto;
+            min-width: 200px;
+            margin: 2rem auto 0;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: block;
+        }
+
+        button:hover {
+            background: #1e3c72;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(30, 60, 114, 0.2);
+        }
+
+        .error-message {
+            background-color: #fff5f5;
+            color: #dc3545;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            text-align: center;
+            font-weight: 500;
+            border: 1px solid #ffcdd2;
+        }
+
+        @media (max-width: 768px) {
+            .form-container {
+                flex-direction: column;
+            }
+
+            .mandatory-fields,
+            .additional-fields {
+                width: 100%;
+            }
+
+            .registration-form {
+                padding: 20px;
+            }
+
+            /* Make bank details grid single column on mobile */
+            .bank-details-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            /* Adjust header for mobile */
+            .header {
+                padding: 1vh;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .logo {
+                height: 32px;
+                left: 12px;
+            }
+
+            /* Adjust form spacing for mobile */
+            .form-group {
+                margin-bottom: 1rem;
+            }
+
+            /* Make inputs more touch-friendly */
+            input, select, textarea {
+                font-size: 16px; /* Prevents zoom on iOS */
+                padding: 10px;
+            }
+
+            /* Adjust button size for mobile */
+            button {
+            width: 100%;
+                padding: 14px 20px;
+                font-size: 16px;
+            }
+        }
+
+        #dstta_id_container {
+            margin-bottom: 1rem;
+        }
+        
+        #dstta_id_container input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e1e1e1;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        
+        #dstta_id_container label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .help-text {
+            display: block;
+            margin-top: 4px;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        input[type="file"] {
+            padding: 8px;
+            background: #f8f9fa;
+            border: 1px dashed #ccc;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        input[type="file"]:hover {
+            border-color: #1e3c72;
+            background: #f0f4f8;
+        }
+
+        input[type="file"]::file-selector-button {
+            background: #1e3c72;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 16px;
+            font-weight: 500;
+        }
+
+        input[type="file"]::file-selector-button:hover {
+            background: #2a5298;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .checkbox-group input[type="checkbox"]:disabled + label {
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        .bank-details {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+
+        .bank-info {
+            background: white;
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .bank-info p {
+            margin: 5px 0;
+        }
+
+        #noc_section {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    {% include 'menu_db.html' %}
+    <div class="container">
+        <div class="header">
+            <img src="{{ url_for('static', filename='dilliLabsIcon.png') }}" alt="DilliLabs Logo" class="logo">
+            <h1>New Player Registration</h1>
+        </div>
+
+        <div class="content">
+            {% if error %}
+            <div class="error-message">
+                {{ error }}
+            </div>
+            {% endif %}
+        
+        <div class="registration-form">
+                <form method="POST" action="{{ url_for('player_registration_db') }}" enctype="multipart/form-data" class="registration-form">
+                    <input type="hidden" id="player_id" name="player_id" value="{{ player_id }}">
+                    <div class="form-container">
+                        <!-- Left Column - Required Fields -->
+                        <div class="mandatory-fields">
+                            <div class="section-title">Basic Information</div>
+                            
+                <div class="form-group">
+                                <label for="player_name" class="required">Name</label>
+                                <input type="text" id="player_name" name="player_name" required 
+                                       placeholder="Enter player's full name"
+                                       pattern="[A-Za-z\s]+" 
+                                       title="Please enter a valid name (letters and spaces only)">
+                </div>
+                
+                <div class="form-group">
+                                <label for="date_of_birth" class="required">Date of Birth</label>
+                                <input type="date" id="date_of_birth" name="date_of_birth" required
+                                       max="{{ today_date }}"
+                                       title="Please select a valid date of birth">
+                </div>
+                
+                <div class="form-group">
+                                <label for="gender" class="required">Gender</label>
+                                <select id="gender" name="gender" required>
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                                <label for="phone" class="required">Phone Number</label>
+                                <input type="tel" id="phone" name="phone" required
+                                       placeholder="Enter 10-digit mobile number"
+                                       pattern="[0-9]{10}"
+                                       title="Please enter a valid 10-digit phone number">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="email">Email ID</label>
+                                <input type="email" id="email" name="email" 
+                                       placeholder="Enter email address">
+                            </div>
+
+                            <div class="section-title" style="margin-top: 2rem;">Upload Documents</div>
+
+                            <div class="form-group">
+                                <label for="photo">Photo (150x150 pixel)</label>
+                                <input type="file" id="photo" name="photo" accept="image/*"
+                                       title="Please upload a photo in 150x150 pixel format">
+                                <small class="help-text">Upload a square photo in 150x150 pixel format</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="birth_certificate">Birth Certificate Copy</label>
+                                <input type="file" id="birth_certificate" name="birth_certificate" accept=".pdf,.jpg,.jpeg,.png"
+                                       title="Please upload a copy of birth certificate">
+                                <small class="help-text">Upload a copy of birth certificate (PDF, JPG, or PNG)</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="address_proof">Address Proof</label>
+                                <input type="file" id="address_proof" name="address_proof" accept=".pdf,.jpg,.jpeg,.png"
+                                       title="Please upload address proof">
+                                <small class="help-text">Upload address proof document (PDF, JPG, or PNG)</small>
+                            </div>
+                        </div>
+
+                        <!-- Right Column - Additional Fields -->
+                        <div class="additional-fields">
+                            <div class="section-title">Additional Information</div>
+                            
+                            <div class="form-group">
+                                <label for="ttfi_id">TTFI ID</label>
+                                <input type="text" id="ttfi_id" name="ttfi_id" 
+                                       placeholder="Enter TTFI ID if issued"
+                                       pattern="[A-Za-z0-9]+" 
+                                       title="Please enter a valid TTFI ID">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="state">State</label>
+                                <select id="state" name="state" class="form-control">
+                                    <option value="">Select State</option>
+                                    <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
+                                    <option value="Andhra Pradesh">Andhra Pradesh</option>
+                                    <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                                    <option value="Assam">Assam</option>
+                                    <option value="Bihar">Bihar</option>
+                                    <option value="Chandigarh">Chandigarh</option>
+                                    <option value="Chhattisgarh">Chhattisgarh</option>
+                                    <option value="Dadra and Nagar Haveli and Daman and Diu">Dadra and Nagar Haveli and Daman and Diu</option>
+                                    <option value="Delhi">Delhi</option>
+                                    <option value="Goa">Goa</option>
+                                    <option value="Gujarat">Gujarat</option>
+                                    <option value="Haryana">Haryana</option>
+                                    <option value="Himachal Pradesh">Himachal Pradesh</option>
+                                    <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+                                    <option value="Jharkhand">Jharkhand</option>
+                                    <option value="Karnataka">Karnataka</option>
+                                    <option value="Kerala">Kerala</option>
+                                    <option value="Ladakh">Ladakh</option>
+                                    <option value="Lakshadweep">Lakshadweep</option>
+                                    <option value="Madhya Pradesh">Madhya Pradesh</option>
+                                    <option value="Maharashtra">Maharashtra</option>
+                                    <option value="Manipur">Manipur</option>
+                                    <option value="Meghalaya">Meghalaya</option>
+                                    <option value="Mizoram">Mizoram</option>
+                                    <option value="Nagaland">Nagaland</option>
+                                    <option value="Odisha">Odisha</option>
+                                    <option value="Puducherry">Puducherry</option>
+                                    <option value="Punjab">Punjab</option>
+                                    <option value="Rajasthan">Rajasthan</option>
+                                    <option value="Sikkim">Sikkim</option>
+                                    <option value="Tamil Nadu">Tamil Nadu</option>
+                                    <option value="Telangana">Telangana</option>
+                                    <option value="Tripura">Tripura</option>
+                                    <option value="Uttar Pradesh">Uttar Pradesh</option>
+                                    <option value="Uttarakhand">Uttarakhand</option>
+                                    <option value="West Bengal">West Bengal</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="do_state_registration" name="do_state_registration" disabled>
+                                    <label for="do_state_registration">Do Official State Registration</label>
+                                </div>
+                            </div>
+
+                            <div id="payment_section" style="display: none;">
+                                <h3>Payment Details</h3>
+                                <p>Registration Fee: ₹1000</p>
+                                
+                                <div class="bank-details">
+                                    <h4>Bank Account Details</h4>
+                                    <p>Please transfer the amount using the following bank details:</p>
+                                    <div class="bank-info">
+                                        <p><strong>Account Name:</strong> Delhi State Table Tennis Association</p>
+                                        <p><strong>Bank Name:</strong> AU Small Finance Bank</p>
+                                        <p><strong>Account Number:</strong> 2402257962293561</p>
+                                        <p><strong>IFSC Code:</strong> AUBL0002579</p>
+                                        <p><strong>Branch:</strong> Punjabi Bagh Branch</p>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="payment_snapshot">Payment Snapshot</label>
+                                    <input type="file" id="payment_snapshot" name="payment_snapshot" accept="image/*,.pdf">
+                                    <small class="form-text text-muted">Upload screenshot or PDF of your payment</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="transaction_id">Transaction ID</label>
+                                    <input type="text" id="transaction_id" name="transaction_id">
+                                    <small class="form-text text-muted">Enter the transaction ID from your payment</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <div class="checkbox-group">
+                                        <input type="checkbox" id="is_state_transfer" name="is_state_transfer">
+                                        <label for="is_state_transfer">Player is transferring from another state</label>
+                                    </div>
+                                </div>
+
+                                <div id="noc_section" style="display: none;">
+                                    <div class="form-group">
+                                        <label for="noc_certificate">NOC Certificate</label>
+                                        <input type="file" id="noc_certificate" name="noc_certificate" accept="image/*,.pdf">
+                                        <small class="form-text text-muted">Upload NOC certificate from previous state association</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="official_state_id">Official State ID</label>
+                                <input type="text" id="official_state_id" name="official_state_id" 
+                                       placeholder="Enter official state ID if issued"
+                                       pattern="[A-Za-z0-9]+" 
+                                       title="Please enter a valid state ID"
+                                       readonly>
+                                <small class="help-text">This will be automatically generated after payment verification</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="district">District</label>
+                                <input type="text" id="district" name="district" 
+                                       placeholder="Enter district name"
+                                       class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="institution">School/Institution</label>
+                                <input type="text" id="institution" name="institution" 
+                                       placeholder="Enter school/institution name">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="academy">Academy</label>
+                                <input type="text" id="academy" name="academy" 
+                                       placeholder="Enter academy name">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="address">Address</label>
+                                <textarea id="address" name="address" 
+                                          placeholder="Enter complete address"></textarea>
+                            </div>
+
+                            <div class="section-title" style="margin-top: 2rem;">Bank Account Details (For Prize Money Transfer)</div>
+                            
+                            <div class="bank-details-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="account_holder_name">Account Holder Name</label>
+                                    <input type="text" id="account_holder_name" name="account_holder_name" 
+                                           placeholder="Enter account holder name"
+                                           class="form-control">
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="account_number">Account Number</label>
+                                    <input type="text" id="account_number" name="account_number" 
+                                           placeholder="Enter bank account number"
+                                           class="form-control">
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="bank_name">Bank Name</label>
+                                    <input type="text" id="bank_name" name="bank_name" 
+                                           placeholder="Enter bank name"
+                                           class="form-control">
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="branch_name">Branch Name</label>
+                                    <input type="text" id="branch_name" name="branch_name" 
+                                           placeholder="Enter branch name"
+                                           class="form-control">
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="ifsc_code">IFSC Code</label>
+                                    <input type="text" id="ifsc_code" name="ifsc_code" 
+                                           placeholder="Enter IFSC code"
+                                           class="form-control"
+                                           pattern="^[A-Z]{4}0[A-Z0-9]{6}$"
+                                           title="Please enter a valid IFSC code (e.g., SBIN0001234)">
+                                </div>
+
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="upi_id">UPI ID</label>
+                                    <input type="text" id="upi_id" name="upi_id" 
+                                           placeholder="Enter UPI ID"
+                                           class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2rem; padding: 1rem; background-color: #fff3cd; border: 1px solid #ffeeba; border-radius: 8px; color: #856404;">
+                        <strong>Important Note:</strong> Please fill in all information carefully and accurately. This information will be used for printing digital certificates for players. Any errors in the information may affect the certificate generation process.
+                </div>
+                
+                <button type="submit">Register Player</button>
+            </form>
+        </div>
+        </div>
+    </div>
+
+    <script>
+        const today = new Date();
+        const dd = String(today.getDate()).padStart(2, '0');
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const yyyy = today.getFullYear();
+        const maxDate = yyyy + '-' + mm + '-' + dd;
+        document.getElementById('date_of_birth').setAttribute('max', maxDate);
+
+        document.getElementById('phone').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
+        });
+
+        document.getElementById('email').addEventListener('input', function() {
+            if (this.value && !this.value.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+                this.setCustomValidity('Please enter a valid email address');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+
+        document.getElementById('upi_id').addEventListener('input', function() {
+            if (this.value && !this.value.includes('@')) {
+                this.setCustomValidity('Please enter a valid UPI ID');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+
+        // Show/hide TTFI ID field based on state
+        document.getElementById('state').addEventListener('change', function() {
+            var state = this.value.toLowerCase();
+            var ttfiIdContainer = document.getElementById('ttfi_id_container');
+            if (state === 'delhi') {
+                ttfiIdContainer.style.display = 'block';
+            } else {
+                ttfiIdContainer.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const stateSelect = document.getElementById('state');
+            const doStateRegistration = document.getElementById('do_state_registration');
+            const paymentSection = document.getElementById('payment_section');
+            const paymentSnapshot = document.getElementById('payment_snapshot');
+            const transactionId = document.getElementById('transaction_id');
+            const officialStateId = document.getElementById('official_state_id');
+            const isStateTransfer = document.getElementById('is_state_transfer');
+            const nocSection = document.getElementById('noc_section');
+            const nocCertificate = document.getElementById('noc_certificate');
+
+            // Ensure checkbox is disabled on page load
+            doStateRegistration.disabled = true;
+            doStateRegistration.checked = false;
+            paymentSection.style.display = 'none';
+
+            // Function to generate Official State ID
+            function generateOfficialStateId(playerId) {
+                if (!playerId) return '';
+                // Remove any dashes
+                return playerId.replace(/-/g, '');
+            }
+
+            // Function to check if payment details are provided
+            function checkPaymentDetails() {
+                if (paymentSnapshot.files.length > 0 && transactionId.value.trim() !== '') {
+                    // Get the player ID from the form
+                    const playerId = document.getElementById('player_id').value;
+                    if (playerId) {
+                        const stateId = generateOfficialStateId(playerId);
+                        officialStateId.value = stateSelect.value === 'Delhi' ? 'DL' + stateId : stateId;
+                    }
+                } else {
+                    officialStateId.value = '';
+                }
+            }
+
+            // Listen for changes in payment details
+            paymentSnapshot.addEventListener('change', checkPaymentDetails);
+            transactionId.addEventListener('input', checkPaymentDetails);
+
+            stateSelect.addEventListener('change', function() {
+                if (this.value) {
+                    doStateRegistration.disabled = false;
+                } else {
+                    doStateRegistration.disabled = true;
+                    doStateRegistration.checked = false;
+                    paymentSection.style.display = 'none';
+                    paymentSnapshot.required = false;
+                    transactionId.required = false;
+                    officialStateId.value = '';
+                }
+            });
+
+            doStateRegistration.addEventListener('change', function() {
+                paymentSection.style.display = this.checked ? 'block' : 'none';
+                const paymentSnapshot = document.getElementById('payment_snapshot');
+                const transactionId = document.getElementById('transaction_id');
+                const photo = document.getElementById('photo');
+                const birthCertificate = document.getElementById('birth_certificate');
+                const addressProof = document.getElementById('address_proof');
+                
+                if (this.checked) {
+                    paymentSnapshot.setAttribute('required', 'required');
+                    transactionId.setAttribute('required', 'required');
+                    photo.setAttribute('required', 'required');
+                    birthCertificate.setAttribute('required', 'required');
+                    addressProof.setAttribute('required', 'required');
+                } else {
+                    paymentSnapshot.removeAttribute('required');
+                    transactionId.removeAttribute('required');
+                    photo.removeAttribute('required');
+                    birthCertificate.removeAttribute('required');
+                    addressProof.removeAttribute('required');
+                    // Clear payment fields when unchecked
+                    paymentSnapshot.value = '';
+                    transactionId.value = '';
+                    isStateTransfer.checked = false;
+                    nocSection.style.display = 'none';
+                    nocCertificate.value = '';
+                }
+            });
+
+            // Handle state transfer checkbox
+            isStateTransfer.addEventListener('change', function() {
+                nocSection.style.display = this.checked ? 'block' : 'none';
+                if (!this.checked) {
+                    nocCertificate.value = '';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Players - Tournament App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1e3c72;
+            margin-bottom: 20px;
+        }
+        .search-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #1e3c72;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            position: relative;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #1e3c72;
+            box-shadow: 0 0 0 2px rgba(30, 60, 114, 0.1);
+        }
+        .search-button {
+            background: #1e3c72;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .search-button:hover {
+            background: #2a5298;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #1e3c72;
+            color: white;
+            font-weight: 500;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .error {
+            color: #d32f2f;
+            padding: 10px;
+            background: #ffebee;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .no-results {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            display: none;
+        }
+        .search-results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    {% include 'menu_db.html' %}
+    <div class="container">
+        <h1>Search Players</h1>
+        <div class="search-form">
+            <div class="form-group">
+                <label for="player_name">Player Name</label>
+                <input type="text" id="player_name" name="player_name" placeholder="Start typing to search players..." autocomplete="off">
+            </div>
+        </div>
+
+        <div id="loading" class="loading">Searching...</div>
+        <div id="error" class="error" style="display: none;"></div>
+        <div id="no-results" class="no-results" style="display: none;">No players found matching your search criteria.</div>
+        
+        <div id="search-results" class="search-results">
+            <table style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Player ID</th>
+                        <th>Date of Birth</th>
+                        <th>Gender</th>
+                        <th>State</th>
+                    </tr>
+                </thead>
+                <tbody id="results-body">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let searchTimeout;
+        const searchInput = document.getElementById('player_name');
+        const loadingDiv = document.getElementById('loading');
+        const errorDiv = document.getElementById('error');
+        const noResultsDiv = document.getElementById('no-results');
+        const resultsTable = document.querySelector('table');
+        const resultsBody = document.getElementById('results-body');
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: '2-digit'
+            });
+        }
+
+        function showLoading() {
+            loadingDiv.style.display = 'block';
+            errorDiv.style.display = 'none';
+            noResultsDiv.style.display = 'none';
+            resultsTable.style.display = 'none';
+        }
+
+        function showError(message) {
+            loadingDiv.style.display = 'none';
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            noResultsDiv.style.display = 'none';
+            resultsTable.style.display = 'none';
+        }
+
+        function showNoResults() {
+            loadingDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+            noResultsDiv.style.display = 'block';
+            resultsTable.style.display = 'none';
+        }
+
+        function showResults(players) {
+            loadingDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+            noResultsDiv.style.display = 'none';
+            resultsTable.style.display = 'table';
+            
+            resultsBody.innerHTML = '';
+            players.forEach(player => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${player.Player_Name}</td>
+                    <td>${player.Player_Id}</td>
+                    <td>${formatDate(player.Date_of_Birth)}</td>
+                    <td>${player.Gender}</td>
+                    <td>${player.State}</td>
+                `;
+                resultsBody.appendChild(row);
+            });
+        }
+
+        function performSearch() {
+            const searchTerm = searchInput.value.trim();
+            
+            if (searchTerm.length < 2) {
+                showNoResults();
+                return;
+            }
+
+            showLoading();
+
+            fetch(`/get-players?name=${encodeURIComponent(searchTerm)}`)
+                .then(response => response.json())
+                .then(players => {
+                    if (players.length === 0) {
+                        showNoResults();
+                    } else {
+                        showResults(players);
+                    }
+                })
+                .catch(error => {
+                    showError('An error occurred while searching. Please try again.');
+                    console.error('Search error:', error);
+                });
+        }
+
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(performSearch, 300);
+        });
+
+        // Initial focus on search input
+        searchInput.focus();
+    </script>
+</body>
+</html>

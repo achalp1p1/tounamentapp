@@ -1,0 +1,556 @@
+{% extends "base_db.html" %}
+<head>
+    <title>Tournament Registration</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #f0f2f5;
+        }
+
+        .container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 20px 36px 0 36px;
+        }
+
+        .header h1 {
+            font-size: min(32px, 4vh);
+            margin-bottom: 1vh;
+        }
+
+        .content {
+            flex: 1;
+            padding: 3vh;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .registration-form {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 24px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .form-title {
+            margin-bottom: 20px;
+            color: #1e3c72;
+            font-size: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group.required label:after {
+            content: " *";
+            color: red;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-control:focus {
+            border-color: #1e3c72;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(30,60,114,0.2);
+        }
+
+        .player-search-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .search-result-item {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .search-result-item:hover {
+            background: #f0f2f5;
+        }
+
+        .selected-player {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .category-selection {
+            margin-bottom: 20px;
+        }
+
+        .category-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .category-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .category-item.selected {
+            background: #1e3c72;
+            color: white;
+        }
+
+        .fee-summary {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .fee-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .fee-total {
+            font-weight: bold;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+        .submit-button {
+            padding: 12px 24px;
+            background: #1e3c72;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .submit-button:hover {
+            background: #2a5298;
+        }
+
+        .submit-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Select2 Customization */
+        .select2-container--default .select2-selection--multiple {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .select2-container--default.select2-container--focus .select2-selection--multiple {
+            border-color: #1e3c72;
+            box-shadow: 0 0 0 2px rgba(30,60,114,0.2);
+        }
+
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background-color: #1e3c72;
+            color: white;
+            border: none;
+        }
+
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+            color: white;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    {% include 'menu_db.html' %}
+    <div class="container">
+        <div class="header">
+            <h1>{{ tournament['Tournament Name'] }}</h1>
+            {% include 'tournament_submenu_db.html' %}
+        </div>
+
+        <div class="content">
+            {% if success %}
+            <div class="success-message">
+                {{ success }}
+            </div>
+            {% endif %}
+
+            {% if error %}
+            <div class="error-message">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <form class="registration-form" id="registrationForm" method="POST">
+                <h2 class="form-title">Add Player to Tournament</h2>
+
+                <!-- Player Search -->
+                <div class="form-group required">
+                    <label for="playerSearch">Search Player</label>
+                    <input type="text" id="playerSearch" class="form-control" placeholder="Type player name to search...">
+                    <div id="searchResults" class="search-results"></div>
+                </div>
+
+                <!-- Selected Player Info -->
+                <div id="selectedPlayer" class="selected-player">
+                    <div class="form-group">
+                        <label>Player Details</label>
+                        <div id="playerDetails"></div>
+                    </div>
+                </div>
+
+                <!-- New Player Form (shown when no player is selected) -->
+                <div id="newPlayerForm" style="display: none;">
+                    <div class="form-group required">
+                        <label for="player_name">Player Name</label>
+                        <input type="text" id="player_name" name="player_name" class="form-control" required>
+                    </div>
+
+                    <div class="form-group required">
+                        <label for="dob">Date of Birth</label>
+                        <input type="date" id="dob" name="dob" class="form-control" required>
+                    </div>
+
+                    <div class="form-group required">
+                        <label for="gender">Gender</label>
+                        <select id="gender" name="gender" class="form-control" required>
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group required">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="address">Address</label>
+                        <textarea id="address" name="address" class="form-control"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="state">State</label>
+                        <select id="state" name="state" class="form-control">
+                            <option value="">Select State</option>
+                            <option value="Andhra Pradesh">Andhra Pradesh</option>
+                            <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                            <option value="Assam">Assam</option>
+                            <option value="Bihar">Bihar</option>
+                            <option value="Chhattisgarh">Chhattisgarh</option>
+                            <option value="Goa">Goa</option>
+                            <option value="Gujarat">Gujarat</option>
+                            <option value="Haryana">Haryana</option>
+                            <option value="Himachal Pradesh">Himachal Pradesh</option>
+                            <option value="Jharkhand">Jharkhand</option>
+                            <option value="Karnataka">Karnataka</option>
+                            <option value="Kerala">Kerala</option>
+                            <option value="Madhya Pradesh">Madhya Pradesh</option>
+                            <option value="Maharashtra">Maharashtra</option>
+                            <option value="Manipur">Manipur</option>
+                            <option value="Meghalaya">Meghalaya</option>
+                            <option value="Mizoram">Mizoram</option>
+                            <option value="Nagaland">Nagaland</option>
+                            <option value="Odisha">Odisha</option>
+                            <option value="Punjab">Punjab</option>
+                            <option value="Rajasthan">Rajasthan</option>
+                            <option value="Sikkim">Sikkim</option>
+                            <option value="Tamil Nadu">Tamil Nadu</option>
+                            <option value="Telangana">Telangana</option>
+                            <option value="Tripura">Tripura</option>
+                            <option value="Uttar Pradesh">Uttar Pradesh</option>
+                            <option value="Uttarakhand">Uttarakhand</option>
+                            <option value="West Bengal">West Bengal</option>
+                            <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
+                            <option value="Chandigarh">Chandigarh</option>
+                            <option value="Dadra and Nagar Haveli and Daman and Diu">Dadra and Nagar Haveli and Daman and Diu</option>
+                            <option value="Delhi">Delhi</option>
+                            <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+                            <option value="Ladakh">Ladakh</option>
+                            <option value="Lakshadweep">Lakshadweep</option>
+                            <option value="Puducherry">Puducherry</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="district">District</label>
+                        <input type="text" id="district" name="district" 
+                               placeholder="Enter district name"
+                               class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ttfi_id">TTFI ID</label>
+                        <input type="text" id="ttfi_id" name="ttfi_id" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="institution">School/Institution</label>
+                        <input type="text" id="institution" name="institution" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="academy">Academy</label>
+                        <input type="text" id="academy" name="academy" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="upi_id">UPI ID</label>
+                        <input type="text" id="upi_id" name="upi_id" class="form-control">
+                    </div>
+                </div>
+
+                <!-- Category Selection -->
+                <div class="form-group required">
+                    <label for="categories">Select Categories</label>
+                    <select id="categories" name="category" class="form-control" required>
+                        <option value="">Select Category</option>
+                        {% for category in tournament_categories %}
+                        <option value="{{ category.Category }}" 
+                                data-fee="{{ category.Fee }}"
+                                data-first-prize="{{ category['First Prize'] }}"
+                                data-second-prize="{{ category['Second Prize'] }}"
+                                data-third-prize="{{ category['Third Prize'] }}"
+                                data-format="{{ category.Format }}">
+                            {{ category.Category }} (₹{{ category.Fee }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Fee Summary -->
+                <div class="fee-summary">
+                    <h3>Fee Summary</h3>
+                    <div id="feeDetails"></div>
+                    <div class="fee-row fee-total">
+                        <span>Total Fee:</span>
+                        <span id="totalFee">₹0</span>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="submit-button" id="submitButton" disabled>
+                    Pay Fee and Add Entry
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            let selectedPlayer = null;
+
+            // Initialize Select2 for categories
+            $('#categories').select2({
+                placeholder: 'Select category',
+                allowClear: true
+            });
+
+            // Player search functionality
+            let searchTimeout;
+            $('#playerSearch').on('input', function() {
+                clearTimeout(searchTimeout);
+                const searchTerm = $(this).val().trim();
+                
+                if (searchTerm.length < 2) {
+                    $('#searchResults').hide();
+                return;
+            }
+
+                searchTimeout = setTimeout(() => {
+                    $.get('/get-players', { name: searchTerm }, function(players) {
+                        const results = $('#searchResults');
+                        results.empty();
+                        
+                        players.forEach(player => {
+                            const item = $('<div>')
+                                .addClass('search-result-item')
+                                .text(`${player.Player_Name} (${player.Player_Id})`)
+                                .data('player', player)
+                                .click(function() {
+                                    selectPlayer($(this).data('player'));
+                                });
+                            results.append(item);
+                        });
+                        
+                        results.show();
+                    });
+                }, 300);
+            });
+
+            // Handle player selection
+            function selectPlayer(player) {
+                selectedPlayer = player;
+                $('#playerSearch').val(player.Player_Name);
+                $('#searchResults').hide();
+                
+                // Show player details
+                const details = $('#playerDetails');
+                details.html(`
+                    <p><strong>Name:</strong> ${player.Player_Name}</p>
+                    <p><strong>ID:</strong> ${player.Player_Id}</p>
+                    <p><strong>Date of Birth:</strong> ${player.Date_of_Birth}</p>
+                    <p><strong>Gender:</strong> ${player.Gender}</p>
+                `);
+                $('#selectedPlayer').show();
+                $('#newPlayerForm').hide();
+                
+                // Add hidden input for player ID
+                if (!$('#player_id').length) {
+                    $('<input>').attr({
+                        type: 'hidden',
+                        id: 'player_id',
+                        name: 'player_id',
+                        value: player.Player_Id
+                    }).appendTo('#registrationForm');
+            } else {
+                    $('#player_id').val(player.Player_Id);
+                }
+                
+                updateSubmitButton();
+            }
+
+            // Show new player form when search is empty
+            $('#playerSearch').on('change', function() {
+                if (!$(this).val().trim()) {
+                    $('#selectedPlayer').hide();
+                    $('#newPlayerForm').show();
+                    selectedPlayer = null;
+                    updateSubmitButton();
+                }
+            });
+
+            // Handle category selection
+            $('#categories').on('change', function() {
+                updateFeeSummary();
+                updateSubmitButton();
+            });
+
+            // Update fee summary
+            function updateFeeSummary() {
+                const selectedOption = $('#categories option:selected');
+                const fee = parseFloat(selectedOption.data('fee')) || 0;
+                
+                $('#feeDetails').html(`
+                    <div class="fee-row">
+                        <span>${selectedOption.text()}</span>
+                        <span>₹${fee}</span>
+                    </div>
+                `);
+                
+                $('#totalFee').text(`₹${fee}`);
+            }
+
+            // Update submit button state
+            function updateSubmitButton() {
+                const hasPlayer = selectedPlayer !== null || $('#newPlayerForm input[required], #newPlayerForm select[required]').toArray().every(input => $(input).val());
+                const hasCategory = $('#categories').val();
+                $('#submitButton').prop('disabled', !(hasPlayer && hasCategory));
+            }
+
+            // Handle form submission
+            $('#registrationForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                if (!selectedPlayer && !$('#newPlayerForm input[required], #newPlayerForm select[required]').toArray().every(input => $(input).val())) {
+                    alert('Please fill in all required fields');
+                    return;
+                }
+
+                if (!$('#categories').val()) {
+                    alert('Please select a category');
+                    return;
+                }
+
+                this.submit();
+            });
+
+            // Close search results when clicking outside
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('.player-search-container').length) {
+                    $('#searchResults').hide();
+                }
+            });
+
+            // Show new player form initially
+            $('#newPlayerForm').show();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,226 @@
+{% extends "base_db.html" %}
+
+{% block head %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>All Players</h1>
+    
+    <div class="intro">
+        <p>Total Number of Players: <strong>{{ players|length }}</strong></p>
+        <div class="search-console">
+            <input type="text" id="searchInput" placeholder="Search players by name..." class="search-input">
+        </div>
+    </div>
+    
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+    
+    {% if players and players|length > 0 %}
+        <table id="playersTable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Official State ID</th>
+                    <th>Date of Birth</th>
+                    <th>Gender</th>
+                    <th>State</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for player in players %}
+                <tr>
+                    <td>{{ player['Name'] }}</td>
+                    <td>{{ player['Official State ID'] if player['Official State ID'] else '' }}</td>
+                    <td>{{ player['Date of Birth'] }}</td>
+                    <td>{{ player['Gender'] }}</td>
+                    <td>{{ player['State'] }}</td>
+                    <td>
+                        <a href="{{ url_for('edit_player_db', player_id=player['Player ID']) }}" class="action-link edit-link" title="Edit Player">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="#" class="action-link delete-link" 
+                           onclick="deletePlayer('{{ player['Player ID'] }}', '{{ player['Name'] }}')" 
+                           title="Delete Player">
+                            <i class="fas fa-trash-alt"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="no-players">
+            <p>No players are currently registered in the system.</p>
+            <a href="{{ url_for('player_registration_db') }}" class="search-link">Register a Player</a>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: #f5f5f5;
+    }
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 {
+        color: #1e3c72;
+        margin-bottom: 20px;
+    }
+    .intro {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border-left: 4px solid #1e3c72;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    th, td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    th {
+        background-color: #1e3c72;
+        color: white;
+        font-weight: 500;
+    }
+    tr:hover {
+        background-color: #f5f5f5;
+    }
+    .error {
+        color: #d32f2f;
+        padding: 10px;
+        background: #ffebee;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+    .no-players {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+        background: #f8f9fa;
+        border-radius: 4px;
+        margin-top: 20px;
+    }
+    .search-link {
+        display: inline-block;
+        margin-top: 15px;
+        background: #1e3c72;
+        color: white;
+        text-decoration: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-weight: 500;
+    }
+    .search-link:hover {
+        background: #2a5298;
+    }
+    .search-console {
+        margin-top: 15px;
+    }
+    .search-input {
+        width: 100%;
+        max-width: 600px;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+    .search-input:focus {
+        outline: none;
+        border-color: #1e3c72;
+        box-shadow: 0 0 0 2px rgba(30,60,114,0.1);
+    }
+    .intro strong {
+        color: #1e3c72;
+        font-size: 1.1em;
+    }
+    .action-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
+        font-size: 1.2em;
+        margin-right: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        padding: 6px;
+        border-radius: 8px;
+        text-decoration: none;
+        vertical-align: middle;
+    }
+    
+    .edit-link {
+        color: #1e3c72;
+    }
+    
+    .edit-link:hover {
+        background: #e8f0fe;
+        color: #2a5298;
+        transform: translateY(-1px);
+    }
+    
+    .delete-link {
+        color: #dc2626;
+    }
+    
+    .delete-link:hover {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .action-link i {
+        margin-right: 4px;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const table = document.getElementById('playersTable');
+        const tbody = table.querySelector('tbody');
+        const rows = tbody.querySelectorAll('tr');
+
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            rows.forEach(row => {
+                const name = row.cells[0].textContent.toLowerCase();
+                const stateId = row.cells[1].textContent.toLowerCase();
+                const state = row.cells[4].textContent.toLowerCase();
+                
+                if (name.includes(searchTerm) || stateId.includes(searchTerm) || state.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    function deletePlayer(playerId, playerName) {
+        if (confirm(`Are you sure you want to delete player "${playerName}"?`)) {
+            window.location.href = `/delete_player_db/${playerId}`;
+        }
+    }
+</script>
+{% endblock %} 

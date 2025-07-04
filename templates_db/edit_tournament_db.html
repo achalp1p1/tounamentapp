@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Tournament</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1976d2;
+            --primary-light: #e3f2fd;
+            --error-color: #d32f2f;
+            --text-primary: #212121;
+            --text-secondary: #757575;
+            --border-color: #e0e0e0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            margin-top: 80px; /* Add space for the menu */
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .page-header h1 {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .back-button:hover {
+            background-color: #bbdefb;
+        }
+
+        .back-button i {
+            margin-right: 0.5rem;
+        }
+
+        form {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .form-section label {
+            display: block;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary-light);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            border: none;
+        }
+
+        .required-field::after {
+            content: " *";
+            color: var(--error-color);
+        }
+
+        .required-note {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .required-note::before {
+            content: "* ";
+            color: var(--error-color);
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        input[type="date"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px var(--primary-light);
+            outline: none;
+        }
+
+        .category-fee-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+            gap: 1rem;
+            padding: 0.75rem;
+            background-color: var(--primary-light);
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        .category-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+            gap: 1rem;
+            align-items: center;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 0.75rem;
+            background: white;
+        }
+
+        .prize-section {
+            border-left: 2px solid var(--primary-light);
+            padding-left: 1rem;
+        }
+
+        .prize-section-header {
+            color: var(--primary-color);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .remove-category {
+            color: var(--error-color);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .remove-category:hover {
+            color: #b71c1c;
+        }
+
+        #add-category-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background-color 0.3s;
+        }
+
+        #add-category-btn:hover {
+            background-color: #1565c0;
+        }
+
+        .submit-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 500;
+            display: block;
+            width: 100%;
+            margin-top: 2rem;
+            transition: background-color 0.3s;
+        }
+
+        .submit-btn:hover {
+            background-color: #1565c0;
+        }
+
+        .logo-upload-container {
+            margin-top: 1rem;
+        }
+
+        .logo-upload-row {
+            margin-bottom: 1rem;
+        }
+
+        .file-input-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .choose-file-btn {
+            padding: 0.5rem 1rem;
+            background-color: #f5f5f5;
+            color: #333;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+
+        .choose-file-btn:hover {
+            background-color: #e0e0e0;
+        }
+
+        .no-file-text {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .add-file-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+            margin-top: 1rem;
+        }
+
+        .add-file-btn:hover {
+            background-color: #1565c0;
+        }
+
+        .logo-preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .logo-preview-item {
+            position: relative;
+            display: inline-block;
+        }
+
+        .logo-preview {
+            max-width: 150px;
+            border-radius: 4px;
+        }
+
+        .remove-logo-btn {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: var(--error-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            font-size: 16px;
+        }
+
+        .remove-logo-btn:hover {
+            background-color: #b71c1c;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin-top: 60px;
+                padding: 0 0.5rem;
+            }
+
+            .form-section {
+                padding: 1rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .category-fee-header,
+            .category-row {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+
+            .prize-section {
+                border-left: none;
+                padding-left: 0;
+                margin-top: 0.5rem;
+            }
+        }
+
+        select[multiple] {
+            height: 120px;
+            padding: 0.5rem;
+        }
+
+        select[multiple] option {
+            padding: 0.5rem;
+            margin: 2px 0;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        select[multiple] option:hover {
+            background-color: var(--primary-light);
+        }
+
+        select[multiple] option:checked {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .category-select-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .category-select-dropdown {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .category-select-dropdown::after {
+            content: '▼';
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .category-options {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-top: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .category-options.show {
+            display: block;
+        }
+
+        .category-option {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            min-height: 32px;
+        }
+
+        .category-option:hover {
+            background-color: var(--primary-light);
+        }
+
+        .category-option input[type="checkbox"] {
+            margin: 0;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            margin-top: 2px;
+        }
+
+        .category-option label {
+            cursor: pointer;
+            font-size: 0.9rem;
+            flex: 1;
+            line-height: 1.2;
+            padding-top: 2px;
+        }
+
+        .selected-categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .selected-category {
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .selected-category .remove-category {
+            cursor: pointer;
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+
+        .fee-input-container {
+            position: relative;
+        }
+
+        .required-asterisk {
+            position: absolute;
+            top: 0;
+            right: 0;
+            color: var(--error-color);
+            font-size: 0.8rem;
+        }
+
+        .fee-error {
+            display: none;
+            color: var(--error-color);
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    {% include 'menu_db.html' %}
+    <div class="container">
+        <div class="page-header">
+            <h1>Edit Tournament</h1>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data">
+            <!-- Basic Details section -->
+            <div class="form-section">
+                <label>Basic Details</label>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tournament_name" class="required-field">Tournament Name</label>
+                        <input type="text" id="tournament_name" name="tournament_name" required value="{{ tournament['Tournament Name'] }}" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="start_date" class="required-field">Start Date</label>
+                        <input type="date" id="start_date" name="start_date" required value="{{ tournament['Start Date'] }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="end_date" class="required-field">End Date</label>
+                        <input type="date" id="end_date" name="end_date" required value="{{ tournament['End Date'] }}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="last_registration_date" class="required-field">Last Entry Date</label>
+                        <input type="date" id="last_registration_date" name="last_registration_date" required value="{{ tournament['Last Registration Date'] }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="venue">Venue</label>
+                        <input type="text" id="venue" name="venue" value="{{ tournament['Venue'] }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="total_prize">Tournament Prizes</label>
+                        <input type="number" id="total_prize" name="total_prize" value="{{ tournament['Total Prize'] }}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categories section -->
+            <div class="form-section">
+                <label>Tournament Categories</label>
+                
+                <!-- Select Categories dropdown (without Add button) -->
+                <div class="category-select-container" style="margin-bottom: 1.5em; position: relative;">
+                    <div class="category-select-dropdown" id="categoryDropdown">
+                        Select Categories
+                    </div>
+                    <div class="category-options" id="categoryOptions" style="z-index: 100;">
+                        {% for config_category in all_categories %}
+                        <div class="category-option">
+                            <input type="checkbox" value="{{ config_category.name }}" id="cat-{{ config_category.id }}">
+                            <label for="cat-{{ config_category.id }}">{{ config_category.name }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="selected-categories" id="selectedCategories"></div>
+                </div>
+                
+                <!-- Existing categories list with different background -->
+                <div id="categories-container">
+                    {% for category_info in full_categories %}
+                    <div class="category-row existing-category" style="background-color: #f0f8ff; border-left: 3px solid #1e3c72; padding-left: 10px; margin-bottom: 8px; border-radius: 4px;" data-category="{{ category_info.Category }}">
+                        <select name="categories[]" required readonly>
+                            <option value="{{ category_info.Category }}" selected>{{ category_info.Category }}</option>
+                        </select>
+                        <select name="formats[]" required>
+                            <option value="Knockout" {% if category_info.Format == 'Knockout' %}selected{% endif %}>Knockout</option>
+                            <option value="Two Stage" {% if category_info.Format == 'Two Stage' %}selected{% endif %}>Two Stage</option>
+                        </select>
+                        <div class="fee-input-container">
+                            <input type="text" name="fees[]" value="{{ category_info.Fee }}" placeholder="Fee" required>
+                            <span class="required-asterisk">*</span>
+                            <div class="fee-error">Fee is required for this category</div>
+                        </div>
+                        <div class="prize-section">
+                            <div>Prizes</div>
+                            <input type="text" name="first_prizes[]" value="{{ category_info['First Prize'] }}" placeholder="First Prize">
+                            <input type="text" name="second_prizes[]" value="{{ category_info['Second Prize'] }}" placeholder="Second Prize">
+                            <input type="text" name="third_prizes[]" value="{{ category_info['Third Prize'] }}" placeholder="Third Prize">
+                        </div>
+                        <button type="button" class="remove-category">
+                            <i class="material-icons">delete</i>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Logo Upload section -->
+            <div class="form-section">
+                <label>Tournament Logos</label>
+                <div class="logo-upload-container">
+                    <div class="logo-upload-row">
+                        <div class="file-input-group">
+                            <input type="file" id="tournament_logo" name="tournament_logo" accept="image/*" multiple style="display: none;">
+                            <button type="button" class="choose-file-btn" onclick="document.getElementById('tournament_logo').click()">Choose Files</button>
+                            <span class="no-file-text">No Files Chosen</span>
+                        </div>
+                    </div>
+                    <div id="logo-preview-container">
+                        {% if tournament['Tournament Logo Link'] %}
+                            {% set logo_links = tournament['Tournament Logo Link'].split(',') %}
+                            {% for logo_link in logo_links %}
+                                <div class="logo-preview-item">
+                                    <img src="{{ url_for('static', filename=logo_link.replace('static/', '')) }}" alt="Tournament Logo" class="logo-preview">
+                                    <input type="hidden" name="existing_logos[]" value="{{ logo_link }}">
+                                    <button type="button" class="remove-logo-btn" onclick="removeLogo(this, '{{ logo_link }}')">
+                                        <i class="material-icons">close</i>
+                                    </button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- General Information section -->
+            <div class="form-section">
+                <label for="general_info">General Information</label>
+                <textarea id="general_info" name="general_info" rows="4">{{ tournament['General Information'] }}</textarea>
+            </div>
+
+            <!-- Bank Details section -->
+            <div class="form-section">
+                <label>Bank Details for Payment Collection</label>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="bank_account">Bank Account Details</label>
+                        <textarea id="bank_account" name="bank_account" rows="3" placeholder="Enter bank account number, IFSC code, account holder name, etc.">{{ tournament['Bank Account'] }}</textarea>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="upi_link">UPI Link (if available)</label>
+                        <input type="text" id="upi_link" name="upi_link" placeholder="Enter UPI payment link" value="{{ tournament['UPI Link'] }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="payment_qr">Payment QR Code (if available)</label>
+                        <input type="file" id="payment_qr" name="payment_qr" accept="image/*">
+                        <div id="qr-preview" class="qr-preview" {% if not tournament['Payment QR'] %}style="display: none;"{% endif %}>
+                            {% if tournament['Payment QR'] %}
+                            <img src="{{ url_for('static', filename=tournament['Payment QR'].replace('static/', '')) }}" alt="QR Code Preview" style="max-width: 200px; margin-top: 10px;">
+                            <input type="hidden" name="existing_qr" value="{{ tournament['Payment QR'] }}">
+                            {% else %}
+                            <img src="" alt="QR Code Preview" style="max-width: 200px; margin-top: 10px;">
+                            {% endif %}
+                            <button type="button" class="remove-qr-btn" onclick="removeQR()">Remove</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn">Save Changes</button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Category selection functionality
+            const categoryDropdown = document.getElementById('categoryDropdown');
+            const categoryOptions = document.getElementById('categoryOptions');
+            const selectedCategories = document.getElementById('selectedCategories');
+            const categoriesContainer = document.getElementById('categories-container');
+
+            // Toggle dropdown
+            categoryDropdown.addEventListener('click', function() {
+                categoryOptions.classList.toggle('show');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!categoryDropdown.contains(e.target) && !categoryOptions.contains(e.target)) {
+                    categoryOptions.classList.remove('show');
+                }
+            });
+
+            // Handle category selection with immediate row creation
+            const checkboxes = categoryOptions.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    console.log("Checkbox changed:", this.value, "Checked:", this.checked); // Debug log
+                    
+                    // Automatically add/remove category rows based on checkbox state
+                    if (this.checked) {
+                        addCategoryRow(this.value);
+                    } else {
+                        removeCategoryRow(this.value);
+                    }
+                    
+                    updateSelectedCategories();
+                });
+            });
+
+            // Function to add category row
+            function addCategoryRow(category) {
+                console.log("Adding category row for:", category);
+                
+                // Check if row already exists
+                const existingRows = Array.from(categoriesContainer.querySelectorAll('select[name="categories[]"]'))
+                    .map(select => select.value);
+                    
+                if (!existingRows.includes(category)) {
+                    const newRow = document.createElement('div');
+                    newRow.className = 'category-row';
+                    newRow.setAttribute('data-category', category);
+                    newRow.setAttribute('style', 'background-color: #ffffff; border-left: 3px solid #28a745; padding-left: 10px; margin-bottom: 8px; border-radius: 4px;');
+                    
+                    newRow.innerHTML = `
+                        <select name="categories[]" required>
+                            <option value="${category}" selected>${category}</option>
+                        </select>
+                        <select name="formats[]" required>
+                            <option value="Knockout">Knockout</option>
+                            <option value="Two Stage">Two Stage</option>
+                        </select>
+                        <div class="fee-input-container">
+                            <input type="text" name="fees[]" placeholder="Fee" required>
+                            <span class="required-asterisk">*</span>
+                            <div class="fee-error">Fee is required for this category</div>
+                        </div>
+                        <div class="prize-section">
+                            <div>Prizes</div>
+                            <input type="text" name="first_prizes[]" placeholder="First Prize">
+                            <input type="text" name="second_prizes[]" placeholder="Second Prize">
+                            <input type="text" name="third_prizes[]" placeholder="Third Prize">
+                        </div>
+                        <button type="button" class="remove-category">
+                            <i class="material-icons">delete</i>
+                        </button>
+                    `;
+                    
+                    // Add event listener for fee validation
+                    const feeInput = newRow.querySelector('input[name="fees[]"]');
+                    const feeError = newRow.querySelector('.fee-error');
+                    
+                    feeInput.addEventListener('input', function() {
+                        validateFeeField(this, feeError);
+                    });
+                    
+                    feeInput.addEventListener('blur', function() {
+                        validateFeeField(this, feeError);
+                    });
+                    
+                    // Add click handler for remove button
+                    newRow.querySelector('.remove-category').addEventListener('click', function() {
+                        const checkbox = document.querySelector(`input[value="${category}"]`);
+                        if (checkbox) {
+                            checkbox.checked = false;
+                            updateSelectedCategories();
+                        }
+                        newRow.remove();
+                    });
+                    
+                    // Insert at the beginning of the container
+                    if (categoriesContainer.firstChild) {
+                        categoriesContainer.insertBefore(newRow, categoriesContainer.firstChild);
+                    } else {
+                        categoriesContainer.appendChild(newRow);
+                    }
+                    console.log("Row added successfully");
+                }
+            }
+            
+            // Function to remove category row
+            function removeCategoryRow(category) {
+                console.log("Removing category row for:", category); // Debug log
+                
+                const rows = Array.from(categoriesContainer.querySelectorAll('.category-row'));
+                rows.forEach(row => {
+                    const select = row.querySelector('select[name="categories[]"]');
+                    if (select && select.value === category) {
+                        row.remove();
+                        console.log("Row removed successfully"); // Debug log
+                    }
+                });
+            }
+
+            function updateSelectedCategories() {
+                selectedCategories.innerHTML = '';
+                const selected = Array.from(checkboxes)
+                    .filter(cb => cb.checked)
+                    .map(cb => cb.value);
+                
+                console.log("Selected categories:", selected); // Debug log
+
+                selected.forEach(category => {
+                    const tag = document.createElement('div');
+                    tag.className = 'selected-category';
+                    tag.innerHTML = `
+                        ${category}
+                        <span class="remove-category" data-category="${category}">×</span>
+                    `;
+                    selectedCategories.appendChild(tag);
+                });
+
+                // Update dropdown text
+                categoryDropdown.textContent = selected.length > 0 
+                    ? `${selected.length} categories selected` 
+                    : 'Select Categories';
+            }
+
+            // Remove category tag
+            selectedCategories.addEventListener('click', function(e) {
+                if (e.target.classList.contains('remove-category')) {
+                    const category = e.target.dataset.category;
+                    const checkbox = document.querySelector(`input[value="${category}"]`);
+                    if (checkbox) {
+                        checkbox.checked = false;
+                        removeCategoryRow(category);
+                        updateSelectedCategories();
+                    }
+                }
+            });
+            
+            // Pre-select checkboxes for existing categories
+            const existingCategories = Array.from(categoriesContainer.querySelectorAll('select[name="categories[]"]'))
+                .map(select => select.value);
+                
+            checkboxes.forEach(checkbox => {
+                if (existingCategories.includes(checkbox.value)) {
+                    checkbox.checked = true;
+                }
+            });
+            
+            // Initialize selected categories display
+            updateSelectedCategories();
+            
+            // Add event listeners to existing remove buttons
+            document.querySelectorAll('.remove-category').forEach(button => {
+                button.addEventListener('click', function() {
+                    const row = this.closest('.category-row');
+                    const categoryValue = row.querySelector('select[name="categories[]"]').value;
+                    
+                    // Uncheck the corresponding checkbox
+                    const checkbox = document.querySelector(`input[value="${categoryValue}"]`);
+                    if (checkbox) {
+                        checkbox.checked = false;
+                        updateSelectedCategories();
+                    }
+                    
+                    row.remove();
+                });
+            });
+        });
+
+        // Add JavaScript for handling multiple file uploads and previews
+        document.getElementById('tournament_logo').addEventListener('change', function(e) {
+            const files = e.target.files;
+            const previewContainer = document.getElementById('logo-preview-container');
+            
+            for (let file of files) {
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const previewItem = document.createElement('div');
+                        previewItem.className = 'logo-preview-item';
+                        previewItem.innerHTML = `
+                            <img src="${e.target.result}" alt="Tournament Logo" class="logo-preview">
+                            <button type="button" class="remove-logo-btn" onclick="removeLogo(this)">
+                                <i class="material-icons">close</i>
+                            </button>
+                        `;
+                        previewContainer.appendChild(previewItem);
+                    }
+                    reader.readAsDataURL(file);
+                }
+            }
+        });
+
+        function removeLogo(button, logoPath) {
+            const previewItem = button.parentElement;
+            const logoContainer = document.getElementById('logo-preview-container');
+            
+            // Create a hidden input to track deleted logos
+            const deletedLogosInput = document.createElement('input');
+            deletedLogosInput.type = 'hidden';
+            deletedLogosInput.name = 'deleted_logos[]';
+            deletedLogosInput.value = logoPath;
+            document.querySelector('form').appendChild(deletedLogosInput);
+            
+            // Remove the preview item
+            previewItem.remove();
+        }
+
+        // Add validation function for fee field
+        function validateFeeField(input, errorElement) {
+            if (!input.value.trim()) {
+                input.classList.add('error');
+                errorElement.style.display = 'block';
+                return false;
+            } else {
+                input.classList.remove('error');
+                errorElement.style.display = 'none';
+                return true;
+            }
+        }
+
+        // QR Code preview functionality
+        document.getElementById('payment_qr').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('qr-preview');
+                    preview.querySelector('img').src = e.target.result;
+                    preview.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function removeQR() {
+            document.getElementById('payment_qr').value = '';
+            document.getElementById('qr-preview').style.display = 'none';
+            // Add a hidden input to indicate QR should be removed
+            if (!document.getElementById('remove_qr')) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.id = 'remove_qr';
+                input.name = 'remove_qr';
+                input.value = 'true';
+                document.querySelector('form').appendChild(input);
+            }
+        }
+    </script>
+</body>
+</html>

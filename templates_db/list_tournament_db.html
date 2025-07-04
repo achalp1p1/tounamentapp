@@ -1,0 +1,339 @@
+{% extends "base_db.html" %}
+
+{% block head %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header">
+        <img src="{{ url_for('static', filename='DilliLabsLogo.png') }}" alt="DilliLabs Logo" class="logo">
+        <h1>Tournaments</h1>
+        <a href="{{ url_for('logout_db') }}" class="log-off">Log Out</a>
+    </div>
+
+    <div class="content">
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+
+        {% if tournaments %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Tournament Name</th>
+                    <th>Venue</th>
+                    <th>Tournament Dates</th>
+                    <th>Last Date of Entry</th>
+                    <th>Categories</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tournament in tournaments %}
+                <tr>
+                    <td>{{ tournament['Tournament Name'] }}</td>
+                    <td>{{ tournament['Venue'] }}</td>
+                    <td>{{ tournament['Start Date'] }} to {{ tournament['End Date'] }}</td>
+                    <td>{{ tournament['Last Registration Date'] }}</td>
+                    <td class="category-list">
+                        {% for category in tournament['Categories'].split(',') %}
+                        <span class="category-link">{{ category.strip() }}</span>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('tournament_details_db', tournament_id=tournament['Tournament ID']) }}" class="icon-btn info-icon" title="View Details">
+                            <i class="fas fa-info-circle"></i>
+                        </a>
+                        <a href="{{ url_for('edit_tournament_db', tournament_id=tournament['Tournament ID']) }}" class="icon-btn edit-icon" title="Edit Tournament">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{{ url_for('tournament_register_db', tournament_id=tournament['Tournament ID']) }}" class="icon-btn add-player-icon" title="Add Player">
+                            <i class="fas fa-user-plus"></i>
+                        </a>
+                        <a href="#" class="icon-btn delete-icon" onclick="deleteTournament('{{ tournament['Tournament ID'] }}')" title="Delete Tournament">
+                            <i class="fas fa-trash-alt"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No tournaments found.</p>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    * { 
+        margin: 0; 
+        padding: 0; 
+        box-sizing: border-box; 
+        font-family: 'Roboto', sans-serif; 
+    }
+    body { 
+        min-height: 100vh; 
+        background: #f8fafc; 
+    }
+    .container { 
+        min-height: 100vh; 
+        display: flex; 
+        flex-direction: column; 
+    }
+
+    /* Modern Header */
+    .header {
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        color: white;
+        padding: 2vh;
+        text-align: center;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .header h1 {
+        font-size: min(32px, 4vh);
+        margin-bottom: 1vh;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+    }
+    .logo {
+        position: absolute;
+        left: 24px;
+        top: 50%;
+        transform: translateY(-50%);
+        height: 48px;
+        width: auto;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+    }
+    .log-off {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        color: white;
+        text-decoration: none;
+        padding: 8px 16px;
+        border: 2px solid white;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    .log-off:hover {
+        background: white;
+        color: #1e3c72;
+    }
+
+    /* Modern Content Area */
+    .content {
+        padding: 3vh;
+        flex-grow: 1;
+        overflow-y: auto;
+        max-width: 1400px;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    /* Modern Table */
+    table { 
+        width: 100%; 
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-top: 24px;
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        table-layout: fixed;
+    }
+    th, td { 
+        padding: 16px 20px; 
+        text-align: left; 
+        border-bottom: 1px solid #edf2f7;
+    }
+    th { 
+        background: #1e3c72; 
+        color: #fff; 
+        font-weight: 500;
+        font-size: 0.95em;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    tr:last-child td {
+        border-bottom: none;
+    }
+    tr:hover { 
+        background: #f8fafc; 
+    }
+
+    /* Adjust table column widths */
+    table th:nth-child(1), 
+    table td:nth-child(1) { /* Tournament Name column */
+        width: 20%;
+        min-width: 150px;
+    }
+
+    table th:nth-child(2), 
+    table td:nth-child(2) { /* Venue column */
+        width: 8%;
+        min-width: 100px;
+    }
+
+    table th:nth-child(3), 
+    table td:nth-child(3) { /* Tournament Dates column */
+        width: 20%;
+        min-width: 160px;
+    }
+
+    table th:nth-child(4), 
+    table td:nth-child(4) { /* Last Date of Entry column */
+        width: 15%;
+        min-width: 120px;
+    }
+
+    table th:nth-child(5), 
+    table td:nth-child(5) { /* Categories column */
+        width: 15%;
+        min-width: 120px;
+    }
+
+    table th:nth-child(6), 
+    table td:nth-child(6) { /* Actions column */
+        width: 20%;
+        min-width: 200px;
+        white-space: nowrap;
+    }
+
+    /* Modern Links and Buttons */
+    .category-link { 
+        color: #1e3c72; 
+        text-decoration: none;
+        cursor: pointer; 
+        display: block;
+        line-height: 1.8;
+        transition: color 0.2s;
+    }
+    .category-link:hover {
+        color: #2a5298;
+    }
+    .category-list {
+        display: block;
+        line-height: 1.8;
+        padding: 4px 0;
+    }
+    .icon-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
+        color: #1e3c72;
+        font-size: 1.2em;
+        margin-right: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        padding: 8px;
+        border-radius: 8px;
+        text-decoration: none;
+        vertical-align: middle;
+    }
+    .edit-icon:hover {
+        background: #e8f0fe;
+        color: #2a5298;
+        transform: translateY(-1px);
+    }
+    .delete-icon {
+        color: #dc2626;
+    }
+    .delete-icon:hover {
+        background-color: #dc3545;
+        color: white;
+    }
+    .info-icon:hover {
+        background: #e8f0fe;
+        color: #2a5298;
+        transform: translateY(-1px);
+    }
+    .add-player-icon {
+        background-color: #f8f9fa;
+        color: #1e3c72;
+    }
+    .add-player-icon:hover {
+        background: #e8f0fe;
+        color: #2a5298;
+        transform: translateY(-1px);
+    }
+
+    /* Error Message */
+    .error {
+        color: #d32f2f;
+        padding: 10px;
+        background: #ffebee;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+        .content {
+            padding: 2vh;
+        }
+        
+        table { 
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        
+        th, td {
+            padding: 12px 16px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+        }
+        
+        .logo {
+            height: 36px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .content {
+            padding: 1vh;
+        }
+        
+        .header {
+            flex-direction: column;
+            padding: 16px;
+        }
+        
+        .logo {
+            position: static;
+            transform: none;
+            margin-bottom: 12px;
+        }
+        
+        .log-off {
+            position: static;
+            margin-top: 12px;
+        }
+        
+        .icon-btn {
+            padding: 6px;
+            margin-right: 8px;
+        }
+    }
+</style>
+
+<script>
+    function deleteTournament(tournamentId) {
+        if (confirm('Are you sure you want to delete this tournament?')) {
+            window.location.href = `/delete_tournament_db/${tournamentId}`;
+        }
+    }
+</script>
+{% endblock %}
