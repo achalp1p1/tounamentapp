@@ -5,6 +5,10 @@ from database.database_init import get_db_connection, init_database
 import os
 from datetime import datetime
 
+def get_project_root():
+    """Get the project root directory"""
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 def truncate_tables(connection):
     """Truncate all tables in the correct order to respect foreign key constraints"""
     try:
@@ -55,7 +59,8 @@ def load_players_data():
             
         # Read CSV file
         print("Reading players_data.csv...")
-        df = pd.read_csv('players_data.csv')
+        csv_path = os.path.join(get_project_root(), 'players_data.csv')
+        df = pd.read_csv(csv_path)
         print(f"Found {len(df)} players in CSV file")
         
         # Convert numeric fields to strings and clean up data
@@ -255,7 +260,8 @@ def load_tournaments_data():
         
         # Read CSV file
         print("Reading tournaments.csv...")
-        df = pd.read_csv('tournaments.csv')
+        csv_path = os.path.join(get_project_root(), 'tournaments.csv')
+        df = pd.read_csv(csv_path)
         print(f"Found {len(df)} tournaments in CSV file")
         
         # Convert numeric fields to strings and clean up data
@@ -370,7 +376,8 @@ def load_tournament_categories():
         
         # Read CSV file
         print("Reading tournament_categories.csv...")
-        df = pd.read_csv('tournament_categories.csv')
+        csv_path = os.path.join(get_project_root(), 'tournament_categories.csv')
+        df = pd.read_csv(csv_path)
         print(f"Found {len(df)} tournament categories in CSV file")
         
         # Convert numeric fields to strings and clean up data
@@ -476,7 +483,8 @@ def load_tournament_registrations():
         
         # Read CSV file
         print("Reading tournament_registrations.csv...")
-        df = pd.read_csv('tournament_registrations.csv')
+        csv_path = os.path.join(get_project_root(), 'tournament_registrations.csv')
+        df = pd.read_csv(csv_path)
         print(f"Found {len(df)} tournament registrations in CSV file")
         
         # Convert numeric fields to strings and clean up data
@@ -580,7 +588,8 @@ def load_tournament_draw():
         
         # Read CSV file
         print("Reading Tournament_draw.csv...")
-        df = pd.read_csv('Tournament_draw.csv')
+        csv_path = os.path.join(get_project_root(), 'Tournament_draw.csv')
+        df = pd.read_csv(csv_path)
         print(f"Found {len(df)} tournament draw entries in CSV file")
         
         # Convert numeric fields to strings and clean up data
