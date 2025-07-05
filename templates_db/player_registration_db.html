@@ -353,7 +353,7 @@
             {% endif %}
         
         <div class="registration-form">
-                <form method="POST" action="{{ url_for('player_registration_db') }}" enctype="multipart/form-data" class="registration-form">
+                <form method="POST" action="{{ url_for('player_registration_db') }}" enctype="multipart/form-data">
                     <input type="hidden" id="player_id" name="player_id" value="{{ player_id }}">
                     <div class="form-container">
                         <!-- Left Column - Required Fields -->
@@ -361,8 +361,8 @@
                             <div class="section-title">Basic Information</div>
                             
                 <div class="form-group">
-                                <label for="player_name" class="required">Name</label>
-                                <input type="text" id="player_name" name="player_name" required 
+                                <label for="name" class="required">Name</label>
+                                <input type="text" id="name" name="name" required 
                                        placeholder="Enter player's full name"
                                        pattern="[A-Za-z\s]+" 
                                        title="Please enter a valid name (letters and spaces only)">
@@ -386,8 +386,8 @@
                 </div>
                 
                 <div class="form-group">
-                                <label for="phone" class="required">Phone Number</label>
-                                <input type="tel" id="phone" name="phone" required
+                                <label for="phone_number" class="required">Phone Number</label>
+                                <input type="tel" id="phone_number" name="phone_number" required
                                        placeholder="Enter 10-digit mobile number"
                                        pattern="[0-9]{10}"
                                        title="Please enter a valid 10-digit phone number">
@@ -402,22 +402,22 @@
                             <div class="section-title" style="margin-top: 2rem;">Upload Documents</div>
 
                             <div class="form-group">
-                                <label for="photo">Photo (150x150 pixel)</label>
-                                <input type="file" id="photo" name="photo" accept="image/*"
+                                <label for="photo_path">Photo (150x150 pixel)</label>
+                                <input type="file" id="photo_path" name="photo_path" accept="image/*"
                                        title="Please upload a photo in 150x150 pixel format">
                                 <small class="help-text">Upload a square photo in 150x150 pixel format</small>
                             </div>
 
                             <div class="form-group">
-                                <label for="birth_certificate">Birth Certificate Copy</label>
-                                <input type="file" id="birth_certificate" name="birth_certificate" accept=".pdf,.jpg,.jpeg,.png"
+                                <label for="birth_certificate_path">Birth Certificate Copy</label>
+                                <input type="file" id="birth_certificate_path" name="birth_certificate_path" accept=".pdf,.jpg,.jpeg,.png"
                                        title="Please upload a copy of birth certificate">
                                 <small class="help-text">Upload a copy of birth certificate (PDF, JPG, or PNG)</small>
                             </div>
 
                             <div class="form-group">
-                                <label for="address_proof">Address Proof</label>
-                                <input type="file" id="address_proof" name="address_proof" accept=".pdf,.jpg,.jpeg,.png"
+                                <label for="address_proof_path">Address Proof</label>
+                                <input type="file" id="address_proof_path" name="address_proof_path" accept=".pdf,.jpg,.jpeg,.png"
                                        title="Please upload address proof">
                                 <small class="help-text">Upload address proof document (PDF, JPG, or PNG)</small>
                             </div>
@@ -480,8 +480,8 @@
                 
                 <div class="form-group">
                                 <div class="checkbox-group">
-                                    <input type="checkbox" id="do_state_registration" name="do_state_registration" disabled>
-                                    <label for="do_state_registration">Do Official State Registration</label>
+                                    <input type="checkbox" id="state_registration" name="state_registration" disabled>
+                                    <label for="state_registration">Do Official State Registration</label>
                                 </div>
                             </div>
 
@@ -502,8 +502,8 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="payment_snapshot">Payment Snapshot</label>
-                                    <input type="file" id="payment_snapshot" name="payment_snapshot" accept="image/*,.pdf">
+                                    <label for="payment_snapshot_path">Payment Snapshot</label>
+                                    <input type="file" id="payment_snapshot_path" name="payment_snapshot_path" accept="image/*,.pdf">
                                     <small class="form-text text-muted">Upload screenshot or PDF of your payment</small>
                                 </div>
 
@@ -522,8 +522,8 @@
 
                                 <div id="noc_section" style="display: none;">
                                     <div class="form-group">
-                                        <label for="noc_certificate">NOC Certificate</label>
-                                        <input type="file" id="noc_certificate" name="noc_certificate" accept="image/*,.pdf">
+                                        <label for="noc_certificate_path">NOC Certificate</label>
+                                        <input type="file" id="noc_certificate_path" name="noc_certificate_path" accept="image/*,.pdf">
                                         <small class="form-text text-muted">Upload NOC certificate from previous state association</small>
                                     </div>
                                 </div>
@@ -547,8 +547,8 @@
                             </div>
                             
                             <div class="form-group">
-                                <label for="institution">School/Institution</label>
-                                <input type="text" id="institution" name="institution" 
+                                <label for="school_institution">School/Institution</label>
+                                <input type="text" id="school_institution" name="school_institution" 
                                        placeholder="Enter school/institution name">
                             </div>
                             
@@ -632,7 +632,7 @@
         const maxDate = yyyy + '-' + mm + '-' + dd;
         document.getElementById('date_of_birth').setAttribute('max', maxDate);
 
-        document.getElementById('phone').addEventListener('input', function(e) {
+        document.getElementById('phone_number').addEventListener('input', function(e) {
             this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
         });
 
@@ -665,14 +665,14 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             const stateSelect = document.getElementById('state');
-            const doStateRegistration = document.getElementById('do_state_registration');
+            const doStateRegistration = document.getElementById('state_registration');
             const paymentSection = document.getElementById('payment_section');
-            const paymentSnapshot = document.getElementById('payment_snapshot');
+            const paymentSnapshot = document.getElementById('payment_snapshot_path');
             const transactionId = document.getElementById('transaction_id');
             const officialStateId = document.getElementById('official_state_id');
             const isStateTransfer = document.getElementById('is_state_transfer');
             const nocSection = document.getElementById('noc_section');
-            const nocCertificate = document.getElementById('noc_certificate');
+            const nocCertificate = document.getElementById('noc_certificate_path');
 
             // Ensure checkbox is disabled on page load
             doStateRegistration.disabled = true;
@@ -719,11 +719,11 @@
 
             doStateRegistration.addEventListener('change', function() {
                 paymentSection.style.display = this.checked ? 'block' : 'none';
-                const paymentSnapshot = document.getElementById('payment_snapshot');
+                const paymentSnapshot = document.getElementById('payment_snapshot_path');
                 const transactionId = document.getElementById('transaction_id');
-                const photo = document.getElementById('photo');
-                const birthCertificate = document.getElementById('birth_certificate');
-                const addressProof = document.getElementById('address_proof');
+                const photo = document.getElementById('photo_path');
+                const birthCertificate = document.getElementById('birth_certificate_path');
+                const addressProof = document.getElementById('address_proof_path');
                 
                 if (this.checked) {
                     paymentSnapshot.setAttribute('required', 'required');

@@ -98,7 +98,7 @@ def check_tables_exist(cursor):
         print(f"Error checking tables: {e}")
         return []
 
-def init_database():
+def init_database(drop_tables=False):
     """Initialize the database and create required tables if they don't exist"""
     print("Starting database initialization...")
     connection = get_db_connection()
@@ -109,20 +109,21 @@ def init_database():
     try:
         cursor = connection.cursor()
         
-        # Drop all tables to ensure clean state
-        print("Dropping existing tables...")
-        cursor.execute("SET FOREIGN_KEY_CHECKS=0")
-        
-        # Get all tables
-        cursor.execute("SHOW TABLES")
-        tables = cursor.fetchall()
-        for table in tables:
-            print(f"Dropping table {table[0]}")
-            cursor.execute(f"DROP TABLE IF EXISTS {table[0]}")
-        
-        cursor.execute("SET FOREIGN_KEY_CHECKS=1")
-        print("All tables dropped successfully")
+        if drop_tables:
+            # Drop all tables to ensure clean state
+            print("Dropping existing tables...")
+            cursor.execute("SET FOREIGN_KEY_CHECKS=0")
             
+            # Get all tables
+            cursor.execute("SHOW TABLES")
+            tables = cursor.fetchall()
+            for table in tables:
+                print(f"Dropping table {table[0]}")
+                cursor.execute(f"DROP TABLE IF EXISTS {table[0]}")
+            
+            cursor.execute("SET FOREIGN_KEY_CHECKS=1")
+            print("All tables dropped successfully")
+        
         # Read SQL statements from file
         sql_file_path = os.path.join('config', 'table_schemas.sql')
         if not os.path.exists(sql_file_path):

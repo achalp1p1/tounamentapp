@@ -34,17 +34,17 @@
             <tbody>
                 {% for player in players %}
                 <tr>
-                    <td>{{ player['Name'] }}</td>
-                    <td>{{ player['Official State ID'] if player['Official State ID'] else '' }}</td>
-                    <td>{{ player['Date of Birth'] }}</td>
-                    <td>{{ player['Gender'] }}</td>
-                    <td>{{ player['State'] }}</td>
+                    <td>{{ player['name'] }}</td>
+                    <td>{{ player['official_state_id'] if player['official_state_id'] else '' }}</td>
+                    <td>{{ player['date_of_birth'] }}</td>
+                    <td>{{ player['gender'] }}</td>
+                    <td>{{ player['state'] }}</td>
                     <td>
-                        <a href="{{ url_for('edit_player_db', player_id=player['Player ID']) }}" class="action-link edit-link" title="Edit Player">
+                        <a href="{{ url_for('edit_player_db', player_id=player['id']) }}" class="action-link edit-link" title="Edit Player">
                             <i class="fas fa-edit"></i>
                         </a>
                         <a href="#" class="action-link delete-link" 
-                           onclick="deletePlayer('{{ player['Player ID'] }}', '{{ player['Name'] }}')" 
+                           onclick="deletePlayer('{{ player['id'] }}', '{{ player['name'] }}')" 
                            title="Delete Player">
                             <i class="fas fa-trash-alt"></i>
                         </a>

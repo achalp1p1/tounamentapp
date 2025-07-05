@@ -53,7 +53,7 @@ def load_players_data():
         
         # Initialize database first
         print("Initializing database...")
-        if not init_database():
+        if not init_database(drop_tables=True):
             print("Failed to initialize database")
             return False
             

@@ -19,7 +19,7 @@ app = Flask(__name__, template_folder='templates_db')
 app.secret_key = 'your_secret_key_here'
 
 # Initialize database on startup
-init_database()
+init_database(drop_tables=False)
 
 # Define upload folder
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'logo')
@@ -134,103 +134,223 @@ def list_tournament_db():
                              error="Error fetching tournaments data", 
                              tournaments=[])
 
-def generate_player_id(date_of_birth):
+def generate_player_id(dob):
+    """Generate a unique player ID based on date of birth"""
+    conn = None
+    cursor = None
     try:
+        # Get current count of players
         conn = get_db_connection()
         cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM players")
+        count = cursor.fetchone()[0]
         
-        # Get the year from date_of_birth
-        year = datetime.strptime(date_of_birth, '%Y-%m-%d').year
-        year_code = str(year)[-2:]  # Last two digits of the year
+        # Format: 25-25-XXXX where XXXX is sequential
+        next_id = str(count + 1).zfill(4)
+        player_id = f"25-25-{next_id}"
         
-        # Get the current maximum ID for this year
-        cursor.execute("""
-            SELECT MAX(Player_ID) 
-            FROM players 
-            WHERE Player_ID LIKE '25-25-%'
-        """)
-        
-        max_id = cursor.fetchone()[0]
-        
-        if max_id:
-            # Extract the sequence number and increment
-            seq_num = int(max_id.split('-')[-1]) + 1
-        else:
-            seq_num = 1
-            
-        # Format: "25-25-XXXX" where XXXX is a sequential number
-        new_id = f"25-25-{seq_num:04d}"
-        
-        cursor.close()
-        conn.close()
-        
-        return new_id
-        
-    except Error as e:
+        return player_id
+    except Exception as e:
         print(f"Error generating player ID: {e}")
-        raise
+        return None
+    finally:
+        if cursor:
+            cursor.close()
+        if conn and conn.is_connected():
+            conn.close()
 
 @app.route('/player_registration_db', methods=['GET', 'POST'])
 def player_registration_db():
+    conn = None
+    cursor = None
+    
     if not session.get('logged_in'):
         return redirect(url_for('login_db'))
         
     if request.method == 'POST':
         try:
+            print("\n=== Starting Player Registration Process ===")
+            
             # Get form data
             form_data = request.form.to_dict()
             files = request.files
             
+            print("\nForm Data:")
+            for key, value in form_data.items():
+                print(f"{key}: {value}")
+            
+            print("\nFiles:")
+            for key in files:
+                print(f"{key}: {files[key].filename if files[key].filename else 'No file'}")
+            
+            # Validate required fields
+            required_fields = ['name', 'date_of_birth', 'gender', 'phone_number']
+            for field in required_fields:
+                if not form_data.get(field):
+                    print(f"\nMissing required field: {field}")
+                    flash(f'Please fill in the {field.replace("_", " ")}', 'error')
+                    return redirect(url_for('player_registration_db'))
+            
             # Generate player ID
             player_id = generate_player_id(form_data['date_of_birth'])
+            if not player_id:
+                print("\nFailed to generate player ID")
+                flash('Error generating player ID. Please try again.', 'error')
+                return redirect(url_for('player_registration_db'))
+                
+            print(f"\nGenerated player ID: {player_id}")
+            
+            # Generate Official State ID only if state registration is checked and state is Delhi
+            state_registration = form_data.get('state_registration') == 'on'
+            state = form_data.get('state', '').strip()
+            official_state_id = ''
+            
+            if state_registration:
+                official_state_id = player_id.replace('-', '')
+                if state == 'Delhi':
+                    official_state_id = 'DL' + official_state_id
+                print(f"Generated Official State ID: {official_state_id}")
             
             # Connect to database
+            print("\nAttempting database connection...")
             conn = get_db_connection()
-            cursor = conn.cursor()
+            if not conn:
+                print("Failed to establish database connection")
+                flash('Database connection failed. Please try again.', 'error')
+                return redirect(url_for('player_registration_db'))
+                
+            cursor = conn.cursor(buffered=True)  # Use buffered cursor
+            print("Database connection successful")
+            
+            # Convert boolean fields to 'Yes'/'No'
+            state_registration = 'Yes' if form_data.get('state_registration') == 'on' else 'No'
+            is_state_transfer = 'Yes' if form_data.get('is_state_transfer') == 'on' else 'No'
             
             # Insert player data
-            cursor.execute("""
+            insert_query = """
                 INSERT INTO players (
-                    Player_ID, Name, Date_of_Birth, Gender, Phone, Email,
-                    Address, State, TTFI_ID, Official_State_ID, Institution,
-                    Academy, District, UPI_ID
+                    id, name, date_of_birth, gender, phone_number, email,
+                    address, state, ttfi_id, official_state_id, school_institution,
+                    academy, district, upi_id, account_holder_name, account_number,
+                    bank_name, branch_name, ifsc_code, state_registration,
+                    is_state_transfer, photo_path, birth_certificate_path,
+                    address_proof_path, payment_snapshot_path, transaction_id,
+                    noc_certificate_path
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
                 )
-            """, (
+            """
+            
+            insert_values = (
                 player_id,
-                form_data.get('player_name', '').strip(),
+                form_data.get('name', '').strip(),
                 form_data.get('date_of_birth', '').strip(),
                 form_data.get('gender', '').strip(),
-                form_data.get('phone', '').strip(),
+                form_data.get('phone_number', '').strip(),
                 form_data.get('email', '').strip(),
                 form_data.get('address', '').strip(),
-                form_data.get('state', '').strip(),
+                state,
                 form_data.get('ttfi_id', '').strip(),
-                form_data.get('official_state_id', '').strip(),
-                form_data.get('institution', '').strip(),
+                official_state_id,  # Now using the generated official_state_id
+                form_data.get('school_institution', '').strip(),
                 form_data.get('academy', '').strip(),
                 form_data.get('district', '').strip(),
-                form_data.get('upi_id', '').strip()
-            ))
+                form_data.get('upi_id', '').strip(),
+                form_data.get('account_holder_name', '').strip(),
+                form_data.get('account_number', '').strip(),
+                form_data.get('bank_name', '').strip(),
+                form_data.get('branch_name', '').strip(),
+                form_data.get('ifsc_code', '').strip(),
+                state_registration,  # Using 'Yes'/'No' instead of boolean
+                is_state_transfer,   # Using 'Yes'/'No' instead of boolean
+                None,  # photo_path - will be updated after file upload
+                None,  # birth_certificate_path - will be updated after file upload
+                None,  # address_proof_path - will be updated after file upload
+                None,  # payment_snapshot_path - will be updated after file upload
+                form_data.get('transaction_id', '').strip(),
+                None   # noc_certificate_path - will be updated after file upload
+            )
             
-            # Handle file uploads if needed
-            # TODO: Implement file upload handling
+            print("\nExecuting insert query:")
+            print("Query:", insert_query)
+            print("Values:", insert_values)
             
-            conn.commit()
-            cursor.close()
-            conn.close()
+            cursor.execute(insert_query, insert_values)
+            conn.commit()  # Commit after insert
+            print("Player data inserted successfully")
+            
+            # Handle file uploads
+            if player_id:
+                upload_dir = os.path.join('static', 'uploads', 'players', player_id)
+                os.makedirs(upload_dir, exist_ok=True)
+                print(f"\nCreated upload directory: {upload_dir}")
+                
+                file_fields = {
+                    'photo_path': 'photo_path',
+                    'birth_certificate_path': 'birth_certificate_path',
+                    'address_proof_path': 'address_proof_path',
+                    'payment_snapshot_path': 'payment_snapshot_path',
+                    'noc_certificate_path': 'noc_certificate_path'
+                }
+                
+                file_paths = {}
+                for db_field, form_field in file_fields.items():
+                    print(f"\nProcessing file field {form_field}")
+                    if form_field in files and files[form_field]:
+                        file = files[form_field]
+                        if file.filename:
+                            filename = secure_filename(file.filename)
+                            file_path = os.path.join(upload_dir, filename)
+                            file.save(file_path)
+                            file_paths[db_field] = os.path.join('uploads', 'players', player_id, filename)
+                            print(f"Saved file {filename} for field {form_field}")
+                
+                if file_paths:
+                    # Update file paths in database
+                    update_query = "UPDATE players SET " + ", ".join(f"{field} = %s" for field in file_paths.keys()) + " WHERE id = %s"
+                    update_values = list(file_paths.values()) + [player_id]
+                    print("\nExecuting update query:")
+                    print("Query:", update_query)
+                    print("Values:", update_values)
+                    cursor.execute(update_query, update_values)
+                    conn.commit()  # Commit after update
+                    print("File paths updated in database")
+            
+            # Verify the insert
+            cursor.execute("SELECT * FROM players WHERE id = %s", (player_id,))
+            result = cursor.fetchone()
+            if result:
+                print(f"\nVerification: Player found in database with ID {player_id}")
+                print("Player data:", result)
+            else:
+                print(f"\nVerification: Player NOT found in database with ID {player_id}")
             
             flash('Player registered successfully!', 'success')
             return redirect(url_for('list_players_db'))
             
         except Error as e:
-            print(f"Error registering player: {e}")
+            print(f"\nDatabase error: {e}")
+            if conn:
+                conn.rollback()
             flash('Error registering player. Please try again.', 'error')
             return redirect(url_for('player_registration_db'))
+        except Exception as e:
+            print(f"\nUnexpected error: {e}")
+            if conn:
+                conn.rollback()
+            flash('An unexpected error occurred. Please try again.', 'error')
+            return redirect(url_for('player_registration_db'))
+        finally:
+            if cursor:
+                cursor.close()
+            if conn and conn.is_connected():
+                conn.close()
+            print("\nDatabase connection cleanup completed")
+            print("=== Player Registration Process Ended ===\n")
     
     # GET request - show registration form
-    return render_template('players_db.html')
+    return render_template('player_registration_db.html', today_date=datetime.now().strftime('%Y-%m-%d'))
 
 def generate_tournament_id():
     try:
