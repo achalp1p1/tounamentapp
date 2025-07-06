@@ -84,24 +84,34 @@ def list_players_db():
         
     try:
         conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor(dictionary=True, buffered=True)
         
+        print("Fetching players from database...")
         cursor.execute("""
-            SELECT * FROM players 
-            ORDER BY Name
+            SELECT id, name, date_of_birth, gender, state, official_state_id 
+            FROM players 
+            ORDER BY name
         """)
         
         players = cursor.fetchall()
-        cursor.close()
-        conn.close()
+        print(f"Found {len(players)} players")
         
+        if players:
+            print("Sample player data:", players[0])
+            
         return render_template('list_players_db.html', players=players)
         
-    except Error as e:
-        print(f"Error: {e}")
+    except mysql.connector.Error as e:
+        print(f"Database error in list_players_db: {e}")
         return render_template('list_players_db.html', 
                              error="Error fetching players data", 
                              players=[])
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals() and conn.is_connected():
+            conn.close()
+            print("Database connection closed.")
 
 @app.route('/list_tournament_db')
 def list_tournament_db():
@@ -114,11 +124,11 @@ def list_tournament_db():
         
         cursor.execute("""
             SELECT t.*, 
-                   GROUP_CONCAT(tc.Category) as Categories
+                   GROUP_CONCAT(tc.category) as categories
             FROM tournaments t
-            LEFT JOIN tournament_categories tc ON t.Tournament_ID = tc.Tournament_ID
-            GROUP BY t.Tournament_ID
-            ORDER BY t.Start_Date DESC
+            LEFT JOIN tournament_categories tc ON t.tournament_id = tc.tournament_id
+            GROUP BY t.tournament_id
+            ORDER BY t.start_date DESC
         """)
         
         tournaments = cursor.fetchall()
@@ -395,25 +405,27 @@ def create_tournament_db():
     if request.method == 'POST':
         try:
             form_data = request.form.to_dict()
-            files = request.files
+            files = request.files.getlist('tournament_logo')  # Get all uploaded files
             
             # Generate tournament ID
             tournament_id = generate_tournament_id()
             
-            # Handle logo upload
-            logo_filename = None
-            if 'tournament_logo' in files:
-                logo = files['tournament_logo']
-                if logo and logo.filename:
-                    # Secure the filename
-                    filename = secure_filename(logo.filename)
-                    # Create tournament directory
-                    tournament_dir = os.path.join('static', 'tournaments', tournament_id)
-                    os.makedirs(tournament_dir, exist_ok=True)
-                    # Save the file
-                    logo_path = os.path.join(tournament_dir, f"logo_{filename}")
-                    logo.save(logo_path)
-                    logo_filename = f"logo_{filename}"
+            # Handle logo uploads
+            logo_filenames = []
+            if files:
+                # Create tournament directory
+                tournament_dir = os.path.join('static', 'tournaments', tournament_id)
+                os.makedirs(tournament_dir, exist_ok=True)
+                
+                for logo in files:
+                    if logo and logo.filename:
+                        # Secure the filename
+                        filename = secure_filename(logo.filename)
+                        # Save the file
+                        logo_path = os.path.join(tournament_dir, f"logo_{filename}")
+                        logo.save(logo_path)
+                        # Store relative path for database
+                        logo_filenames.append(f"tournaments/{tournament_id}/logo_{filename}")
             
             # Connect to database
             conn = get_db_connection()
@@ -422,36 +434,57 @@ def create_tournament_db():
             # Insert tournament data
             cursor.execute("""
                 INSERT INTO tournaments (
-                    Tournament_ID, Name, Venue, Start_Date, End_Date, 
-                    Last_Registration_Date, Total_Prize, General_Information,
-                    Logo_Link, Status, Bank_Account, UPI_Link, Payment_QR
+                    tournament_id, name, venue, start_date, end_date, 
+                    last_registration_date, total_prize, general_information,
+                    tournament_logo_link, status, bank_account, upi_link
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
                 )
             """, (
                 tournament_id,
-                form_data.get('tournament_name', '').strip(),
+                form_data.get('name', '').strip(),
                 form_data.get('venue', '').strip(),
                 form_data.get('start_date', '').strip(),
                 form_data.get('end_date', '').strip(),
                 form_data.get('last_registration_date', '').strip(),
-                form_data.get('total_prize', '').strip(),
+                form_data.get('total_prize', '0').strip(),
                 form_data.get('general_information', '').strip(),
-                logo_filename,
-                'Active',  # Default status
+                ','.join(logo_filenames) if logo_filenames else None,
+                'Upcoming',  # Default status based on dates
                 form_data.get('bank_account', '').strip(),
-                form_data.get('upi_link', '').strip(),
-                form_data.get('payment_qr', '').strip()
+                form_data.get('upi_link', '').strip()
             ))
             
             # Handle categories
-            categories = request.form.getlist('categories[]')
-            for category in categories:
+            # Categories are submitted as arrays with indices
+            category_data = {}
+            for key, value in form_data.items():
+                if key.startswith('categories['):
+                    # Extract index and field from key like categories[0][category]
+                    parts = key.split('[')
+                    index = parts[1].split(']')[0]
+                    field = parts[2].split(']')[0]
+                    
+                    if index not in category_data:
+                        category_data[index] = {}
+                    category_data[index][field] = value
+
+            # Insert categories
+            for category_info in category_data.values():
                 cursor.execute("""
                     INSERT INTO tournament_categories (
-                        Tournament_ID, Category
-                    ) VALUES (%s, %s)
-                """, (tournament_id, category))
+                        tournament_id, category, fee, first_prize,
+                        second_prize, third_prize, format
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    tournament_id,
+                    category_info.get('category', '').strip(),
+                    category_info.get('fee', '0').strip(),
+                    category_info.get('first_prize', '0').strip(),
+                    category_info.get('second_prize', '0').strip(),
+                    category_info.get('third_prize', '0').strip(),
+                    category_info.get('format', '').strip()
+                ))
             
             conn.commit()
             cursor.close()
@@ -466,7 +499,8 @@ def create_tournament_db():
             return redirect(url_for('create_tournament_db'))
     
     # GET request - show creation form
-    return render_template('tournament_creation_db.html')
+    categories = get_categories_from_config()
+    return render_template('tournament_creation_db.html', categories=categories)
 
 @app.route('/tournament_db/<tournament_id>/edit', methods=['GET', 'POST'])
 def edit_tournament_db(tournament_id):
@@ -497,31 +531,41 @@ def edit_tournament_db(tournament_id):
                     # Update logo filename in database
                     cursor.execute("""
                         UPDATE tournaments 
-                        SET Logo_Link = %s 
-                        WHERE Tournament_ID = %s
+                        SET tournament_logo_link = %s 
+                        WHERE tournament_id = %s
                     """, (f"logo_{filename}", tournament_id))
+            
+            # Handle empty values for decimal fields
+            total_prize = form_data.get('total_prize', '').strip()
+            if total_prize == '':
+                total_prize = None
+            else:
+                try:
+                    total_prize = float(total_prize)
+                except ValueError:
+                    total_prize = None
             
             # Update tournament data
             cursor.execute("""
                 UPDATE tournaments SET
-                    Name = %s,
-                    Venue = %s,
-                    Start_Date = %s,
-                    End_Date = %s,
-                    Last_Registration_Date = %s,
-                    Total_Prize = %s,
-                    General_Information = %s,
-                    Bank_Account = %s,
-                    UPI_Link = %s,
-                    Payment_QR = %s
-                WHERE Tournament_ID = %s
+                    name = %s,
+                    venue = %s,
+                    start_date = %s,
+                    end_date = %s,
+                    last_registration_date = %s,
+                    total_prize = %s,
+                    general_information = %s,
+                    bank_account = %s,
+                    upi_link = %s,
+                    payment_qr = %s
+                WHERE tournament_id = %s
             """, (
-                form_data.get('tournament_name', '').strip(),
+                form_data.get('name', '').strip(),
                 form_data.get('venue', '').strip(),
-                form_data.get('start_date', '').strip(),
-                form_data.get('end_date', '').strip(),
-                form_data.get('last_registration_date', '').strip(),
-                form_data.get('total_prize', '').strip(),
+                form_data.get('start_date', '').strip() or None,
+                form_data.get('end_date', '').strip() or None,
+                form_data.get('last_registration_date', '').strip() or None,
+                total_prize,
                 form_data.get('general_information', '').strip(),
                 form_data.get('bank_account', '').strip(),
                 form_data.get('upi_link', '').strip(),
@@ -530,13 +574,40 @@ def edit_tournament_db(tournament_id):
             ))
             
             # Update categories
-            cursor.execute("DELETE FROM tournament_categories WHERE Tournament_ID = %s", (tournament_id,))
+            cursor.execute("DELETE FROM tournament_categories WHERE tournament_id = %s", (tournament_id,))
             categories = request.form.getlist('categories[]')
-            for category in categories:
+            fees = request.form.getlist('fees[]')
+            first_prizes = request.form.getlist('first_prizes[]')
+            second_prizes = request.form.getlist('second_prizes[]')
+            third_prizes = request.form.getlist('third_prizes[]')
+            formats = request.form.getlist('formats[]')
+            
+            for i in range(len(categories)):
+                # Handle empty values for numeric fields
+                fee = fees[i].strip() if i < len(fees) else ''
+                first_prize = first_prizes[i].strip() if i < len(first_prizes) else ''
+                second_prize = second_prizes[i].strip() if i < len(second_prizes) else ''
+                third_prize = third_prizes[i].strip() if i < len(third_prizes) else ''
+                
+                # Convert empty strings to None
+                fee = float(fee) if fee != '' else None
+                first_prize = float(first_prize) if first_prize != '' else None
+                second_prize = float(second_prize) if second_prize != '' else None
+                third_prize = float(third_prize) if third_prize != '' else None
+                
                 cursor.execute("""
-                    INSERT INTO tournament_categories (Tournament_ID, Category)
-                    VALUES (%s, %s)
-                """, (tournament_id, category))
+                    INSERT INTO tournament_categories 
+                    (tournament_id, category, fee, first_prize, second_prize, third_prize, format)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    tournament_id, 
+                    categories[i],
+                    fee,
+                    first_prize,
+                    second_prize,
+                    third_prize,
+                    formats[i] if i < len(formats) else None
+                ))
             
             conn.commit()
             flash('Tournament updated successfully!', 'success')
@@ -545,11 +616,7 @@ def edit_tournament_db(tournament_id):
         else:
             # GET request - fetch tournament data
             cursor.execute("""
-                SELECT t.*, GROUP_CONCAT(tc.Category) as Categories
-                FROM tournaments t
-                LEFT JOIN tournament_categories tc ON t.Tournament_ID = tc.Tournament_ID
-                WHERE t.Tournament_ID = %s
-                GROUP BY t.Tournament_ID
+                SELECT * FROM tournaments WHERE tournament_id = %s
             """, (tournament_id,))
             
             tournament = cursor.fetchone()
@@ -558,8 +625,22 @@ def edit_tournament_db(tournament_id):
                 flash('Tournament not found!', 'error')
                 return redirect(url_for('list_tournament_db'))
             
+            # Fetch tournament categories separately
+            cursor.execute("""
+                SELECT category, fee, first_prize, second_prize, third_prize, format
+                FROM tournament_categories 
+                WHERE tournament_id = %s
+            """, (tournament_id,))
+            
+            tournament_categories = cursor.fetchall()
+            
+            # Get available categories from config
+            available_categories = get_categories_from_config()
+            
             return render_template('edit_tournament_db.html', 
-                                 tournament=tournament)
+                                 tournament=tournament,
+                                 tournament_categories=tournament_categories,
+                                 available_categories=available_categories)
     
     except Error as e:
         print(f"Error: {e}")
@@ -581,26 +662,26 @@ def tournament_info_db(tournament_id):
         
         # Get tournament details
         cursor.execute("""
-            SELECT t.*, GROUP_CONCAT(tc.Category) as Categories
+            SELECT t.*, 
+                   GROUP_CONCAT(tc.category) as categories
             FROM tournaments t
-            LEFT JOIN tournament_categories tc ON t.Tournament_ID = tc.Tournament_ID
-            WHERE t.Tournament_ID = %s
-            GROUP BY t.Tournament_ID
+            LEFT JOIN tournament_categories tc ON t.tournament_id = tc.tournament_id
+            WHERE t.tournament_id = %s
+            GROUP BY t.tournament_id
         """, (tournament_id,))
         
         tournament = cursor.fetchone()
         
         if not tournament:
-            flash('Tournament not found!', 'error')
-            return redirect(url_for('list_tournament_db'))
-        
-        # Get registered players
+            return "Tournament not found", 404
+            
+        # Get registrations for this tournament
         cursor.execute("""
-            SELECT p.*, tr.Category, tr.Registration_Date, tr.Status as Registration_Status
-            FROM tournament_registrations tr
-            JOIN players p ON tr.Player_ID = p.Player_ID
-            WHERE tr.Tournament_ID = %s
-            ORDER BY tr.Registration_Date
+            SELECT r.*, p.name
+            FROM tournament_registrations r
+            JOIN players p ON r.player_id = p.id
+            WHERE r.tournament_id = %s
+            ORDER BY r.registration_date DESC
         """, (tournament_id,))
         
         registrations = cursor.fetchall()
@@ -611,11 +692,10 @@ def tournament_info_db(tournament_id):
         return render_template('tournament_details_db.html',
                              tournament=tournament,
                              registrations=registrations)
-        
+                             
     except Error as e:
         print(f"Error: {e}")
-        flash('Error fetching tournament details. Please try again.', 'error')
-        return redirect(url_for('list_tournament_db'))
+        return "Error fetching tournament details", 500
 
 @app.route('/tournament_db/<tournament_id>/register', methods=['GET', 'POST'])
 def tournament_register_db(tournament_id):
@@ -627,64 +707,65 @@ def tournament_register_db(tournament_id):
         cursor = conn.cursor(dictionary=True)
         
         if request.method == 'POST':
-            player_id = request.form.get('player_id')
-            category = request.form.get('category')
+            data = request.get_json()
+            player_id = data.get('player_id')
+            category = data.get('category')
             
+            # Check if player exists
+            cursor.execute("SELECT * FROM players WHERE id = %s", (player_id,))
+            player = cursor.fetchone()
+            
+            if not player:
+                return jsonify({'success': False, 'message': 'Player not found'})
+                
             # Check if already registered
             cursor.execute("""
-                SELECT * FROM tournament_registrations
-                WHERE Tournament_ID = %s AND Player_ID = %s AND Category = %s
+                SELECT * FROM tournament_registrations 
+                WHERE tournament_id = %s AND player_id = %s AND category = %s
             """, (tournament_id, player_id, category))
             
             if cursor.fetchone():
-                flash('Player already registered in this category!', 'error')
-                return redirect(url_for('tournament_register_db', tournament_id=tournament_id))
-            
-            # Register player
+                return jsonify({'success': False, 'message': 'Player already registered in this category'})
+                
+            # Add registration
             cursor.execute("""
-                INSERT INTO tournament_registrations (
-                    Tournament_ID, Player_ID, Registration_Date, Category, Status
-                ) VALUES (%s, %s, %s, %s, %s)
-            """, (
-                tournament_id,
-                player_id,
-                datetime.now().strftime('%Y-%m-%d'),
-                category,
-                'Pending'  # Default status
-            ))
+                INSERT INTO tournament_registrations 
+                (tournament_id, player_id, category, registration_date, status)
+                VALUES (%s, %s, %s, CURDATE(), 'Pending')
+            """, (tournament_id, player_id, category))
             
             conn.commit()
-            flash('Registration successful!', 'success')
-            return redirect(url_for('tournament_info_db', tournament_id=tournament_id))
             
-        else:
-            # GET request - show registration form
-            # Get tournament details
-            cursor.execute("""
-                SELECT t.*, GROUP_CONCAT(tc.Category) as Categories
-                FROM tournaments t
-                LEFT JOIN tournament_categories tc ON t.Tournament_ID = tc.Tournament_ID
-                WHERE t.Tournament_ID = %s
-                GROUP BY t.Tournament_ID
-            """, (tournament_id,))
+            return jsonify({
+                'success': True,
+                'message': 'Registration successful',
+                'redirect_url': url_for('tournament_info_db', tournament_id=tournament_id)
+            })
             
-            tournament = cursor.fetchone()
+        # GET request - show registration form
+        cursor.execute("""
+            SELECT t.*, 
+                   GROUP_CONCAT(tc.category) as categories
+            FROM tournaments t
+            LEFT JOIN tournament_categories tc ON t.tournament_id = tc.tournament_id
+            WHERE t.tournament_id = %s
+            GROUP BY t.tournament_id
+        """, (tournament_id,))
+        
+        tournament = cursor.fetchone()
+        
+        if not tournament:
+            return "Tournament not found", 404
             
-            # Get all players
-            cursor.execute("SELECT * FROM players ORDER BY Name")
-            players = cursor.fetchall()
-            
-            cursor.close()
-            conn.close()
-            
-            return render_template('tournament_register_db.html',
-                                 tournament=tournament,
-                                 players=players)
-            
+        cursor.close()
+        conn.close()
+        
+        return render_template('tournament_register_db.html',
+                             tournament=tournament)
+                             
     except Error as e:
         print(f"Error: {e}")
-        flash('Error processing registration. Please try again.', 'error')
-        return redirect(url_for('list_tournament_db'))
+        return "Error processing registration", 500
 
 @app.route('/search_players_db')
 def search_players_db():
@@ -743,77 +824,75 @@ def edit_player_db(player_id):
         
     try:
         conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor(dictionary=True, buffered=True)
         
         if request.method == 'POST':
-            form_data = request.form.to_dict()
-            files = request.files
+            # Get form data
+            name = request.form.get('player_name')
+            dob = request.form.get('dob')
+            gender = request.form.get('gender')
+            phone = request.form.get('phone')
+            email = request.form.get('email')
+            address = request.form.get('address')
+            state = request.form.get('state')
+            district = request.form.get('district')
+            ttfi_id = request.form.get('ttfi_id')
+            institution = request.form.get('institution')
+            academy = request.form.get('academy')
+            upi_id = request.form.get('upi_id')
+            
+            print(f"Updating player {player_id} with name: {name}")
             
             # Update player data
             cursor.execute("""
                 UPDATE players SET
-                    Name = %s,
-                    Date_of_Birth = %s,
-                    Gender = %s,
-                    Phone = %s,
-                    Email = %s,
-                    Address = %s,
-                    State = %s,
-                    TTFI_ID = %s,
-                    Official_State_ID = %s,
-                    Institution = %s,
-                    Academy = %s,
-                    District = %s,
-                    UPI_ID = %s
-                WHERE Player_ID = %s
-            """, (
-                form_data.get('player_name', '').strip(),
-                form_data.get('date_of_birth', '').strip(),
-                form_data.get('gender', '').strip(),
-                form_data.get('phone', '').strip(),
-                form_data.get('email', '').strip(),
-                form_data.get('address', '').strip(),
-                form_data.get('state', '').strip(),
-                form_data.get('ttfi_id', '').strip(),
-                form_data.get('official_state_id', '').strip(),
-                form_data.get('institution', '').strip(),
-                form_data.get('academy', '').strip(),
-                form_data.get('district', '').strip(),
-                form_data.get('upi_id', '').strip(),
-                player_id
-            ))
-            
-            # Handle file uploads if needed
-            # TODO: Implement file upload handling
+                    name = %s,
+                    date_of_birth = %s,
+                    gender = %s,
+                    phone_number = %s,
+                    email = %s,
+                    address = %s,
+                    state = %s,
+                    district = %s,
+                    ttfi_id = %s,
+                    school_institution = %s,
+                    academy = %s,
+                    upi_id = %s
+                WHERE id = %s
+            """, (name, dob, gender, phone, email, address, state, district, ttfi_id, institution, academy, upi_id, player_id))
             
             conn.commit()
-            flash('Player updated successfully!', 'success')
+            print("Player updated successfully")
             return redirect(url_for('list_players_db'))
             
         else:
-            # GET request - fetch player data
-            cursor.execute("""
-                SELECT * FROM players
-                WHERE Player_ID = %s
-            """, (player_id,))
-            
+            print(f"Fetching player data for ID: {player_id}")
+            # Get player data for display
+            cursor.execute("SELECT * FROM players WHERE id = %s", (player_id,))
             player = cursor.fetchone()
             
-            if not player:
-                flash('Player not found!', 'error')
-                return redirect(url_for('list_players_db'))
+            if player is None:
+                print(f"Player not found with ID: {player_id}")
+                return "Player not found", 404
+                
+            print("Player data found:", player)
+                
+            # Get states for dropdown
+            cursor.execute("SELECT DISTINCT state FROM players WHERE state IS NOT NULL AND state != '' ORDER BY state")
+            states = [row['state'] for row in cursor.fetchall()]
             
-            return render_template('edit_player_db.html',
-                                 player=player)
-                                 
-    except Error as e:
-        print(f"Error: {e}")
-        flash('Error processing player data. Please try again.', 'error')
-        return redirect(url_for('list_players_db'))
+            return render_template('edit_player_db.html', player=player, states=states)
+            
+    except mysql.connector.Error as err:
+        print(f"Database error in edit_player_db: {err}")
+        return f"Database error occurred: {err}", 500
         
     finally:
-        cursor.close()
-        conn.close()
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals() and conn.is_connected():
+            conn.close()
+            print("Database connection closed.")
 
 @app.route('/delete_player_db/<player_id>', methods=['POST'])
 def delete_player_db(player_id):
@@ -898,7 +977,8 @@ def get_categories_from_config():
     try:
         with open('config/categories_config.json', 'r') as f:
             config = json.load(f)
-            return config.get('categories', [])
+            categories = config.get('categories', [])
+            return [category['name'] for category in categories]
     except Exception as e:
         print(f"Error reading categories config: {e}")
         return []
@@ -937,11 +1017,11 @@ def tournament_update_seeding_db(tournament_id):
         else:
             # Get tournament details
             cursor.execute("""
-                SELECT t.*, GROUP_CONCAT(tc.Category) as Categories
+                SELECT t.*, GROUP_CONCAT(tc.category) as categories
                 FROM tournaments t
-                LEFT JOIN tournament_categories tc ON t.Tournament_ID = tc.Tournament_ID
-                WHERE t.Tournament_ID = %s
-                GROUP BY t.Tournament_ID
+                LEFT JOIN tournament_categories tc ON t.tournament_id = tc.tournament_id
+                WHERE t.tournament_id = %s
+                GROUP BY t.tournament_id
             """, (tournament_id,))
             
             tournament = cursor.fetchone()
@@ -952,11 +1032,11 @@ def tournament_update_seeding_db(tournament_id):
             
             # Get registered players with their seeding
             cursor.execute("""
-                SELECT p.*, tr.Category, tr.Registration_Date, tr.Seeding
+                SELECT p.*, tr.category, tr.registration_date, tr.Seeding
                 FROM tournament_registrations tr
-                JOIN players p ON tr.Player_ID = p.Player_ID
-                WHERE tr.Tournament_ID = %s
-                ORDER BY tr.Category, tr.Seeding NULLS LAST, p.Name
+                JOIN players p ON tr.player_id = p.id
+                WHERE tr.tournament_id = %s
+                ORDER BY tr.category, tr.Seeding NULLS LAST, p.Name
             """, (tournament_id,))
             
             registrations = cursor.fetchall()
@@ -997,11 +1077,11 @@ def tournament_create_draw_db(tournament_id):
         
         # Get tournament details
         cursor.execute("""
-            SELECT t.*, GROUP_CONCAT(tc.Category) as Categories
+            SELECT t.*, GROUP_CONCAT(tc.category) as categories
             FROM tournaments t
-            LEFT JOIN tournament_categories tc ON t.Tournament_ID = tc.Tournament_ID
-            WHERE t.Tournament_ID = %s
-            GROUP BY t.Tournament_ID
+            LEFT JOIN tournament_categories tc ON t.tournament_id = tc.tournament_id
+            WHERE t.tournament_id = %s
+            GROUP BY t.tournament_id
         """, (tournament_id,))
         
         tournament = cursor.fetchone()
@@ -1012,35 +1092,34 @@ def tournament_create_draw_db(tournament_id):
         
         # Get registered players with seeding
         cursor.execute("""
-            SELECT p.*, tr.Category, tr.Registration_Date, tr.Seeding
+            SELECT p.*, tr.category, tr.registration_date, tr.seeding
             FROM tournament_registrations tr
-            JOIN players p ON tr.Player_ID = p.Player_ID
-            WHERE tr.Tournament_ID = %s
-            ORDER BY tr.Category, tr.Seeding NULLS LAST, p.Name
+            JOIN players p ON tr.player_id = p.id
+            WHERE tr.tournament_id = %s
+            ORDER BY tr.category, tr.seeding NULLS LAST, p.name
         """, (tournament_id,))
         
         registrations = cursor.fetchall()
         
-        # Group players by category
+        # Organize players by category
         players_by_category = {}
         for reg in registrations:
-            category = reg['Category']
+            category = reg['category']
             if category not in players_by_category:
                 players_by_category[category] = []
             players_by_category[category].append(reg)
         
-        return render_template('tournament_update_format_db.html',
-                             tournament=tournament,
-                             players_by_category=players_by_category)
-                             
-    except Error as e:
-        print(f"Error: {e}")
-        flash('Error creating draw. Please try again.', 'error')
-        return redirect(url_for('tournament_info_db', tournament_id=tournament_id))
-        
-    finally:
         cursor.close()
         conn.close()
+        
+        return render_template('tournament_create_draw_db.html',
+                             tournament=tournament,
+                             players_by_category=players_by_category)
+        
+    except Error as e:
+        print(f"Error: {e}")
+        flash('Error fetching tournament details. Please try again.', 'error')
+        return redirect(url_for('list_tournament_db'))
 
 @app.route('/save_tournament_draw_db', methods=['POST'])
 def save_tournament_draw_db():
@@ -1124,6 +1203,32 @@ def get_category_players_db(tournament_id, category):
     except Error as e:
         print(f"Error fetching players: {e}")
         return jsonify({'error': str(e)}), 500
+
+@app.route('/get_player_details_db/<player_id>')
+def get_player_details_db(player_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        cursor.execute("""
+            SELECT id, name, date_of_birth, state, district, school_institution
+            FROM players
+            WHERE id = %s
+        """, (player_id,))
+        
+        player = cursor.fetchone()
+        
+        cursor.close()
+        conn.close()
+        
+        if player:
+            return jsonify({'success': True, 'player': player})
+        else:
+            return jsonify({'success': False, 'message': 'Player not found'})
+            
+    except Error as e:
+        print(f"Error: {e}")
+        return jsonify({'success': False, 'message': 'Error fetching player details'})
 
 if __name__ == '__main__':
     app.run(debug=True) 

@@ -20,25 +20,25 @@
                     <h2 class="section-title">Required Information</h2>
                     <div class="form-group">
                         <label for="player_name" class="required">Player Name</label>
-                        <input type="text" id="player_name" name="player_name" value="{{ player['Name'] }}" required>
+                        <input type="text" id="player_name" name="player_name" value="{{ player['name'] }}" required>
                     </div>
 
                     <div class="form-group">
                         <label for="dob" class="required">Date of Birth</label>
-                        <input type="date" id="dob" name="dob" value="{{ player['Date of Birth'] }}" required>
+                        <input type="date" id="dob" name="dob" value="{{ player['date_of_birth'] }}" required>
                     </div>
 
                     <div class="form-group">
                         <label for="gender" class="required">Gender</label>
                         <select id="gender" name="gender" required>
-                            <option value="Male" {% if player['Gender'] == 'Male' %}selected{% endif %}>Male</option>
-                            <option value="Female" {% if player['Gender'] == 'Female' %}selected{% endif %}>Female</option>
+                            <option value="Male" {% if player['gender'] == 'Male' %}selected{% endif %}>Male</option>
+                            <option value="Female" {% if player['gender'] == 'Female' %}selected{% endif %}>Female</option>
                         </select>
                     </div>
 
                     <div class="form-group">
                         <label for="phone" class="required">Phone Number</label>
-                        <input type="tel" id="phone" name="phone" value="{{ player['Phone'] }}" required>
+                        <input type="tel" id="phone" name="phone" value="{{ player['phone_number'] }}" required>
                     </div>
                 </div>
 
@@ -46,12 +46,12 @@
                     <h2 class="section-title">Additional Information</h2>
                     <div class="form-group">
                         <label for="email">Email</label>
-                        <input type="email" id="email" name="email" value="{{ player['Email'] }}">
+                        <input type="email" id="email" name="email" value="{{ player['email'] }}">
                     </div>
 
                     <div class="form-group">
                         <label for="address">Address</label>
-                        <textarea id="address" name="address">{{ player['Address'] }}</textarea>
+                        <textarea id="address" name="address">{{ player['address'] }}</textarea>
                     </div>
 
                     <div class="form-group">
@@ -59,34 +59,34 @@
                         <select id="state" name="state">
                             <option value="">Select State</option>
                             {% for state in states %}
-                            <option value="{{ state }}" {% if player['State'] == state %}selected{% endif %}>{{ state }}</option>
+                            <option value="{{ state }}" {% if player['state'] == state %}selected{% endif %}>{{ state }}</option>
                             {% endfor %}
                         </select>
                     </div>
 
                     <div class="form-group">
                         <label for="district">District</label>
-                        <input type="text" id="district" name="district" value="{{ player['District'] }}">
+                        <input type="text" id="district" name="district" value="{{ player['district'] }}">
                     </div>
 
                     <div class="form-group">
                         <label for="ttfi_id">TTFI ID</label>
-                        <input type="text" id="ttfi_id" name="ttfi_id" value="{{ player['TTFI ID'] }}">
+                        <input type="text" id="ttfi_id" name="ttfi_id" value="{{ player['ttfi_id'] }}">
                     </div>
 
                     <div class="form-group">
-                        <label for="institution">School/Institution</label>
-                        <input type="text" id="institution" name="institution" value="{{ player['Institution'] }}">
+                        <label for="school_institution">School/Institution</label>
+                        <input type="text" id="school_institution" name="school_institution" value="{{ player['school_institution'] }}">
                     </div>
 
                     <div class="form-group">
                         <label for="academy">Academy</label>
-                        <input type="text" id="academy" name="academy" value="{{ player['Academy'] }}">
+                        <input type="text" id="academy" name="academy" value="{{ player['academy'] }}">
                     </div>
 
                     <div class="form-group">
                         <label for="upi_id">UPI ID</label>
-                        <input type="text" id="upi_id" name="upi_id" value="{{ player['UPI ID'] }}">
+                        <input type="text" id="upi_id" name="upi_id" value="{{ player['upi_id'] }}">
                     </div>
                 </div>
             </div>
