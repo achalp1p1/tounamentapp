@@ -148,14 +148,14 @@
 
                     <div class="form-group">
                         <div class="checkbox-group">
-                            <input type="checkbox" id="do_state_registration" name="do_state_registration" 
-                                   {% if player['official_state_id'] %}checked{% endif %}
+                            <input type="checkbox" id="do_state_registration" name="state_registration" 
+                                   {% if player['state_registration'] == 'Yes' %}checked{% endif %}
                                    {% if player['state_registration'] == 'Yes' %}disabled{% endif %}>
                             <label for="do_state_registration"><strong>Do Official State Registration</strong></label>
                         </div>
                     </div>
 
-                    <div id="payment_section" style="display: {% if player['state_registration'] == 'Yes' or player['official_state_id'] %}block{% else %}none{% endif %};">
+                    <div id="payment_section" style="display: {% if player['state_registration'] == 'Yes' %}block{% else %}none{% endif %};">
                         <h3>Payment Details</h3>
                         <p>Registration Fee: ₹1000</p>
                         <div class="bank-details">
@@ -583,51 +583,83 @@
     function generateOfficialStateId(playerId) {
         if (!playerId) return '';
         // Remove any dashes
-        return playerId.replace(/-/g, '');
+        let stateId = playerId.replace(/-/g, '');
+        return stateSelect.value === 'Delhi' ? 'DL' + stateId : stateId;
     }
 
-    // Function to check if payment details are provided
-    function checkPaymentDetails() {
-        if (paymentSnapshot.files.length > 0 && transactionId.value.trim() !== '') {
-            // Get the player ID from the URL
+    // Function to update official state ID
+    function updateOfficialStateId() {
+        if (doStateRegistration.checked && !doStateRegistration.disabled) {
             const playerId = window.location.pathname.split('/').pop();
             if (playerId) {
-                const stateId = generateOfficialStateId(playerId);
-                officialStateId.value = stateSelect.value === 'Delhi' ? 'DL' + stateId : stateId;
+                officialStateId.value = generateOfficialStateId(playerId);
             }
+        }
+    }
+
+    // Function to update payment requirements
+    function updatePaymentRequirements() {
+        const isNewRegistration = doStateRegistration.checked && !doStateRegistration.disabled;
+        paymentSnapshot.required = isNewRegistration;
+        transactionId.required = isNewRegistration;
+        
+        if (isNewRegistration) {
+            paymentSnapshot.removeAttribute('disabled');
+            transactionId.removeAttribute('readonly');
         } else {
-            officialStateId.value = '';
+            if (doStateRegistration.disabled) {
+                paymentSnapshot.setAttribute('disabled', 'disabled');
+                transactionId.setAttribute('readonly', 'readonly');
+            }
         }
     }
 
     // Only add event listeners if the fields are not disabled
     if (!doStateRegistration.disabled) {
-        // Listen for changes in payment details
-        paymentSnapshot.addEventListener('change', checkPaymentDetails);
-        transactionId.addEventListener('input', checkPaymentDetails);
+        // Listen for changes in state
+        stateSelect.addEventListener('change', updateOfficialStateId);
 
         // Show/hide payment section based on checkbox
         doStateRegistration.addEventListener('change', function() {
             paymentSection.style.display = this.checked ? 'block' : 'none';
-            paymentSnapshot.required = this.checked;
-            transactionId.required = this.checked;
             if (!this.checked) {
                 paymentSnapshot.value = '';
                 transactionId.value = '';
                 officialStateId.value = '';
+            } else {
+                updateOfficialStateId();
             }
+            updatePaymentRequirements();
         });
     }
 
     // Initialize state registration section
     if (doStateRegistration.checked) {
         paymentSection.style.display = 'block';
-        paymentSnapshot.required = true;
-        transactionId.required = true;
+        updatePaymentRequirements();
+        if (!doStateRegistration.disabled) {
+            updateOfficialStateId();
+        }
     } else {
         paymentSection.style.display = 'none';
         paymentSnapshot.required = false;
         transactionId.required = false;
     }
+
+    // Add form validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (doStateRegistration.checked && !doStateRegistration.disabled) {
+            if (!transactionId.value.trim()) {
+                e.preventDefault();
+                alert('Please enter the transaction ID for state registration');
+                return;
+            }
+            if (!paymentSnapshot.files.length) {
+                e.preventDefault();
+                alert('Please upload the payment snapshot for state registration');
+                return;
+            }
+        }
+    });
 </script>
 {% endblock %} 

@@ -149,15 +149,41 @@ def generate_player_id(dob):
     conn = None
     cursor = None
     try:
-        # Get current count of players
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM players")
-        count = cursor.fetchone()[0]
+        
+        # Get the highest player ID number
+        cursor.execute("""
+            SELECT id FROM players 
+            WHERE id LIKE '25-25-%' 
+            ORDER BY CAST(SUBSTRING(id, 7) AS UNSIGNED) DESC 
+            LIMIT 1
+        """)
+        result = cursor.fetchone()
+        
+        if result:
+            # Extract the numeric part and increment
+            last_id = result[0]
+            last_number = int(last_id.split('-')[-1])
+            next_number = last_number + 1
+        else:
+            # If no existing players, start from 1
+            next_number = 1
         
         # Format: 25-25-XXXX where XXXX is sequential
-        next_id = str(count + 1).zfill(4)
+        next_id = str(next_number).zfill(4)
         player_id = f"25-25-{next_id}"
+        
+        # Verify this ID is not already taken
+        while True:
+            cursor.execute("SELECT COUNT(*) FROM players WHERE id = %s", (player_id,))
+            count = cursor.fetchone()[0]
+            if count == 0:
+                break
+            # If ID exists, try next number
+            next_number += 1
+            next_id = str(next_number).zfill(4)
+            player_id = f"25-25-{next_id}"
         
         return player_id
     except Exception as e:
@@ -837,11 +863,45 @@ def edit_player_db(player_id):
             state = request.form.get('state')
             district = request.form.get('district')
             ttfi_id = request.form.get('ttfi_id')
-            institution = request.form.get('institution')
+            institution = request.form.get('school_institution')
             academy = request.form.get('academy')
             upi_id = request.form.get('upi_id')
             
+            # Get state registration details
+            state_registration = request.form.get('state_registration') == 'on'
+            transaction_id = request.form.get('transaction_id')
+            
+            # Handle state registration
+            official_state_id = None
+            if state_registration:
+                # Generate official state ID based on player ID
+                official_state_id = player_id.replace('-', '')
+                if state == 'Delhi':
+                    official_state_id = 'DL' + official_state_id
+                
+                # Validate payment details if this is a new registration
+                cursor.execute("SELECT state_registration FROM players WHERE id = %s", (player_id,))
+                current_registration = cursor.fetchone()
+                if current_registration and current_registration['state_registration'] != 'Yes':
+                    # This is a new registration, validate payment details
+                    if not transaction_id:
+                        flash('Transaction ID is required for state registration', 'error')
+                        return redirect(url_for('edit_player_db', player_id=player_id))
+                    
+                    # Check if payment snapshot is provided
+                    if 'payment_snapshot' not in request.files or not request.files['payment_snapshot'].filename:
+                        flash('Payment snapshot is required for state registration', 'error')
+                        return redirect(url_for('edit_player_db', player_id=player_id))
+            
+            # Get bank account details
+            account_holder_name = request.form.get('account_holder_name')
+            account_number = request.form.get('account_number')
+            bank_name = request.form.get('bank_name')
+            branch_name = request.form.get('branch_name')
+            ifsc_code = request.form.get('ifsc_code')
+            
             print(f"Updating player {player_id} with name: {name}")
+            print(f"State registration: {state_registration}, Official ID: {official_state_id}")
             
             # Update player data
             cursor.execute("""
@@ -857,12 +917,56 @@ def edit_player_db(player_id):
                     ttfi_id = %s,
                     school_institution = %s,
                     academy = %s,
-                    upi_id = %s
+                    upi_id = %s,
+                    official_state_id = %s,
+                    state_registration = %s,
+                    transaction_id = %s,
+                    account_holder_name = %s,
+                    account_number = %s,
+                    bank_name = %s,
+                    branch_name = %s,
+                    ifsc_code = %s
                 WHERE id = %s
-            """, (name, dob, gender, phone, email, address, state, district, ttfi_id, institution, academy, upi_id, player_id))
+            """, (name, dob, gender, phone, email, address, state, district, ttfi_id, 
+                  institution, academy, upi_id, official_state_id, 
+                  'Yes' if state_registration else 'No', transaction_id,
+                  account_holder_name, account_number, bank_name, branch_name, ifsc_code, player_id))
+            
+            # Handle file uploads
+            files = request.files
+            upload_path = os.path.join('static', 'uploads', 'players', player_id)
+            os.makedirs(upload_path, exist_ok=True)
+            
+            # Handle payment snapshot if state registration is being done
+            if state_registration and 'payment_snapshot' in files:
+                payment_file = files['payment_snapshot']
+                if payment_file and payment_file.filename:
+                    filename = secure_filename(payment_file.filename)
+                    payment_path = os.path.join(upload_path, 'payment_snapshot.jpg')
+                    payment_file.save(payment_path)
+                    cursor.execute("""
+                        UPDATE players 
+                        SET payment_snapshot_path = %s 
+                        WHERE id = %s
+                    """, (payment_path, player_id))
+            
+            # Handle other document uploads
+            for doc_type in ['photo', 'birth_certificate', 'address_proof']:
+                if doc_type in files:
+                    file = files[doc_type]
+                    if file and file.filename:
+                        filename = secure_filename(file.filename)
+                        file_path = os.path.join(upload_path, f"{doc_type}.jpg")
+                        file.save(file_path)
+                        cursor.execute(f"""
+                            UPDATE players 
+                            SET {doc_type}_path = %s 
+                            WHERE id = %s
+                        """, (file_path, player_id))
             
             conn.commit()
             print("Player updated successfully")
+            flash('Player updated successfully!', 'success')
             return redirect(url_for('list_players_db'))
             
         else:
@@ -885,7 +989,8 @@ def edit_player_db(player_id):
             
     except mysql.connector.Error as err:
         print(f"Database error in edit_player_db: {err}")
-        return f"Database error occurred: {err}", 500
+        flash(f"Database error occurred: {err}", 'error')
+        return redirect(url_for('edit_player_db', player_id=player_id))
         
     finally:
         if 'cursor' in locals():
@@ -906,13 +1011,13 @@ def delete_player_db(player_id):
         # First delete from tournament_registrations
         cursor.execute("""
             DELETE FROM tournament_registrations
-            WHERE Player_ID = %s
+            WHERE player_id = %s
         """, (player_id,))
         
         # Then delete the player
         cursor.execute("""
             DELETE FROM players
-            WHERE Player_ID = %s
+            WHERE id = %s
         """, (player_id,))
         
         conn.commit()
