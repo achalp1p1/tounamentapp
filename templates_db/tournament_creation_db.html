@@ -1,1156 +1,831 @@
 {% extends "base_db.html" %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Tournament - DilliLabs Tournify</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #1976d2;
-            --primary-light: #e3f2fd;
-            --error-color: #d32f2f;
-            --text-primary: #212121;
-            --text-secondary: #757575;
-            --border-color: #e0e0e0;
-        }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Roboto', sans-serif;
-        }
+{% block title %}Create Tournament - DilliLabs Tournify{% endblock %}
 
-        body {
-            background-color: #f5f5f5;
-            color: var(--text-primary);
-            line-height: 1.6;
-            min-height: 100vh;
-        }
+{% block head %}
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<style>
+    :root {
+        --primary-color: #1976d2;
+        --primary-light: #e3f2fd;
+        --error-color: #d32f2f;
+        --text-primary: #212121;
+        --text-secondary: #757575;
+        --border-color: #e0e0e0;
+    }
 
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Roboto', sans-serif;
+    }
+
+    body {
+        background-color: #f5f5f5;
+        color: var(--text-primary);
+        line-height: 1.6;
+        min-height: 100vh;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        margin-top: 80px;
+    }
+
+    /* Add header styles */
+    .header {
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        color: white;
+        padding: 2vh;
+        text-align: center;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .header h1 {
+        font-size: min(32px, 4vh);
+        margin-bottom: 1vh;
+    }
+
+    .logo {
+        position: absolute;
+        left: 24px;
+        top: 50%;
+        transform: translateY(-50%);
+        height: 48px;
+        width: auto;
+    }
+
+    form {
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+    }
+
+    .form-section label {
+        display: block;
+        color: var(--primary-color);
+        font-size: 1.1rem;
+        font-weight: 500;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--primary-light);
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        font-weight: 500;
+        border: none;
+    }
+
+    .required-field::after {
+        content: " *";
+        color: var(--error-color);
+    }
+
+    .required-note {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    .required-note::before {
+        content: "* ";
+        color: var(--error-color);
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    textarea,
+    select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        font-size: 1rem;
+        transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    input[type="date"]:focus,
+    textarea:focus,
+    select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px var(--primary-light);
+        outline: none;
+    }
+
+    .category-select-container {
+        position: relative;
+        width: 100%;
+    }
+
+    .category-select-dropdown {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        background: white;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .category-select-dropdown::after {
+        content: '▼';
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+
+    .category-options {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        margin-top: 4px;
+        max-height: 300px;
+        overflow-y: auto;
+        z-index: 1000;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .category-options.show {
+        display: block;
+    }
+
+    .category-option {
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        min-height: 32px;
+    }
+
+    .category-option:hover {
+        background-color: var(--primary-light);
+    }
+
+    .category-option input[type="checkbox"] {
+        margin: 0;
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+        margin-top: 2px;
+    }
+
+    .category-option label {
+        cursor: pointer;
+        font-size: 0.9rem;
+        flex: 1;
+        line-height: 1.2;
+        padding-top: 2px;
+    }
+
+    .selected-categories {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .selected-category {
+        background: var(--primary-light);
+        color: var(--primary-color);
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .selected-category .remove-category {
+        color: var(--primary-color);
+        font-size: 1.2rem;
+        cursor: pointer;
+    }
+
+    .selected-category .remove-category:hover {
+        color: var(--error-color);
+    }
+
+    .category-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr 2fr 1fr;
+        gap: 1rem;
+        align-items: start;
+        padding: 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        margin-bottom: 1rem;
+        background: white;
+    }
+
+    .prize-section {
+        display: grid;
+        gap: 0.5rem;
+    }
+
+    .prize-section > div {
+        font-weight: 500;
+        color: var(--primary-color);
+        margin-bottom: 0.25rem;
+    }
+
+    .fee-input-container {
+        position: relative;
+    }
+
+    .required-asterisk {
+        color: var(--error-color);
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-weight: bold;
+    }
+
+    .remove-category {
+        color: var(--error-color);
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .remove-category:hover {
+        color: #b71c1c;
+    }
+
+    .logo-preview-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .logo-preview {
+        max-width: 150px;
+        max-height: 150px;
+        border-radius: 4px;
+        border: 1px solid var(--border-color);
+    }
+
+    .logo-row {
+        margin-bottom: 15px;
+    }
+
+    .add-logo-btn {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: background-color 0.3s;
+    }
+
+    .add-logo-btn:hover {
+        background-color: #1565c0;
+    }
+
+    .remove-logo-btn {
+        color: var(--error-color);
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .remove-logo-btn:hover {
+        color: #b71c1c;
+    }
+
+    .submit-btn {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 1.1rem;
+        font-weight: 500;
+        display: block;
+        width: 100%;
+        max-width: 300px;
+        margin: 2rem auto 0;
+        transition: background-color 0.3s;
+    }
+
+    .submit-btn:hover {
+        background-color: #1565c0;
+    }
+
+    .error-message {
+        color: var(--error-color);
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+        display: none;
+        padding: 0.5rem;
+        background-color: #ffebee;
+        border-radius: 4px;
+        border-left: 3px solid var(--error-color);
+    }
+
+    .form-group.error input {
+        border-color: var(--error-color);
+    }
+
+    .form-group.error .error-message {
+        display: block;
+    }
+
+    /* Footer styles */
+    .footer {
+        background: #1e3c72;
+        color: white;
+        padding: 16px 0;
+        text-align: center;
+        margin-top: auto;
+    }
+
+    .footer-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 24px;
+    }
+
+    .footer p {
+        margin: 0;
+        font-size: 0.9em;
+        font-weight: 500;
+    }
+
+    /* Mobile optimizations */
+    @media (max-width: 768px) {
         .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-            margin-top: 80px; /* Add space for the menu */
-        }
-
-        .page-header {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid var(--primary-color);
-        }
-
-        .page-header h1 {
-            color: var(--primary-color);
-            font-size: 1.8rem;
-            font-weight: 500;
-            text-align: center;
-        }
-
-        .back-button {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.5rem 1rem;
-            background-color: var(--primary-light);
-            color: var(--primary-color);
-            text-decoration: none;
-            border-radius: 4px;
-            transition: background-color 0.3s;
-        }
-
-        .back-button:hover {
-            background-color: #bbdefb;
-        }
-
-        .back-button i {
-            margin-right: 0.5rem;
-        }
-
-        form {
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .form-section {
-            margin-bottom: 2rem;
-            padding: 1.5rem;
-            background: white;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-        }
-
-        .form-section label {
-            display: block;
-            color: var(--primary-color);
-            font-size: 1.1rem;
-            font-weight: 500;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid var(--primary-light);
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            font-weight: 500;
-            border: none;
-        }
-
-        .required-field::after {
-            content: " *";
-            color: var(--error-color);
-        }
-
-        .required-note {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-        }
-
-        .required-note::before {
-            content: "* ";
-            color: var(--error-color);
-        }
-
-        input[type="text"],
-        input[type="number"],
-        input[type="date"],
-        textarea,
-        select {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            font-size: 1rem;
-            transition: border-color 0.3s, box-shadow 0.3s;
-        }
-
-        input[type="text"]:focus,
-        input[type="number"]:focus,
-        input[type="date"]:focus,
-        textarea:focus,
-        select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px var(--primary-light);
-            outline: none;
-        }
-
-        .category-fee-header {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
-            gap: 1rem;
-            padding: 0.75rem;
-            background-color: var(--primary-light);
-            border-radius: 4px;
-            margin-bottom: 1rem;
-            font-weight: 500;
-            color: var(--primary-color);
-        }
-
-        .category-row {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
-            gap: 1rem;
-            align-items: center;
-            padding: 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            margin-bottom: 0.75rem;
-            background: white;
-        }
-
-        .prize-section {
-            border-left: 2px solid var(--primary-light);
-            padding-left: 1rem;
-        }
-
-        .prize-section-header {
-            color: var(--primary-color);
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            font-size: 0.9rem;
-        }
-
-        input[type="text"]:focus {
-            border-color: var(--primary-color);
-            outline: none;
-            box-shadow: 0 0 0 2px var(--primary-light);
-        }
-
-        .remove-category {
-            color: var(--error-color);
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 0.25rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .remove-category:hover {
-            color: #b71c1c;
-        }
-
-        #add-category-btn {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: background-color 0.3s;
-        }
-
-        #add-category-btn:hover {
-            background-color: #1565c0;
-        }
-
-        .submit-btn {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1.1rem;
-            font-weight: 500;
-            display: block;
-            width: 100%;
-            max-width: 300px;
-            margin: 2rem auto 0;
-            transition: background-color 0.3s;
-        }
-
-        .submit-btn:hover {
-            background-color: #1565c0;
-        }
-
-        .error {
-            color: var(--error-color);
-            font-size: 0.9rem;
-            margin-top: 0.25rem;
-        }
-
-        .logo-section {
-            margin-top: 1rem;
-        }
-
-        .logo-row {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .logo-preview {
-            max-width: 200px;
-            max-height: 200px;
-            border-radius: 4px;
-            border: 1px solid var(--border-color);
-        }
-
-        .add-logo-btn {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 0.5rem;
-            border-radius: 4px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.3s;
-        }
-
-        .add-logo-btn:hover {
-            background-color: #1565c0;
-        }
-
-        .remove-logo-btn {
-            color: var(--error-color);
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 0.25rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .remove-logo-btn:hover {
-            color: #b71c1c;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                margin: 1rem auto;
-                padding: 0 0.5rem;
-            }
-
-            .page-header {
-                flex-direction: column;
-                gap: 1rem;
-                text-align: center;
-                margin-bottom: 1rem;
-            }
-
-            .page-header h1 {
-                font-size: 1.5rem;
-            }
-
-            .back-button {
-                width: 100%;
-                justify-content: center;
-            }
-
-            form {
-                padding: 1rem;
-            }
-
-            .form-section {
-                padding: 1rem;
-                margin-bottom: 1rem;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-
-            .category-fee-header {
-                display: none;
-            }
-
-            .category-row {
-                grid-template-columns: 1fr;
-                gap: 0.75rem;
-                padding: 1rem;
-                position: relative;
-            }
-
-            .category-row::before {
-                content: attr(data-label);
-                font-weight: 500;
-                color: var(--text-secondary);
-                margin-bottom: 0.25rem;
-            }
-
-            .category-row select,
-            .category-row input {
-                width: 100%;
-            }
-
-            .prize-section {
-                border-left: none;
-                padding-left: 0;
-                margin-top: 0.5rem;
-                padding-top: 0.5rem;
-                border-top: 1px solid var(--primary-light);
-            }
-
-            .remove-category {
-                position: absolute;
-                top: 0.5rem;
-                right: 0.5rem;
-            }
-
-            .submit-btn {
-                width: 100%;
-                max-width: none;
-                margin-top: 1rem;
-            }
-
-            .logo-row {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .logo-preview {
-                max-width: 100%;
-            }
-        }
-
-        /* Additional mobile optimizations */
-        @media (max-width: 480px) {
-            .form-section label {
-                font-size: 1rem;
-            }
-
-            .category-row {
-                padding: 0.75rem;
-            }
-
-            #add-category-btn {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-
-        /* Add new styles for multi-select */
-        .category-select-container {
-            position: relative;
-            width: 100%;
-        }
-
-        .category-select-dropdown {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            background: white;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .category-select-dropdown::after {
-            content: '▼';
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-
-        .category-options {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            margin-top: 4px;
-            max-height: 300px;
-            overflow-y: auto;
-            z-index: 1000;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .category-options.show {
-            display: block;
-        }
-
-        .category-option {
-            padding: 0.5rem 1rem;
-            cursor: pointer;
-            display: flex;
-            align-items: flex-start;
-            gap: 0.5rem;
-            min-height: 32px;
-        }
-
-        .category-option:hover {
-            background-color: var(--primary-light);
-        }
-
-        .category-option input[type="checkbox"] {
-            margin: 0;
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-            margin-top: 2px;
-        }
-
-        .category-option label {
-            cursor: pointer;
-            font-size: 0.9rem;
-            flex: 1;
-            line-height: 1.2;
-            padding-top: 2px;
-        }
-
-        .selected-categories {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-        }
-
-        .selected-category {
-            background: var(--primary-light);
-            color: var(--primary-color);
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
-
-        .selected-category .remove-category {
-            color: var(--primary-color);
-            font-size: 1.2rem;
-            cursor: pointer;
-        }
-
-        .selected-category .remove-category:hover {
-            color: var(--error-color);
-        }
-
-        .logo-preview-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .logo-preview {
-            max-width: 150px;
-            max-height: 150px;
-            border-radius: 4px;
-            border: 1px solid var(--border-color);
-        }
-
-        .logo-row {
-            margin-bottom: 15px;
-        }
-
-        /* Add header styles */
-        .header {
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            color: white;
-            padding: 2vh;
-            text-align: center;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .header h1 {
-            font-size: min(32px, 4vh);
-            margin-bottom: 1vh;
+            margin: 1rem auto;
+            padding: 0 0.5rem;
         }
 
         .logo {
-            position: absolute;
-            left: 24px;
-            top: 50%;
-            transform: translateY(-50%);
-            height: 48px;
-            width: auto;
+            height: 36px;
+            left: 16px;
         }
 
-        @media (max-width: 768px) {
-            .logo {
-                height: 36px;
-                left: 16px;
-            }
+        .header h1 {
+            font-size: 1.5rem;
         }
 
-        /* Add footer styles */
-        .footer {
-            background: #1e3c72;
-            color: white;
-            padding: 16px 0;
-            text-align: center;
-            margin-top: auto;
+        form {
+            padding: 1rem;
         }
 
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 24px;
+        .form-section {
+            padding: 1rem;
+            margin-bottom: 1rem;
         }
 
-        .footer p {
-            margin: 0;
-            font-size: 0.9em;
-            font-weight: 500;
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 1rem;
         }
 
-        @media (max-width: 768px) {
-            .footer {
-                padding: 12px 0;
-            }
-            
-            .footer-content {
-                padding: 0 16px;
-            }
-            
-            .footer p {
-                font-size: 0.85em;
-            }
+        .category-row {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+            padding: 0.75rem;
         }
 
-        /* Add error message styles */
-        .error-message {
-            color: var(--error-color);
-            font-size: 0.85rem;
-            margin-top: 0.25rem;
-            display: none;
-            padding: 0.5rem;
-            background-color: #ffebee;
-            border-radius: 4px;
-            border-left: 3px solid var(--error-color);
+        .prize-section {
+            border-left: none;
+            padding-left: 0;
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid var(--primary-light);
         }
 
-        .form-group.error input {
-            border-color: var(--error-color);
-        }
-
-        .form-group.error .error-message {
-            display: block;
-        }
-
-        /* Add these styles to the existing <style> section */
-        .fee-field {
-            position: relative;
-            display: flex;
+        .logo-row {
             flex-direction: column;
+            align-items: flex-start;
         }
 
-        .fee-label {
-            margin-bottom: 5px;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
+        .logo-preview {
+            max-width: 100%;
         }
 
-        .required-marker {
-            color: var(--error-color);
-            font-weight: bold;
+        .footer {
+            padding: 12px 0;
+        }
+        
+        .footer-content {
+            padding: 0 16px;
+        }
+        
+        .footer p {
+            font-size: 0.85em;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .form-section label {
+            font-size: 1rem;
         }
 
-        .fee-error {
-            display: none;
-            color: var(--error-color);
-            font-size: 0.8rem;
-            margin-top: 4px;
+        .category-row {
+            padding: 0.75rem;
         }
 
-        input[name="fees[]"] {
-            border: 1px solid var(--border-color);
-        }
-
-        input[name="fees[]"].error {
-            border-color: var(--error-color);
-        }
-
-        input[name="fees[]"].error + .fee-error {
-            display: block;
-        }
-
-        .fee-input-container {
-            position: relative;
-            display: inline-block;
+        .add-logo-btn {
             width: 100%;
+            justify-content: center;
         }
+    }
+</style>
+{% endblock %}
 
-        .fee-input-container input {
-            width: 100%;
-            padding-right: 20px;
-        }
-
-        .required-asterisk {
-            color: var(--error-color);
-            position: absolute;
-            right: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-weight: bold;
-        }
-    </style>
-</head>
-<body>
-    {% include 'menu_db.html' %}
-    <div class="container">
-        <div class="header">
-            <img src="{{ url_for('static', filename='dilliLabsIcon.png') }}" alt="DilliLabs Logo" class="logo">
-            <h1>Create New Tournament</h1>
-        </div>
-
-        <form method="POST" enctype="multipart/form-data">
-            <!-- Basic Details section -->
-            <div class="form-section">
-                <label>Basic Details</label>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="tournament_name" class="required-field">Tournament Name</label>
-                        <input type="text" id="tournament_name" name="tournament_name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="start_date" class="required-field">Start Date</label>
-                        <input type="date" id="start_date" name="start_date" required>
-                        <div class="error-message" id="start_date_error"></div>
-                    </div>
-                    <div class="form-group">
-                        <label for="end_date" class="required-field">End Date</label>
-                        <input type="date" id="end_date" name="end_date" required>
-                        <div class="error-message" id="end_date_error"></div>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="last_registration_date" class="required-field">Last Entry Date</label>
-                        <input type="date" id="last_registration_date" name="last_registration_date" required>
-                        <div class="error-message" id="last_registration_date_error"></div>
-                    </div>
-                    <div class="form-group">
-                        <label for="venue">Venue</label>
-                        <input type="text" id="venue" name="venue">
-                    </div>
-                    <div class="form-group">
-                        <label for="prize_money">Tournament Prizes</label>
-                        <input type="text" id="prize_money" name="prize_money">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Categories section -->
-            <div class="form-section">
-                <label>Tournament Categories</label>
-                <div class="category-select-container">
-                    <div class="category-select-dropdown" id="categoryDropdown">
-                        Select Categories
-                    </div>
-                    <div class="category-options" id="categoryOptions">
-                        {% for category in categories %}
-                        <div class="category-option">
-                            <input type="checkbox" value="{{ category.name }}" id="cat-{{ category.id }}">
-                            <label for="cat-{{ category.id }}">{{ category.name }}</label>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    <div class="selected-categories" id="selectedCategories"></div>
-                </div>
-                <div id="categories-container">
-                    <!-- Category rows will be added here -->
-                </div>
-            </div>
-
-            <!-- Logo Upload section -->
-            <div class="form-section">
-                <label>Tournament Logos</label>
-                <div id="logos-container">
-                    <div class="logo-row">
-                        <div class="form-group">
-                            <input type="file" name="tournament_logo" accept="image/*" multiple>
-                            <div class="logo-preview-container"></div>
-                        </div>
-                        <button type="button" class="remove-logo-btn" style="display: none;">
-                            <i class="material-icons">delete</i>
-                        </button>
-                    </div>
-                </div>
-                <button type="button" id="add-logo-btn" class="add-logo-btn">
-                    <i class="material-icons">add</i>
-                </button>
-            </div>
-
-            <!-- General Information section -->
-            <div class="form-section">
-                <label for="general_info">General Information</label>
-                <textarea id="general_info" name="general_info" rows="4"></textarea>
-            </div>
-
-            <!-- Bank Details section -->
-            <div class="form-section">
-                <label>Bank Details for Payment Collection</label>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="bank_account">Bank Account Details</label>
-                        <textarea id="bank_account" name="bank_account" rows="3" placeholder="Enter bank account number, IFSC code, account holder name, etc."></textarea>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="upi_link">UPI Link (if available)</label>
-                        <input type="text" id="upi_link" name="upi_link" placeholder="Enter UPI payment link">
-                    </div>
-                    <div class="form-group">
-                        <label for="payment_qr">Payment QR Code (if available)</label>
-                        <input type="file" id="payment_qr" name="payment_qr" accept="image/*">
-                        <div id="qr-preview" class="qr-preview" style="display: none;">
-                            <img src="" alt="QR Code Preview" style="max-width: 200px; margin-top: 10px;">
-                            <button type="button" class="remove-qr-btn" onclick="removeQR()">Remove</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <button type="submit" class="submit-btn">Create Tournament</button>
-        </form>
-
-        <footer class="footer">
-            <div class="footer-content">
-                <p>Copyright © {{ current_year }} - DilliLabs Techsports Pvt Ltd</p>
-            </div>
-        </footer>
+{% block content %}
+<div class="container">
+    <div class="header">
+        <img src="{{ url_for('static', filename='dilliLabsIcon.png') }}" alt="DilliLabs Logo" class="logo">
+        <h1>Create New Tournament</h1>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Category selection functionality
-            const categoryDropdown = document.getElementById('categoryDropdown');
-            const categoryOptions = document.getElementById('categoryOptions');
-            const selectedCategories = document.getElementById('selectedCategories');
-            const categoriesContainer = document.getElementById('categories-container');
+    <form method="POST" action="{{ url_for('create_tournament_db') }}" enctype="multipart/form-data">
+        <!-- Basic Details section -->
+        <div class="form-section">
+            <label>Basic Details</label>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="tournament_name" class="required-field">Tournament Name</label>
+                    <input type="text" id="tournament_name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="start_date" class="required-field">Start Date</label>
+                    <input type="date" id="start_date" name="start_date" required>
+                    <div class="error-message" id="start_date_error"></div>
+                </div>
+                <div class="form-group">
+                    <label for="end_date" class="required-field">End Date</label>
+                    <input type="date" id="end_date" name="end_date" required>
+                    <div class="error-message" id="end_date_error"></div>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="last_registration_date" class="required-field">Last Entry Date</label>
+                    <input type="date" id="last_registration_date" name="last_registration_date" required>
+                    <div class="error-message" id="last_registration_date_error"></div>
+                </div>
+                <div class="form-group">
+                    <label for="venue">Venue</label>
+                    <input type="text" id="venue" name="venue">
+                </div>
+                <div class="form-group">
+                    <label for="prize_money">Tournament Prizes</label>
+                    <input type="text" id="prize_money" name="total_prize">
+                </div>
+            </div>
+        </div>
 
-            // Toggle dropdown
-            categoryDropdown.addEventListener('click', function() {
-                categoryOptions.classList.toggle('show');
-            });
+        <!-- Categories section -->
+        <div class="form-section">
+            <label>Tournament Categories</label>
+            <div class="category-select-container">
+                <div class="category-select-dropdown" id="categoryDropdown">
+                    Select Categories
+                </div>
+                <div class="category-options" id="categoryOptions">
+                    {% for category in categories %}
+                    <div class="category-option">
+                        <input type="checkbox" value="{{ category.name }}" id="cat-{{ category.id }}">
+                        <label for="cat-{{ category.id }}">{{ category.name }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="selected-categories" id="selectedCategories"></div>
+            </div>
+            <div id="categories-container">
+                <!-- Category rows will be added here -->
+            </div>
+        </div>
 
-            // Close dropdown when clicking outside
-            document.addEventListener('click', function(e) {
-                if (!categoryDropdown.contains(e.target) && !categoryOptions.contains(e.target)) {
-                    categoryOptions.classList.remove('show');
-                }
-            });
-
-            // Handle category selection with immediate row creation
-            const checkboxes = categoryOptions.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    console.log("Checkbox changed:", this.value, "Checked:", this.checked); // Debug log
-                    
-                    // Automatically add/remove category rows based on checkbox state
-                    if (this.checked) {
-                        addCategoryRow(this.value);
-                    } else {
-                        removeCategoryRow(this.value);
-                    }
-                    
-                    updateSelectedCategories();
-                });
-            });
-
-            // Function to add category row
-            function addCategoryRow(category) {
-                console.log("Adding category row for:", category); // Debug log
-                
-                // Check if row already exists
-                const existingRows = Array.from(categoriesContainer.querySelectorAll('select[name="categories[]"]'))
-                    .map(select => select.value);
-                    
-                if (!existingRows.includes(category)) {
-                    const newRow = document.createElement('div');
-                    newRow.className = 'category-row';
-                    newRow.setAttribute('data-category', category);
-                    newRow.innerHTML = `
-                        <select name="categories[]" required>
-                            <option value="${category}" selected>${category}</option>
-                        </select>
-                        <select name="formats[]" required>
-                            <option value="Knockout">Knockout</option>
-                            <option value="Two Stage">Two Stage</option>
-                        </select>
-                        <div class="fee-input-container">
-                            <input type="text" name="fees[]" placeholder="Fee" required>
-                            <span class="required-asterisk">*</span>
-                        </div>
-                        <div class="prize-section">
-                            <div>Prizes</div>
-                            <input type="text" name="first_prizes[]" placeholder="First Prize">
-                            <input type="text" name="second_prizes[]" placeholder="Second Prize">
-                            <input type="text" name="third_prizes[]" placeholder="Third Prize">
-                        </div>
-                        <button type="button" class="remove-category">
-                            <i class="material-icons">delete</i>
-                        </button>
-                    `;
-                    
-                    // Add event listener for fee validation
-                    const feeInput = newRow.querySelector('input[name="fees[]"]');
-                    feeInput.addEventListener('input', function() {
-                        validateFeeField(this);
-                    });
-                    
-                    feeInput.addEventListener('blur', function() {
-                        validateFeeField(this);
-                    });
-                    
-                    // Add click handler for remove button
-                    newRow.querySelector('.remove-category').addEventListener('click', function() {
-                        // Uncheck the corresponding checkbox
-                        const checkbox = document.querySelector(`input[value="${category}"]`);
-                        if (checkbox) {
-                            checkbox.checked = false;
-                            updateSelectedCategories();
-                        }
-                        newRow.remove();
-                    });
-                    
-                    categoriesContainer.appendChild(newRow);
-                    console.log("Row added successfully"); // Debug log
-                }
-            }
-            
-            // Function to remove category row
-            function removeCategoryRow(category) {
-                console.log("Removing category row for:", category); // Debug log
-                
-                const rows = Array.from(categoriesContainer.querySelectorAll('.category-row'));
-                rows.forEach(row => {
-                    const select = row.querySelector('select[name="categories[]"]');
-                    if (select && select.value === category) {
-                        row.remove();
-                        console.log("Row removed successfully"); // Debug log
-                    }
-                });
-            }
-
-            function updateSelectedCategories() {
-                selectedCategories.innerHTML = '';
-                const selected = Array.from(checkboxes)
-                    .filter(cb => cb.checked)
-                    .map(cb => cb.value);
-                
-                console.log("Selected categories:", selected); // Debug log
-
-                selected.forEach(category => {
-                    const tag = document.createElement('div');
-                    tag.className = 'selected-category';
-                    tag.innerHTML = `
-                        ${category}
-                        <span class="remove-category" data-category="${category}">×</span>
-                    `;
-                    selectedCategories.appendChild(tag);
-                });
-
-                // Update dropdown text
-                categoryDropdown.textContent = selected.length > 0 
-                    ? `${selected.length} categories selected` 
-                    : 'Select Categories';
-            }
-
-            // Remove category tag
-            selectedCategories.addEventListener('click', function(e) {
-                if (e.target.classList.contains('remove-category')) {
-                    const category = e.target.dataset.category;
-                    const checkbox = document.querySelector(`input[value="${category}"]`);
-                    if (checkbox) {
-                        checkbox.checked = false;
-                        removeCategoryRow(category);
-                        updateSelectedCategories();
-                    }
-                }
-            });
-
-            // Set default dates
-            const today = new Date();
-            const startDate = new Date(today);
-            startDate.setDate(today.getDate() + 7); // Start date is 7 days from today
-            const endDate = new Date(today);
-            endDate.setDate(today.getDate() + 12); // End date is 12 days from today
-            const lastEntryDate = new Date(today);
-            lastEntryDate.setDate(today.getDate() + 5); // Last entry date is 5 days from today
-
-            document.getElementById('start_date').value = startDate.toISOString().split('T')[0];
-            document.getElementById('end_date').value = endDate.toISOString().split('T')[0];
-            document.getElementById('last_registration_date').value = lastEntryDate.toISOString().split('T')[0];
-
-            // Add event listeners for date validation
-            document.querySelector('form').addEventListener('submit', function(e) {
-                if (!validateDates()) {
-                    e.preventDefault();
-                }
-            });
-
-            function validateDates() {
-                const startDateInput = document.getElementById('start_date');
-                const endDateInput = document.getElementById('end_date');
-                const lastEntryDateInput = document.getElementById('last_registration_date');
-                
-                // Reset all error states
-                [startDateInput, endDateInput, lastEntryDateInput].forEach(input => {
-                    input.parentElement.classList.remove('error');
-                    document.getElementById(`${input.id}_error`).textContent = '';
-                });
-
-                // Only validate if all date fields have values
-                if (!startDateInput.value || !endDateInput.value || !lastEntryDateInput.value) {
-                    return true;
-                }
-
-                const startDate = new Date(startDateInput.value);
-                const endDate = new Date(endDateInput.value);
-                const lastEntryDate = new Date(lastEntryDateInput.value);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-
-                let isValid = true;
-                let firstErrorField = null;
-
-                if (startDate < today) {
-                    startDateInput.parentElement.classList.add('error');
-                    document.getElementById('start_date_error').textContent = 'Start Date cannot be in the past';
-                    isValid = false;
-                    if (!firstErrorField) firstErrorField = startDateInput;
-                }
-                if (endDate < startDate) {
-                    endDateInput.parentElement.classList.add('error');
-                    document.getElementById('end_date_error').textContent = 'End Date must be equal to or after Start Date';
-                    isValid = false;
-                    if (!firstErrorField) firstErrorField = endDateInput;
-                }
-                if (lastEntryDate >= startDate) {
-                    lastEntryDateInput.parentElement.classList.add('error');
-                    document.getElementById('last_registration_date_error').textContent = 'Last Entry Date must be before Start Date';
-                    isValid = false;
-                    if (!firstErrorField) firstErrorField = lastEntryDateInput;
-                }
-                if (lastEntryDate < today) {
-                    lastEntryDateInput.parentElement.classList.add('error');
-                    document.getElementById('last_registration_date_error').textContent = 'Last Entry Date cannot be in the past';
-                    isValid = false;
-                    if (!firstErrorField) firstErrorField = lastEntryDateInput;
-                }
-
-                if (!isValid && firstErrorField) {
-                    firstErrorField.focus();
-                }
-
-                return isValid;
-            }
-
-            // Logo upload functionality
-            const logosContainer = document.getElementById('logos-container');
-            const addLogoBtn = document.getElementById('add-logo-btn');
-
-            function createLogoRow() {
-                const logoRow = document.createElement('div');
-                logoRow.className = 'logo-row';
-                logoRow.innerHTML = `
+        <!-- Logo Upload section -->
+        <div class="form-section">
+            <label>Tournament Logos</label>
+            <div id="logos-container">
+                <div class="logo-row">
                     <div class="form-group">
                         <input type="file" name="tournament_logo" accept="image/*" multiple>
                         <div class="logo-preview-container"></div>
                     </div>
-                    <button type="button" class="remove-logo-btn">
+                    <button type="button" class="remove-logo-btn" style="display: none;">
+                        <i class="material-icons">delete</i>
+                    </button>
+                </div>
+            </div>
+            <button type="button" id="add-logo-btn" class="add-logo-btn">
+                <i class="material-icons">add</i>
+            </button>
+        </div>
+
+        <!-- General Information section -->
+        <div class="form-section">
+            <label for="general_info">General Information</label>
+            <textarea id="general_info" name="general_information" rows="4"></textarea>
+        </div>
+
+        <!-- Bank Details section -->
+        <div class="form-section">
+            <label>Bank Details for Payment Collection</label>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="bank_account">Bank Account Details</label>
+                    <textarea id="bank_account" name="bank_account" rows="3" placeholder="Enter bank account number, IFSC code, account holder name, etc."></textarea>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="upi_link">UPI Link (if available)</label>
+                    <input type="text" id="upi_link" name="upi_link" placeholder="Enter UPI payment link">
+                </div>
+                <div class="form-group">
+                    <label for="payment_qr">Payment QR Code (if available)</label>
+                    <input type="file" id="payment_qr" name="payment_qr" accept="image/*">
+                    <div id="qr-preview" class="qr-preview" style="display: none;">
+                        <img src="" alt="QR Code Preview" style="max-width: 200px; margin-top: 10px;">
+                        <button type="button" class="remove-qr-btn" onclick="removeQR()">Remove</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="submit-btn">Create Tournament</button>
+    </form>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p>Copyright © {{ current_year }} - DilliLabs Techsports Pvt Ltd</p>
+        </div>
+    </footer>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Category selection functionality
+        const categoryDropdown = document.getElementById('categoryDropdown');
+        const categoryOptions = document.getElementById('categoryOptions');
+        const selectedCategories = document.getElementById('selectedCategories');
+        const categoriesContainer = document.getElementById('categories-container');
+
+        // Toggle dropdown
+        categoryDropdown.addEventListener('click', function() {
+            categoryOptions.classList.toggle('show');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!categoryDropdown.contains(e.target) && !categoryOptions.contains(e.target)) {
+                categoryOptions.classList.remove('show');
+            }
+        });
+
+        // Handle category selection with immediate row creation
+        const checkboxes = categoryOptions.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                if (this.checked) {
+                    addCategoryRow(this.value);
+                } else {
+                    removeCategoryRow(this.value);
+                }
+                updateSelectedCategories();
+            });
+        });
+
+        // Function to add category row
+        function addCategoryRow(category) {
+            const existingRows = Array.from(categoriesContainer.querySelectorAll('select[name^="categories"]'))
+                .map(select => select.value);
+                
+            if (!existingRows.includes(category)) {
+                const rowCount = categoriesContainer.children.length;
+                const newRow = document.createElement('div');
+                newRow.className = 'category-row';
+                newRow.setAttribute('data-category', category);
+                newRow.innerHTML = `
+                    <select name="categories[${rowCount}][category]" required>
+                        <option value="${category}" selected>${category}</option>
+                    </select>
+                    <select name="categories[${rowCount}][format]" required>
+                        <option value="Single Elimination">Single Elimination</option>
+                        <option value="Double Elimination">Double Elimination</option>
+                        <option value="Round Robin">Round Robin</option>
+                        <option value="Groups + Knockouts">Groups + Knockouts</option>
+                    </select>
+                    <div class="prize-section">
+                        <div>Prizes</div>
+                        <input type="number" name="categories[${rowCount}][fee]" placeholder="Entry Fee" required>
+                        <input type="number" name="categories[${rowCount}][first_prize]" placeholder="First Prize">
+                        <input type="number" name="categories[${rowCount}][second_prize]" placeholder="Second Prize">
+                        <input type="number" name="categories[${rowCount}][third_prize]" placeholder="Third Prize">
+                    </div>
+                    <button type="button" class="remove-category">
                         <i class="material-icons">delete</i>
                     </button>
                 `;
-
-                // Add file change handler
-                const fileInput = logoRow.querySelector('input[type="file"]');
-                const previewContainer = logoRow.querySelector('.logo-preview-container');
                 
-                fileInput.addEventListener('change', function(e) {
-                    previewContainer.innerHTML = ''; // Clear existing previews
-                    Array.from(e.target.files).forEach(file => {
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = function(e) {
-                                const preview = document.createElement('img');
-                                preview.src = e.target.result;
-                                preview.className = 'logo-preview';
-                                preview.style.display = 'block';
-                                previewContainer.appendChild(preview);
-                            }
-                            reader.readAsDataURL(file);
-                        }
-                    });
+                // Add click handler for remove button
+                newRow.querySelector('.remove-category').addEventListener('click', function() {
+                    const checkbox = document.querySelector(`input[value="${category}"]`);
+                    if (checkbox) {
+                        checkbox.checked = false;
+                        updateSelectedCategories();
+                    }
+                    newRow.remove();
                 });
-
-                // Add remove handler
-                const removeBtn = logoRow.querySelector('.remove-logo-btn');
-                removeBtn.addEventListener('click', function() {
-                    logoRow.remove();
-                });
-
-                return logoRow;
-            }
-
-            // Add logo button handler
-            addLogoBtn.addEventListener('click', function() {
-                const newRow = createLogoRow();
-                logosContainer.appendChild(newRow);
                 
-                // Show remove button for all rows if more than one
-                const rows = logosContainer.querySelectorAll('.logo-row');
-                if (rows.length > 1) {
-                    rows.forEach(row => {
-                        row.querySelector('.remove-logo-btn').style.display = 'inline-flex';
-                    });
-                }
-            });
-
-            // Initialize first logo row
-            const firstRow = logosContainer.querySelector('.logo-row');
-            const firstFileInput = firstRow.querySelector('input[type="file"]');
-            const firstPreviewContainer = firstRow.querySelector('.logo-preview-container');
-            
-            firstFileInput.addEventListener('change', function(e) {
-                firstPreviewContainer.innerHTML = ''; // Clear existing previews
-                Array.from(e.target.files).forEach(file => {
-                    if (file) {
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            const preview = document.createElement('img');
-                            preview.src = e.target.result;
-                            preview.className = 'logo-preview';
-                            preview.style.display = 'block';
-                            firstPreviewContainer.appendChild(preview);
-                        }
-                        reader.readAsDataURL(file);
-                    }
-                });
-            });
-
-            // Add this validation function
-            function validateFeeField(input) {
-                if (!input.value.trim()) {
-                    input.classList.add('error');
-                    return false;
-                } else {
-                    input.classList.remove('error');
-                    return true;
-                }
+                categoriesContainer.appendChild(newRow);
             }
-
-            // QR Code preview functionality
-            document.getElementById('payment_qr').addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const preview = document.getElementById('qr-preview');
-                        preview.querySelector('img').src = e.target.result;
-                        preview.style.display = 'block';
-                    }
-                    reader.readAsDataURL(file);
+        }
+        
+        // Function to remove category row
+        function removeCategoryRow(category) {
+            const rows = categoriesContainer.querySelectorAll('.category-row');
+            rows.forEach(row => {
+                if (row.getAttribute('data-category') === category) {
+                    row.remove();
                 }
             });
+        }
 
-            function removeQR() {
-                document.getElementById('payment_qr').value = '';
-                document.getElementById('qr-preview').style.display = 'none';
+        function updateSelectedCategories() {
+            selectedCategories.innerHTML = '';
+            const selected = Array.from(checkboxes)
+                .filter(cb => cb.checked)
+                .map(cb => cb.value);
+
+            selected.forEach(category => {
+                const tag = document.createElement('div');
+                tag.className = 'selected-category';
+                tag.innerHTML = `
+                    ${category}
+                    <span class="remove-category" data-category="${category}">×</span>
+                `;
+                selectedCategories.appendChild(tag);
+            });
+
+            categoryDropdown.textContent = selected.length > 0 
+                ? `${selected.length} categories selected` 
+                : 'Select Categories';
+        }
+
+        // Remove category tag
+        selectedCategories.addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-category')) {
+                const category = e.target.dataset.category;
+                const checkbox = document.querySelector(`input[value="${category}"]`);
+                if (checkbox) {
+                    checkbox.checked = false;
+                    removeCategoryRow(category);
+                    updateSelectedCategories();
+                }
             }
         });
-    </script>
-</body>
-</html>
+
+        // Logo preview functionality
+        const logoInput = document.querySelector('input[name="tournament_logo"]');
+        const previewContainer = document.querySelector('.logo-preview-container');
+        const removeLogoBtn = document.querySelector('.remove-logo-btn');
+
+        logoInput.addEventListener('change', function(e) {
+            previewContainer.innerHTML = '';
+            for (let file of e.target.files) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.createElement('img');
+                    preview.src = e.target.result;
+                    preview.className = 'logo-preview';
+                    preview.alt = 'Logo Preview';
+                    previewContainer.appendChild(preview);
+                }
+                reader.readAsDataURL(file);
+            }
+            removeLogoBtn.style.display = e.target.files.length > 0 ? 'block' : 'none';
+        });
+
+        removeLogoBtn.addEventListener('click', function() {
+            logoInput.value = '';
+            previewContainer.innerHTML = '';
+            this.style.display = 'none';
+        });
+
+        // QR code preview
+        const qrInput = document.getElementById('payment_qr');
+        const qrPreview = document.getElementById('qr-preview');
+        const qrImage = qrPreview.querySelector('img');
+
+        qrInput.addEventListener('change', function(e) {
+            if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    qrImage.src = e.target.result;
+                    qrPreview.style.display = 'block';
+                }
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+
+        function removeQR() {
+            qrInput.value = '';
+            qrPreview.style.display = 'none';
+            qrImage.src = '';
+        }
+
+        // Set default dates
+        const today = new Date();
+        const startDate = new Date(today);
+        startDate.setDate(today.getDate() + 7);
+        const endDate = new Date(today);
+        endDate.setDate(today.getDate() + 12);
+        const lastEntryDate = new Date(today);
+        lastEntryDate.setDate(today.getDate() + 5);
+
+        document.getElementById('start_date').value = startDate.toISOString().split('T')[0];
+        document.getElementById('end_date').value = endDate.toISOString().split('T')[0];
+        document.getElementById('last_registration_date').value = lastEntryDate.toISOString().split('T')[0];
+
+        // Form validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const startDate = new Date(document.getElementById('start_date').value);
+            const endDate = new Date(document.getElementById('end_date').value);
+            const lastRegDate = new Date(document.getElementById('last_registration_date').value);
+
+            let hasError = false;
+
+            if (endDate < startDate) {
+                document.getElementById('end_date_error').textContent = 'End date cannot be earlier than start date';
+                document.getElementById('end_date_error').style.display = 'block';
+                hasError = true;
+            }
+
+            if (lastRegDate > startDate) {
+                document.getElementById('last_registration_date_error').textContent = 'Last registration date must be before the tournament start date';
+                document.getElementById('last_registration_date_error').style.display = 'block';
+                hasError = true;
+            }
+
+            if (hasError) {
+                e.preventDefault();
+            }
+        });
+    });
+</script>
+{% endblock %}

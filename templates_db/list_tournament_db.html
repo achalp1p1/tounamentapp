@@ -22,10 +22,10 @@
         <table>
             <thead>
                 <tr>
-                    <th>Tournament Name</th>
+                    <th>Name</th>
                     <th>Venue</th>
                     <th>Tournament Dates</th>
-                    <th>Last Date of Entry</th>
+                    <th>Last Registration Date</th>
                     <th>Categories</th>
                     <th>Actions</th>
                 </tr>
@@ -33,26 +33,30 @@
             <tbody>
                 {% for tournament in tournaments %}
                 <tr>
-                    <td>{{ tournament['Tournament Name'] }}</td>
-                    <td>{{ tournament['Venue'] }}</td>
-                    <td>{{ tournament['Start Date'] }} to {{ tournament['End Date'] }}</td>
-                    <td>{{ tournament['Last Registration Date'] }}</td>
+                    <td>
+                        <a href="{{ url_for('tournament_info_db', tournament_id=tournament['tournament_id']) }}" class="tournament-name-link">
+                            {{ tournament['name'] }}
+                        </a>
+                    </td>
+                    <td>{{ tournament['venue'] }}</td>
+                    <td>{{ tournament['start_date']|datetime }} to {{ tournament['end_date']|datetime }}</td>
+                    <td>{{ tournament['last_registration_date']|datetime }}</td>
                     <td class="category-list">
-                        {% for category in tournament['Categories'].split(',') %}
+                        {% for category in tournament['categories'].split(',') %}
                         <span class="category-link">{{ category.strip() }}</span>
                         {% endfor %}
                     </td>
                     <td>
-                        <a href="{{ url_for('tournament_details_db', tournament_id=tournament['Tournament ID']) }}" class="icon-btn info-icon" title="View Details">
+                        <a href="{{ url_for('tournament_info_db', tournament_id=tournament['tournament_id']) }}" class="icon-btn info-icon" title="View Details">
                             <i class="fas fa-info-circle"></i>
                         </a>
-                        <a href="{{ url_for('edit_tournament_db', tournament_id=tournament['Tournament ID']) }}" class="icon-btn edit-icon" title="Edit Tournament">
+                        <a href="{{ url_for('edit_tournament_db', tournament_id=tournament['tournament_id']) }}" class="icon-btn edit-icon" title="Edit Tournament">
                             <i class="fas fa-edit"></i>
                         </a>
-                        <a href="{{ url_for('tournament_register_db', tournament_id=tournament['Tournament ID']) }}" class="icon-btn add-player-icon" title="Add Player">
+                        <a href="{{ url_for('tournament_register_db', tournament_id=tournament['tournament_id']) }}" class="icon-btn add-player-icon" title="Add Player">
                             <i class="fas fa-user-plus"></i>
                         </a>
-                        <a href="#" class="icon-btn delete-icon" onclick="deleteTournament('{{ tournament['Tournament ID'] }}')" title="Delete Tournament">
+                        <a href="#" class="icon-btn delete-icon" onclick="deleteTournament('{{ tournament['tournament_id'] }}')" title="Delete Tournament">
                             <i class="fas fa-trash-alt"></i>
                         </a>
                     </td>
@@ -125,6 +129,18 @@
     .log-off:hover {
         background: white;
         color: #1e3c72;
+    }
+
+    /* Tournament Name Link Style */
+    .tournament-name-link {
+        color: #1e3c72;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    .tournament-name-link:hover {
+        color: #2a5298;
+        text-decoration: underline;
     }
 
     /* Modern Content Area */
