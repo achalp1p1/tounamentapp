@@ -248,9 +248,9 @@
 
     .category-row {
         display: grid;
-        grid-template-columns: 2fr 1fr 2fr 1fr;
+        grid-template-columns: 2fr 1.5fr 1fr 3fr 0.5fr;
         gap: 1rem;
-        align-items: start;
+        align-items: center;
         padding: 1rem;
         border: 1px solid var(--border-color);
         border-radius: 4px;
@@ -258,15 +258,55 @@
         background: white;
     }
 
-    .prize-section {
-        display: grid;
-        gap: 0.5rem;
+    .category-row select,
+    .category-row input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        font-size: 1rem;
+        transition: border-color 0.3s, box-shadow 0.3s;
     }
 
-    .prize-section > div {
-        font-weight: 500;
+    .category-row select:focus,
+    .category-row input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px var(--primary-light);
+        outline: none;
+    }
+
+    .prize-section {
+        border-left: 2px solid var(--primary-light);
+        padding-left: 1rem;
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    .prize-section-header {
         color: var(--primary-color);
+        font-weight: 500;
         margin-bottom: 0.25rem;
+    }
+
+    .remove-category {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--error-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem;
+        width: 100%;
+        height: 100%;
+    }
+
+    .remove-category:hover {
+        color: #b71c1c;
+    }
+
+    .remove-category i {
+        font-size: 1.5rem;
     }
 
     .fee-input-container {
@@ -280,21 +320,6 @@
         top: 50%;
         transform: translateY(-50%);
         font-weight: bold;
-    }
-
-    .remove-category {
-        color: var(--error-color);
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 0.25rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .remove-category:hover {
-        color: #b71c1c;
     }
 
     .logo-preview-container {
@@ -440,16 +465,15 @@
 
         .category-row {
             grid-template-columns: 1fr;
-            gap: 0.75rem;
-            padding: 0.75rem;
+            gap: 1rem;
         }
 
         .prize-section {
             border-left: none;
+            border-top: 2px solid var(--primary-light);
             padding-left: 0;
+            padding-top: 1rem;
             margin-top: 0.5rem;
-            padding-top: 0.5rem;
-            border-top: 1px solid var(--primary-light);
         }
 
         .logo-row {
@@ -471,6 +495,11 @@
         
         .footer p {
             font-size: 0.85em;
+        }
+
+        .remove-category {
+            justify-content: flex-start;
+            padding-left: 0;
         }
     }
 
@@ -530,7 +559,7 @@
                 </div>
                 <div class="form-group">
                     <label for="prize_money">Tournament Prizes</label>
-                    <input type="text" id="prize_money" name="total_prize">
+                    <input type="number" id="prize_money" name="total_prize" step="0.01" min="0">
                 </div>
             </div>
         </div>
@@ -665,19 +694,17 @@
                         <option value="${category}" selected>${category}</option>
                     </select>
                     <select name="categories[${rowCount}][format]" required>
-                        <option value="Single Elimination">Single Elimination</option>
-                        <option value="Double Elimination">Double Elimination</option>
-                        <option value="Round Robin">Round Robin</option>
-                        <option value="Groups + Knockouts">Groups + Knockouts</option>
+                        <option value="Knockout" selected>Knockout</option>
+                        <option value="Two Stage">Two Stage</option>
                     </select>
+                    <input type="number" name="categories[${rowCount}][fee]" placeholder="Entry Fee" step="0.01" min="0" required>
                     <div class="prize-section">
-                        <div>Prizes</div>
-                        <input type="number" name="categories[${rowCount}][fee]" placeholder="Entry Fee" required>
-                        <input type="number" name="categories[${rowCount}][first_prize]" placeholder="First Prize">
-                        <input type="number" name="categories[${rowCount}][second_prize]" placeholder="Second Prize">
-                        <input type="number" name="categories[${rowCount}][third_prize]" placeholder="Third Prize">
+                        <div class="prize-section-header">Prizes</div>
+                        <input type="number" name="categories[${rowCount}][first_prize]" placeholder="First Prize" step="0.01" min="0">
+                        <input type="number" name="categories[${rowCount}][second_prize]" placeholder="Second Prize" step="0.01" min="0">
+                        <input type="number" name="categories[${rowCount}][third_prize]" placeholder="Third Prize" step="0.01" min="0">
                     </div>
-                    <button type="button" class="remove-category">
+                    <button type="button" class="remove-category" title="Remove Category">
                         <i class="material-icons">delete</i>
                     </button>
                 `;

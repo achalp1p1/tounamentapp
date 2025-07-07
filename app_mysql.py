@@ -453,6 +453,16 @@ def create_tournament_db():
                         # Store relative path for database
                         logo_filenames.append(f"tournaments/{tournament_id}/logo_{filename}")
             
+            # Handle total prize
+            total_prize = form_data.get('total_prize', '').strip()
+            if total_prize == '':
+                total_prize = 0.00
+            else:
+                try:
+                    total_prize = float(total_prize)
+                except ValueError:
+                    total_prize = 0.00
+
             # Connect to database
             conn = get_db_connection()
             cursor = conn.cursor()
@@ -473,7 +483,7 @@ def create_tournament_db():
                 form_data.get('start_date', '').strip(),
                 form_data.get('end_date', '').strip(),
                 form_data.get('last_registration_date', '').strip(),
-                form_data.get('total_prize', '0').strip(),
+                total_prize,
                 form_data.get('general_information', '').strip(),
                 ','.join(logo_filenames) if logo_filenames else None,
                 'Upcoming',  # Default status based on dates
@@ -482,11 +492,9 @@ def create_tournament_db():
             ))
             
             # Handle categories
-            # Categories are submitted as arrays with indices
             category_data = {}
             for key, value in form_data.items():
                 if key.startswith('categories['):
-                    # Extract index and field from key like categories[0][category]
                     parts = key.split('[')
                     index = parts[1].split(']')[0]
                     field = parts[2].split(']')[0]
@@ -495,8 +503,35 @@ def create_tournament_db():
                         category_data[index] = {}
                     category_data[index][field] = value
 
-            # Insert categories
+            # Insert categories with proper amount handling
             for category_info in category_data.values():
+                # Handle amount fields
+                fee = category_info.get('fee', '').strip()
+                first_prize = category_info.get('first_prize', '').strip()
+                second_prize = category_info.get('second_prize', '').strip()
+                third_prize = category_info.get('third_prize', '').strip()
+
+                # Convert amount fields to float, default to 0.00 if empty or invalid
+                try:
+                    fee = float(fee) if fee else 0.00
+                except ValueError:
+                    fee = 0.00
+
+                try:
+                    first_prize = float(first_prize) if first_prize else 0.00
+                except ValueError:
+                    first_prize = 0.00
+
+                try:
+                    second_prize = float(second_prize) if second_prize else 0.00
+                except ValueError:
+                    second_prize = 0.00
+
+                try:
+                    third_prize = float(third_prize) if third_prize else 0.00
+                except ValueError:
+                    third_prize = 0.00
+
                 cursor.execute("""
                     INSERT INTO tournament_categories (
                         tournament_id, category, fee, first_prize,
@@ -505,10 +540,10 @@ def create_tournament_db():
                 """, (
                     tournament_id,
                     category_info.get('category', '').strip(),
-                    category_info.get('fee', '0').strip(),
-                    category_info.get('first_prize', '0').strip(),
-                    category_info.get('second_prize', '0').strip(),
-                    category_info.get('third_prize', '0').strip(),
+                    fee,
+                    first_prize,
+                    second_prize,
+                    third_prize,
                     category_info.get('format', '').strip()
                 ))
             
