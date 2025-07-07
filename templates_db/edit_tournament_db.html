@@ -72,34 +72,26 @@
             <div id="categoriesContainer">
                 {% for category in tournament_categories %}
                 <div class="category-row existing-category" style="background-color: #f0f8ff; border-left: 3px solid #1e3c72; padding-left: 10px; margin-bottom: 8px; border-radius: 4px;" data-category="{{ category.category }}">
-                    <div class="form-group">
-                        <select name="categories[]" required>
-                            <option value="{{ category.category }}" selected>{{ category.category }}</option>
-                        </select>
-                    </div>
+                    <select name="categories[]" required readonly>
+                        <option value="{{ category.category }}" selected>{{ category.category }}</option>
+                    </select>
 
-                    <div class="form-group">
-                        <select name="formats[]">
-                            <option value="Single Elimination" {% if category.format == 'Single Elimination' %}selected{% endif %}>Single Elimination</option>
-                            <option value="Double Elimination" {% if category.format == 'Double Elimination' %}selected{% endif %}>Double Elimination</option>
-                            <option value="Round Robin" {% if category.format == 'Round Robin' %}selected{% endif %}>Round Robin</option>
-                            <option value="Groups + Knockouts" {% if category.format == 'Groups + Knockouts' %}selected{% endif %}>Groups + Knockouts</option>
-                        </select>
-                    </div>
+                    <select name="formats[]" required>
+                        <option value="Knockout" {% if category.format == 'Knockout' %}selected{% endif %}>Knockout</option>
+                        <option value="Two Stage" {% if category.format == 'Two Stage' %}selected{% endif %}>Two Stage</option>
+                    </select>
 
-                    <div class="form-group">
-                        <div class="fee-input-container">
-                            <input type="number" name="fees[]" value="{{ category.fee }}" required>
-                            <span class="required-asterisk">*</span>
-                            <div class="fee-error">Fee is required for this category</div>
-                        </div>
+                    <div class="fee-input-container">
+                        <input type="number" name="fees[]" value="{{ category.fee }}" step="0.01" min="0" required>
+                        <span class="required-asterisk">*</span>
+                        <div class="fee-error">Fee is required for this category</div>
                     </div>
 
                     <div class="prize-section">
                         <div>Prizes</div>
-                        <input type="number" name="first_prizes[]" value="{{ category.first_prize }}" placeholder="First Prize">
-                        <input type="number" name="second_prizes[]" value="{{ category.second_prize }}" placeholder="Second Prize">
-                        <input type="number" name="third_prizes[]" value="{{ category.third_prize }}" placeholder="Third Prize">
+                        <input type="number" name="first_prizes[]" value="{{ category.first_prize }}" step="0.01" min="0" placeholder="First Prize">
+                        <input type="number" name="second_prizes[]" value="{{ category.second_prize }}" step="0.01" min="0" placeholder="Second Prize">
+                        <input type="number" name="third_prizes[]" value="{{ category.third_prize }}" step="0.01" min="0" placeholder="Third Prize">
                     </div>
 
                     <button type="button" class="remove-category" onclick="removeCategory(this)">
@@ -182,7 +174,6 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Category selection functionality
     const categoryDropdown = document.getElementById('categoryDropdown');
     const categoryOptions = document.getElementById('categoryOptions');
     const selectedCategories = document.getElementById('selectedCategories');
@@ -200,7 +191,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Handle category selection with immediate row creation
+    // Handle category selection
     const checkboxes = categoryOptions.querySelectorAll('input[type="checkbox"]');
     checkboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
@@ -237,41 +228,33 @@ document.addEventListener('DOMContentLoaded', function() {
             newRow.setAttribute('style', 'background-color: #ffffff; border-left: 3px solid #28a745; padding-left: 10px; margin-bottom: 8px; border-radius: 4px;');
             
             newRow.innerHTML = `
-                <div class="form-group">
-                    <select name="categories[]" required>
-                        <option value="${category}" selected>${category}</option>
-                    </select>
-                </div>
+                <select name="categories[]" required readonly>
+                    <option value="${category}" selected>${category}</option>
+                </select>
 
-                <div class="form-group">
-                    <select name="formats[]">
-                        <option value="Single Elimination">Single Elimination</option>
-                        <option value="Double Elimination">Double Elimination</option>
-                        <option value="Round Robin">Round Robin</option>
-                        <option value="Groups + Knockouts">Groups + Knockouts</option>
-                    </select>
-                </div>
+                <select name="formats[]" required>
+                    <option value="Knockout" selected>Knockout</option>
+                    <option value="Two Stage">Two Stage</option>
+                </select>
 
-                <div class="form-group">
-                    <div class="fee-input-container">
-                        <input type="number" name="fees[]" placeholder="Fee" required>
-                        <span class="required-asterisk">*</span>
-                        <div class="fee-error">Fee is required for this category</div>
-                    </div>
+                <div class="fee-input-container">
+                    <input type="number" name="fees[]" step="0.01" min="0" required>
+                    <span class="required-asterisk">*</span>
+                    <div class="fee-error">Fee is required for this category</div>
                 </div>
 
                 <div class="prize-section">
                     <div>Prizes</div>
-                    <input type="number" name="first_prizes[]" placeholder="First Prize">
-                    <input type="number" name="second_prizes[]" placeholder="Second Prize">
-                    <input type="number" name="third_prizes[]" placeholder="Third Prize">
+                    <input type="number" name="first_prizes[]" step="0.01" min="0" placeholder="First Prize">
+                    <input type="number" name="second_prizes[]" step="0.01" min="0" placeholder="Second Prize">
+                    <input type="number" name="third_prizes[]" step="0.01" min="0" placeholder="Third Prize">
                 </div>
 
                 <button type="button" class="remove-category" onclick="removeCategory(this)">
                     <i class="material-icons">delete</i>
                 </button>
             `;
-            
+
             // Add event listener for fee validation
             const feeInput = newRow.querySelector('input[name="fees[]"]');
             const feeError = newRow.querySelector('.fee-error');
@@ -528,7 +511,7 @@ select:focus {
 
 .category-fee-header {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr 1fr 0.5fr;
     gap: 1rem;
     padding: 0.75rem;
     background-color: var(--primary-light);
@@ -540,7 +523,7 @@ select:focus {
 
 .category-row {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: 2fr 1.5fr 1fr 3fr 0.5fr;
     gap: 1rem;
     align-items: center;
     padding: 0.75rem;
@@ -581,6 +564,19 @@ select:focus {
 
 #add-category-btn:hover {
     background-color: #1565c0;
+}
+
+.form-group input[type="number"] {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    transition: border-color 0.3s;
+}
+
+.form-group input[type="number"]:focus {
+    border-color: var(--primary-color);
+    outline: none;
 }
 
 .submit-btn {
@@ -683,36 +679,86 @@ select:focus {
 .required-asterisk {
     position: absolute;
     top: 0;
-    right: -12px;
+    right: 0;
     color: var(--error-color);
     font-size: 0.8rem;
 }
 
-@media (max-width: 768px) {
-    .container {
-        margin-top: 60px;
-        padding: 0 0.5rem;
-    }
+.fee-error {
+    display: none;
+    color: var(--error-color);
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
 
-    .form-section {
-        padding: 1rem;
-    }
+.prize-section {
+    border-left: 2px solid var(--primary-light);
+    padding-left: 1rem;
+}
 
-    .form-row {
-        grid-template-columns: 1fr;
-    }
+.prize-section input {
+    width: calc(33.33% - 0.5rem);
+    margin-right: 0.5rem;
+}
 
-    .category-fee-header,
-    .category-row {
-        grid-template-columns: 1fr;
-        gap: 0.5rem;
-    }
+.prize-section div {
+    margin-bottom: 0.5rem;
+    color: var(--primary-color);
+    font-weight: 500;
+}
 
-    .prize-section {
-        border-left: none;
-        padding-left: 0;
-        margin-top: 0.5rem;
-    }
+.qr-preview {
+    margin-top: 1rem;
+}
+
+.preview-container {
+    position: relative;
+    display: inline-block;
+}
+
+.qr-preview-image {
+    max-width: 200px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+.remove-qr-btn {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: #d32f2f;
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-size: 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.remove-qr-btn:hover {
+    background-color: #b71c1c;
+}
+
+textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 1rem;
+    resize: vertical;
+    min-height: 80px;
+}
+
+textarea:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px var(--primary-light);
+    outline: none;
 }
 
 .category-select-container {
@@ -810,81 +856,6 @@ select:focus {
     font-size: 1.2rem;
     line-height: 1;
 }
-
-.fee-input-container {
-    position: relative;
-}
-
-.fee-error {
-    display: none;
-    color: var(--error-color);
-    font-size: 0.8rem;
-    margin-top: 0.25rem;
-}
-
-.prize-section {
-    border-left: 2px solid var(--primary-light);
-    padding-left: 1rem;
-}
-
-.prize-section > div {
-    color: var(--primary-color);
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-}
-
-.qr-preview {
-    margin-top: 1rem;
-}
-
-.preview-container {
-    position: relative;
-    display: inline-block;
-}
-
-.qr-preview-image {
-    max-width: 200px;
-    border-radius: 4px;
-    border: 1px solid #ddd;
-}
-
-.remove-qr-btn {
-    position: absolute;
-    top: -10px;
-    right: -10px;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background-color: #d32f2f;
-    color: white;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    font-size: 16px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-.remove-qr-btn:hover {
-    background-color: #b71c1c;
-}
-
-textarea {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-size: 1rem;
-    resize: vertical;
-    min-height: 80px;
-}
-
-textarea:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px var(--primary-light);
-    outline: none;
-}
 </style>
 {% endblock %}
+

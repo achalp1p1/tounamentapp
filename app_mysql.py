@@ -697,17 +697,13 @@ def edit_tournament_db(tournament_id):
             
             # Get available categories from config
             available_categories = get_categories_from_config()
+            # Extract just the names for the edit page
+            available_category_names = [category['name'] for category in available_categories]
             
-            # Format total_prize for display
-            if tournament['total_prize'] is not None:
-                tournament['tournament_prizes'] = str(tournament['total_prize'])
-            else:
-                tournament['tournament_prizes'] = ''
-            
-            return render_template('edit_tournament_db.html', 
-                                 tournament=tournament,
-                                 tournament_categories=tournament_categories,
-                                 available_categories=available_categories)
+            return render_template('edit_tournament_db.html',
+                                tournament=tournament,
+                                tournament_categories=tournament_categories,
+                                available_categories=available_category_names)
     
     except Error as e:
         print(f"Error: {e}")
