@@ -1123,8 +1123,7 @@ def get_categories_from_config():
     try:
         with open('config/categories_config.json', 'r') as f:
             config = json.load(f)
-            categories = config.get('categories', [])
-            return [category['name'] for category in categories]
+            return config.get('categories', [])  # Return full category objects
     except Exception as e:
         print(f"Error reading categories config: {e}")
         return []
