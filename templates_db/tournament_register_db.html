@@ -5,56 +5,89 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 {% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="header">
         <img src="{{ url_for('static', filename='DilliLabsLogo.png') }}" alt="DilliLabs Logo" class="logo">
-        <h1>Tournament Registration</h1>
-        <a href="{{ url_for('list_tournament_db') }}" class="back-button">
-            <i class="fas fa-arrow-left"></i> Back to List
-        </a>
+        <h1>{{ tournament['name'] }}</h1>
+        {% include 'tournament_submenu_db.html' %}
     </div>
 
     <div class="content">
-        <div class="tournament-info">
-            <h2>{{ tournament['name'] }}</h2>
-            <div class="tournament-details">
-                <p><strong>Venue:</strong> {{ tournament['venue'] }}</p>
-                <p><strong>Start Date:</strong> {{ tournament['start_date']|datetime }}</p>
-                <p><strong>End Date:</strong> {{ tournament['end_date']|datetime }}</p>
-                <p><strong>Last Registration Date:</strong> {{ tournament['last_registration_date']|datetime }}</p>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="{{ category }}-message">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="registration-form">
+            <div class="form-title">Player Registration</div>
+
+            <div class="player-search-container">
+                <div class="form-group required">
+                    <label for="player_search">Search Player</label>
+                    <input type="text" id="player_search" class="form-control" placeholder="Enter name, ID, or phone number">
+                </div>
+                <div id="searchResults" class="search-results"></div>
             </div>
+
+            <form id="registrationForm" method="POST">
+                <input type="hidden" id="player_id" name="player_id">
+
+                <div id="selectedPlayer" class="selected-player" style="display: none;">
+                    <h3>Selected Player Details</h3>
+                    <div class="player-details">
+                        <p><strong>Name:</strong> <span id="playerName"></span></p>
+                        <p><strong>ID:</strong> <span id="playerId"></span></p>
+                        <p><strong>Date of Birth:</strong> <span id="playerDOB"></span></p>
+                        <p><strong>State:</strong> <span id="playerState"></span></p>
+                        <p><strong>District:</strong> <span id="playerDistrict"></span></p>
+                    </div>
+                </div>
+
+                <div class="category-selection">
+                    <div class="form-group required">
+                        <label>Select Categories</label>
+                        <div class="category-list">
+                            {% for category in tournament['categories'].split(',') %}
+                            <div class="category-item" data-category="{{ category.strip() }}">
+                                {{ category.strip() }}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <input type="hidden" id="selected_categories" name="categories">
+                    </div>
+                </div>
+
+                <div class="fee-summary" style="display: none;">
+                    <h3>Registration Fee Summary</h3>
+                    <div class="fee-details">
+                        <div class="fee-row">
+                            <span>Categories Selected:</span>
+                            <span id="categoryCount">0</span>
+                        </div>
+                        <div class="fee-row">
+                            <span>Fee per Category:</span>
+                            <span>₹500</span>
+                        </div>
+                        <div class="fee-row fee-total">
+                            <span>Total Fee:</span>
+                            <span id="totalFee">₹0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-button" disabled>Register Player</button>
+            </form>
         </div>
-
-        <form id="registrationForm" method="POST" class="registration-form">
-            <div class="form-group required">
-                <label for="player_id">Player ID</label>
-                <input type="text" id="player_id" name="player_id" class="form-control" required>
-            </div>
-
-            <div class="form-group required">
-                <label for="category">Category</label>
-                <select id="category" name="category" class="form-control" required>
-                    <option value="">Select Category</option>
-                    {% for category in tournament['categories'].split(',') %}
-                    <option value="{{ category.strip() }}">{{ category.strip() }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="selected-player" id="selectedPlayer">
-                <h3>Selected Player Details</h3>
-                <p><strong>Name:</strong> <span id="playerName"></span></p>
-                <p><strong>Date of Birth:</strong> <span id="playerDOB"></span></p>
-                <p><strong>State:</strong> <span id="playerState"></span></p>
-                <p><strong>District:</strong> <span id="playerDistrict"></span></p>
-                <p><strong>School/Institution:</strong> <span id="playerSchool"></span></p>
-            </div>
-
-            <button type="submit" class="submit-button">Register</button>
-        </form>
     </div>
 </div>
 
@@ -280,61 +313,165 @@
         border-radius: 4px;
         margin-bottom: 20px;
     }
+
+    .player-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .player-details p {
+        margin: 0;
+        padding: 8px;
+        background: #fff;
+        border-radius: 4px;
+    }
+
+    .category-item {
+        display: flex;
+        align-items: center;
+        padding: 12px;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .category-item:hover {
+        background: #e9ecef;
+    }
+
+    .category-item.selected {
+        background: #1e3c72;
+        color: white;
+        border-color: #1e3c72;
+    }
+
+    .fee-details {
+        background: white;
+        padding: 16px;
+        border-radius: 8px;
+        margin-top: 12px;
+    }
 </style>
 
 <script>
-document.getElementById('player_id').addEventListener('input', function() {
-    const playerId = this.value;
-    if (playerId) {
-        fetch(`/get_player_details_db/${playerId}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    document.getElementById('playerName').textContent = data.player.name;
-                    document.getElementById('playerDOB').textContent = data.player.date_of_birth;
-                    document.getElementById('playerState').textContent = data.player.state;
-                    document.getElementById('playerDistrict').textContent = data.player.district;
-                    document.getElementById('playerSchool').textContent = data.player.school_institution;
-                    document.getElementById('selectedPlayer').style.display = 'block';
-                } else {
-                    document.getElementById('selectedPlayer').style.display = 'none';
-                    alert('Player not found');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error fetching player details');
-            });
-    }
-});
+$(document).ready(function() {
+    let selectedCategories = new Set();
+    let selectedPlayer = null;
 
-document.getElementById('registrationForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const formData = {
-        player_id: document.getElementById('player_id').value,
-        category: document.getElementById('category').value,
-        tournament_id: '{{ tournament["tournament_id"] }}'
-    };
-
-    fetch('/tournament_db/{{ tournament["tournament_id"] }}/register', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            window.location.href = data.redirect_url;
-        } else {
-            alert(data.message || 'Registration failed');
+    // Player search functionality
+    $('#player_search').on('input', function() {
+        const query = $(this).val();
+        if (query.length < 3) {
+            $('#searchResults').hide();
+            return;
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error submitting registration');
+
+        $.get('/get_player_details_db', { query: query }, function(data) {
+            if (data.length > 0) {
+                const resultsHtml = data.map(player => `
+                    <div class="search-result-item" data-player='${JSON.stringify(player)}'>
+                        ${player.name} (${player.id})
+                    </div>
+                `).join('');
+                $('#searchResults').html(resultsHtml).show();
+            } else {
+                $('#searchResults').html('<div class="search-result-item">No players found</div>').show();
+            }
+        });
+    });
+
+    // Handle player selection
+    $(document).on('click', '.search-result-item', function() {
+        const player = $(this).data('player');
+        if (!player) return;
+
+        selectedPlayer = player;
+        $('#player_id').val(player.id);
+        $('#playerName').text(player.name);
+        $('#playerId').text(player.id);
+        $('#playerDOB').text(player.date_of_birth);
+        $('#playerState').text(player.state);
+        $('#playerDistrict').text(player.district);
+        
+        $('#selectedPlayer').show();
+        $('#searchResults').hide();
+        $('#player_search').val('');
+        
+        updateSubmitButton();
+    });
+
+    // Category selection
+    $('.category-item').click(function() {
+        const category = $(this).data('category');
+        if ($(this).hasClass('selected')) {
+            $(this).removeClass('selected');
+            selectedCategories.delete(category);
+        } else {
+            $(this).addClass('selected');
+            selectedCategories.add(category);
+        }
+        
+        $('#selected_categories').val(Array.from(selectedCategories).join(','));
+        updateFeeSummary();
+        updateSubmitButton();
+    });
+
+    function updateFeeSummary() {
+        const count = selectedCategories.size;
+        const feePerCategory = 500;
+        const total = count * feePerCategory;
+
+        $('#categoryCount').text(count);
+        $('#totalFee').text(`₹${total}`);
+        
+        if (count > 0) {
+            $('.fee-summary').show();
+        } else {
+            $('.fee-summary').hide();
+        }
+    }
+
+    function updateSubmitButton() {
+        const isValid = selectedPlayer && selectedCategories.size > 0;
+        $('.submit-button').prop('disabled', !isValid);
+    }
+
+    // Form submission
+    $('#registrationForm').submit(function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            player_id: $('#player_id').val(),
+            categories: Array.from(selectedCategories)
+        };
+
+        $.ajax({
+            url: window.location.pathname,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function(response) {
+                if (response.success) {
+                    window.location.href = response.redirect_url;
+                } else {
+                    alert(response.message || 'Registration failed. Please try again.');
+                }
+            },
+            error: function() {
+                alert('An error occurred. Please try again.');
+            }
+        });
+    });
+
+    // Close search results when clicking outside
+    $(document).click(function(e) {
+        if (!$(e.target).closest('.player-search-container').length) {
+            $('#searchResults').hide();
+        }
     });
 });
 </script>

@@ -561,15 +561,15 @@ def edit_tournament_db(tournament_id):
                         WHERE tournament_id = %s
                     """, (f"logo_{filename}", tournament_id))
             
-            # Handle empty values for decimal fields
-            total_prize = form_data.get('total_prize', '').strip()
-            if total_prize == '':
-                total_prize = None
+            # Handle tournament prizes
+            tournament_prizes = form_data.get('tournament_prizes', '').strip()
+            if tournament_prizes == '':
+                tournament_prizes = None
             else:
                 try:
-                    total_prize = float(total_prize)
+                    tournament_prizes = float(tournament_prizes)
                 except ValueError:
-                    total_prize = None
+                    tournament_prizes = None
             
             # Update tournament data
             cursor.execute("""
@@ -591,7 +591,7 @@ def edit_tournament_db(tournament_id):
                 form_data.get('start_date', '').strip() or None,
                 form_data.get('end_date', '').strip() or None,
                 form_data.get('last_registration_date', '').strip() or None,
-                total_prize,
+                tournament_prizes,  # Use the new tournament_prizes value
                 form_data.get('general_information', '').strip(),
                 form_data.get('bank_account', '').strip(),
                 form_data.get('upi_link', '').strip(),
@@ -662,6 +662,12 @@ def edit_tournament_db(tournament_id):
             
             # Get available categories from config
             available_categories = get_categories_from_config()
+            
+            # Format total_prize for display
+            if tournament['total_prize'] is not None:
+                tournament['tournament_prizes'] = str(tournament['total_prize'])
+            else:
+                tournament['tournament_prizes'] = ''
             
             return render_template('edit_tournament_db.html', 
                                  tournament=tournament,
@@ -735,7 +741,10 @@ def tournament_register_db(tournament_id):
         if request.method == 'POST':
             data = request.get_json()
             player_id = data.get('player_id')
-            category = data.get('category')
+            categories = data.get('categories', [])
+            
+            if not player_id or not categories:
+                return jsonify({'success': False, 'message': 'Player ID and categories are required'})
             
             # Check if player exists
             cursor.execute("SELECT * FROM players WHERE id = %s", (player_id,))
@@ -743,28 +752,60 @@ def tournament_register_db(tournament_id):
             
             if not player:
                 return jsonify({'success': False, 'message': 'Player not found'})
-                
-            # Check if already registered
-            cursor.execute("""
-                SELECT * FROM tournament_registrations 
-                WHERE tournament_id = %s AND player_id = %s AND category = %s
-            """, (tournament_id, player_id, category))
             
-            if cursor.fetchone():
-                return jsonify({'success': False, 'message': 'Player already registered in this category'})
-                
-            # Add registration
+            # Check tournament exists and registration is open
             cursor.execute("""
-                INSERT INTO tournament_registrations 
-                (tournament_id, player_id, category, registration_date, status)
-                VALUES (%s, %s, %s, CURDATE(), 'Pending')
-            """, (tournament_id, player_id, category))
+                SELECT * FROM tournaments 
+                WHERE tournament_id = %s 
+                AND last_registration_date >= CURDATE()
+            """, (tournament_id,))
+            
+            tournament = cursor.fetchone()
+            if not tournament:
+                return jsonify({
+                    'success': False, 
+                    'message': 'Tournament not found or registration closed'
+                })
+            
+            success_count = 0
+            error_messages = []
+            
+            # Process each category
+            for category in categories:
+                # Check if already registered in this category
+                cursor.execute("""
+                    SELECT * FROM tournament_registrations 
+                    WHERE tournament_id = %s AND player_id = %s AND category = %s
+                """, (tournament_id, player_id, category))
+                
+                if cursor.fetchone():
+                    error_messages.append(f'Already registered in category: {category}')
+                    continue
+                
+                try:
+                    # Add registration for this category
+                    cursor.execute("""
+                        INSERT INTO tournament_registrations 
+                        (tournament_id, player_id, category, registration_date, status)
+                        VALUES (%s, %s, %s, CURDATE(), 'Pending')
+                    """, (tournament_id, player_id, category))
+                    success_count += 1
+                except Error as e:
+                    error_messages.append(f'Error registering for category {category}: {str(e)}')
             
             conn.commit()
             
+            # Prepare response message
+            if success_count == len(categories):
+                message = 'Successfully registered for all categories'
+            elif success_count > 0:
+                message = f'Registered for {success_count} categories. Errors: {", ".join(error_messages)}'
+            else:
+                message = f'Registration failed. {", ".join(error_messages)}'
+            
             return jsonify({
-                'success': True,
-                'message': 'Registration successful',
+                'success': success_count > 0,
+                'message': message,
                 'redirect_url': url_for('tournament_info_db', tournament_id=tournament_id)
             })
             
@@ -1309,31 +1350,39 @@ def get_category_players_db(tournament_id, category):
         print(f"Error fetching players: {e}")
         return jsonify({'error': str(e)}), 500
 
-@app.route('/get_player_details_db/<player_id>')
-def get_player_details_db(player_id):
+@app.route('/get_player_details_db')
+def get_player_details_db():
+    if not session.get('logged_in'):
+        return jsonify([])
+        
     try:
+        query = request.args.get('query', '')
+        if len(query) < 3:
+            return jsonify([])
+            
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         
+        # Search by name, ID, or phone
         cursor.execute("""
-            SELECT id, name, date_of_birth, state, district, school_institution
-            FROM players
-            WHERE id = %s
-        """, (player_id,))
+            SELECT id, name, date_of_birth, state, district
+            FROM players 
+            WHERE name LIKE %s 
+            OR id LIKE %s 
+            OR phone LIKE %s
+            LIMIT 10
+        """, (f'%{query}%', f'%{query}%', f'%{query}%'))
         
-        player = cursor.fetchone()
+        players = cursor.fetchall()
         
         cursor.close()
         conn.close()
         
-        if player:
-            return jsonify({'success': True, 'player': player})
-        else:
-            return jsonify({'success': False, 'message': 'Player not found'})
-            
+        return jsonify(players)
+        
     except Error as e:
         print(f"Error: {e}")
-        return jsonify({'success': False, 'message': 'Error fetching player details'})
+        return jsonify([])
 
 if __name__ == '__main__':
     app.run(debug=True) 

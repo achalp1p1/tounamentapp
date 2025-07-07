@@ -21,13 +21,6 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="venue" class="required-field">Venue</label>
-                    <input type="text" id="venue" name="venue" value="{{ tournament['venue'] }}" required>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
                     <label for="start_date" class="required-field">Start Date</label>
                     <input type="date" id="start_date" name="start_date" value="{{ tournament['start_date'] }}" required>
                 </div>
@@ -36,62 +29,77 @@
                     <label for="end_date" class="required-field">End Date</label>
                     <input type="date" id="end_date" name="end_date" value="{{ tournament['end_date'] }}" required>
                 </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="last_registration_date" class="required-field">Last Entry Date</label>
+                    <input type="date" id="last_registration_date" name="last_registration_date" value="{{ tournament['last_registration_date'] }}" required>
+                </div>
 
                 <div class="form-group">
-                    <label for="last_registration_date" class="required-field">Last Registration Date</label>
-                    <input type="date" id="last_registration_date" name="last_registration_date" value="{{ tournament['last_registration_date'] }}" required>
+                    <label for="venue">Venue</label>
+                    <input type="text" id="venue" name="venue" value="{{ tournament['venue'] }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="tournament_prizes">Tournament Prizes</label>
+                    <input type="text" id="tournament_prizes" name="tournament_prizes" value="{{ tournament['tournament_prizes'] }}" placeholder="Enter total prize money">
                 </div>
             </div>
         </div>
 
         <div class="form-section">
-            <label>Categories</label>
-            <div class="category-fee-header">
-                <div>Category</div>
-                <div>Fee</div>
-                <div>First Prize</div>
-                <div>Second Prize</div>
-                <div>Third Prize</div>
-                <div>Format</div>
+            <label>Tournament Categories</label>
+            
+            <!-- Select Categories dropdown -->
+            <div class="category-select-container" style="margin-bottom: 1.5em; position: relative;">
+                <div class="category-select-dropdown" id="categoryDropdown">
+                    Select Categories
+                </div>
+                <div class="category-options" id="categoryOptions" style="z-index: 100;">
+                    {% for category in available_categories %}
+                    <div class="category-option">
+                        <input type="checkbox" value="{{ category }}" id="cat-{{ loop.index }}">
+                        <label for="cat-{{ loop.index }}">{{ category }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="selected-categories" id="selectedCategories"></div>
             </div>
-
+            
+            <!-- Categories list -->
             <div id="categoriesContainer">
                 {% for category in tournament_categories %}
-                <div class="category-row">
+                <div class="category-row existing-category" style="background-color: #f0f8ff; border-left: 3px solid #1e3c72; padding-left: 10px; margin-bottom: 8px; border-radius: 4px;" data-category="{{ category.category }}">
                     <div class="form-group">
                         <select name="categories[]" required>
-                            {% for available_category in available_categories %}
-                            <option value="{{ available_category }}" {% if category['category'] == available_category %}selected{% endif %}>{{ available_category }}</option>
-                            {% endfor %}
+                            <option value="{{ category.category }}" selected>{{ category.category }}</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <select name="formats[]">
+                            <option value="Single Elimination" {% if category.format == 'Single Elimination' %}selected{% endif %}>Single Elimination</option>
+                            <option value="Double Elimination" {% if category.format == 'Double Elimination' %}selected{% endif %}>Double Elimination</option>
+                            <option value="Round Robin" {% if category.format == 'Round Robin' %}selected{% endif %}>Round Robin</option>
+                            <option value="Groups + Knockouts" {% if category.format == 'Groups + Knockouts' %}selected{% endif %}>Groups + Knockouts</option>
                         </select>
                     </div>
 
                     <div class="form-group">
                         <div class="fee-input-container">
-                            <input type="number" name="fees[]" value="{{ category['fee'] }}" required>
+                            <input type="number" name="fees[]" value="{{ category.fee }}" required>
                             <span class="required-asterisk">*</span>
+                            <div class="fee-error">Fee is required for this category</div>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <input type="number" name="first_prizes[]" value="{{ category['first_prize'] }}">
-                    </div>
-
-                    <div class="form-group">
-                        <input type="number" name="second_prizes[]" value="{{ category['second_prize'] }}">
-                    </div>
-
-                    <div class="form-group">
-                        <input type="number" name="third_prizes[]" value="{{ category['third_prize'] }}">
-                    </div>
-
-                    <div class="form-group">
-                        <select name="formats[]">
-                            <option value="Single Elimination" {% if category['format'] == 'Single Elimination' %}selected{% endif %}>Single Elimination</option>
-                            <option value="Double Elimination" {% if category['format'] == 'Double Elimination' %}selected{% endif %}>Double Elimination</option>
-                            <option value="Round Robin" {% if category['format'] == 'Round Robin' %}selected{% endif %}>Round Robin</option>
-                            <option value="Groups + Knockouts" {% if category['format'] == 'Groups + Knockouts' %}selected{% endif %}>Groups + Knockouts</option>
-                        </select>
+                    <div class="prize-section">
+                        <div>Prizes</div>
+                        <input type="number" name="first_prizes[]" value="{{ category.first_prize }}" placeholder="First Prize">
+                        <input type="number" name="second_prizes[]" value="{{ category.second_prize }}" placeholder="Second Prize">
+                        <input type="number" name="third_prizes[]" value="{{ category.third_prize }}" placeholder="Third Prize">
                     </div>
 
                     <button type="button" class="remove-category" onclick="removeCategory(this)">
@@ -100,10 +108,6 @@
                 </div>
                 {% endfor %}
             </div>
-
-            <button type="button" id="add-category-btn" onclick="addCategory()">
-                <i class="material-icons">add</i> Add Category
-            </button>
         </div>
 
         <div class="form-section">
@@ -142,34 +146,32 @@
             <label>Bank Details for Payment Collection</label>
             <div class="form-row">
                 <div class="form-group">
-                    <label for="bank_account">Bank Account</label>
-                    <input type="text" id="bank_account" name="bank_account" value="{{ tournament['bank_account'] }}">
-                </div>
-
-                <div class="form-group">
-                    <label for="upi_link">UPI Link</label>
-                    <input type="text" id="upi_link" name="upi_link" value="{{ tournament['upi_link'] }}">
+                    <label for="bank_account">Bank Account Details</label>
+                    <textarea id="bank_account" name="bank_account" rows="3" placeholder="Enter bank account number, IFSC code, account holder name, etc.">{{ tournament['bank_account'] }}</textarea>
                 </div>
             </div>
-
-            <div class="form-group">
-                <label for="payment_qr">Payment QR Code</label>
-                <div class="logo-upload-container">
-                    <div class="logo-upload-row">
-                        <div class="file-input-group">
-                            <input type="file" id="payment_qr" name="payment_qr" accept="image/*" style="display: none;">
-                            <button type="button" class="choose-file-btn" onclick="document.getElementById('payment_qr').click()">Choose File</button>
-                            <span class="no-file-text">No file chosen</span>
-                        </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="upi_link">UPI Link (if available)</label>
+                    <input type="text" id="upi_link" name="upi_link" placeholder="Enter UPI payment link" value="{{ tournament['upi_link'] }}">
+                </div>
+                <div class="form-group">
+                    <label for="payment_qr">Payment QR Code (if available)</label>
+                    <div class="file-input-group">
+                        <input type="file" id="payment_qr" name="payment_qr" accept="image/*" style="display: none;">
+                        <button type="button" class="choose-file-btn" onclick="document.getElementById('payment_qr').click()">Choose File</button>
+                        <span class="no-file-text">No file chosen</span>
                     </div>
-                    {% if tournament['payment_qr'] %}
-                    <div class="logo-preview-container">
-                        <div class="logo-preview-item">
-                            <img src="{{ tournament['payment_qr'] }}" alt="Current Payment QR" class="logo-preview">
-                            <button type="button" class="remove-logo-btn" onclick="removeQR(this)">×</button>
+                    <div id="qr-preview" class="qr-preview" {% if not tournament['payment_qr'] %}style="display: none;"{% endif %}>
+                        {% if tournament['payment_qr'] %}
+                        <div class="preview-container">
+                            <img src="{{ tournament['payment_qr'] }}" alt="QR Code Preview" class="qr-preview-image">
+                            <button type="button" class="remove-qr-btn" onclick="removeQR()">
+                                <i class="material-icons">close</i>
+                            </button>
                         </div>
+                        {% endif %}
                     </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
@@ -179,50 +181,163 @@
 </div>
 
 <script>
-function addCategory() {
-    const container = document.getElementById('categoriesContainer');
-    const newRow = document.createElement('div');
-    newRow.className = 'category-row';
-    newRow.innerHTML = `
-        <div class="form-group">
-            <select name="categories[]" required>
-                {% for category in available_categories %}
-                <option value="{{ category }}">{{ category }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="form-group">
-            <div class="fee-input-container">
-                <input type="number" name="fees[]" required>
-                <span class="required-asterisk">*</span>
+document.addEventListener('DOMContentLoaded', function() {
+    // Category selection functionality
+    const categoryDropdown = document.getElementById('categoryDropdown');
+    const categoryOptions = document.getElementById('categoryOptions');
+    const selectedCategories = document.getElementById('selectedCategories');
+    const categoriesContainer = document.getElementById('categoriesContainer');
+
+    // Toggle dropdown
+    categoryDropdown.addEventListener('click', function() {
+        categoryOptions.classList.toggle('show');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!categoryDropdown.contains(e.target) && !categoryOptions.contains(e.target)) {
+            categoryOptions.classList.remove('show');
+        }
+    });
+
+    // Handle category selection with immediate row creation
+    const checkboxes = categoryOptions.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                addCategoryRow(this.value);
+            } else {
+                removeCategoryRow(this.value);
+            }
+            updateSelectedCategories();
+        });
+    });
+
+    // Initialize checkboxes based on existing categories
+    const existingCategories = Array.from(categoriesContainer.querySelectorAll('.category-row'))
+        .map(row => row.getAttribute('data-category'));
+    
+    checkboxes.forEach(checkbox => {
+        if (existingCategories.includes(checkbox.value)) {
+            checkbox.checked = true;
+        }
+    });
+    updateSelectedCategories();
+
+    // Function to add category row
+    function addCategoryRow(category) {
+        // Check if row already exists
+        const existingRows = Array.from(categoriesContainer.querySelectorAll('select[name="categories[]"]'))
+            .map(select => select.value);
+            
+        if (!existingRows.includes(category)) {
+            const newRow = document.createElement('div');
+            newRow.className = 'category-row';
+            newRow.setAttribute('data-category', category);
+            newRow.setAttribute('style', 'background-color: #ffffff; border-left: 3px solid #28a745; padding-left: 10px; margin-bottom: 8px; border-radius: 4px;');
+            
+            newRow.innerHTML = `
+                <div class="form-group">
+                    <select name="categories[]" required>
+                        <option value="${category}" selected>${category}</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <select name="formats[]">
+                        <option value="Single Elimination">Single Elimination</option>
+                        <option value="Double Elimination">Double Elimination</option>
+                        <option value="Round Robin">Round Robin</option>
+                        <option value="Groups + Knockouts">Groups + Knockouts</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <div class="fee-input-container">
+                        <input type="number" name="fees[]" placeholder="Fee" required>
+                        <span class="required-asterisk">*</span>
+                        <div class="fee-error">Fee is required for this category</div>
+                    </div>
+                </div>
+
+                <div class="prize-section">
+                    <div>Prizes</div>
+                    <input type="number" name="first_prizes[]" placeholder="First Prize">
+                    <input type="number" name="second_prizes[]" placeholder="Second Prize">
+                    <input type="number" name="third_prizes[]" placeholder="Third Prize">
+                </div>
+
+                <button type="button" class="remove-category" onclick="removeCategory(this)">
+                    <i class="material-icons">delete</i>
+                </button>
+            `;
+            
+            // Add event listener for fee validation
+            const feeInput = newRow.querySelector('input[name="fees[]"]');
+            const feeError = newRow.querySelector('.fee-error');
+            
+            feeInput.addEventListener('input', function() {
+                validateFeeField(this, feeError);
+            });
+            
+            categoriesContainer.appendChild(newRow);
+        }
+    }
+
+    // Function to remove category row
+    function removeCategoryRow(category) {
+        const row = categoriesContainer.querySelector(`.category-row[data-category="${category}"]`);
+        if (row) {
+            row.remove();
+        }
+    }
+
+    // Function to update selected categories display
+    function updateSelectedCategories() {
+        const selected = Array.from(categoryOptions.querySelectorAll('input[type="checkbox"]:checked'))
+            .map(checkbox => checkbox.value);
+            
+        selectedCategories.innerHTML = selected.map(category => `
+            <div class="selected-category">
+                ${category}
+                <span class="remove-category" onclick="unselectCategory('${category}')">&times;</span>
             </div>
-        </div>
-        <div class="form-group">
-            <input type="number" name="first_prizes[]">
-        </div>
-        <div class="form-group">
-            <input type="number" name="second_prizes[]">
-        </div>
-        <div class="form-group">
-            <input type="number" name="third_prizes[]">
-        </div>
-        <div class="form-group">
-            <select name="formats[]">
-                <option value="Single Elimination">Single Elimination</option>
-                <option value="Double Elimination">Double Elimination</option>
-                <option value="Round Robin">Round Robin</option>
-                <option value="Groups + Knockouts">Groups + Knockouts</option>
-            </select>
-        </div>
-        <button type="button" class="remove-category" onclick="removeCategory(this)">
-            <i class="material-icons">delete</i>
-        </button>
-    `;
-    container.appendChild(newRow);
+        `).join('');
+        
+        categoryDropdown.textContent = selected.length ? `${selected.length} Categories Selected` : 'Select Categories';
+    }
+
+    // Function to validate fee field
+    function validateFeeField(input, errorDiv) {
+        if (!input.value || input.value <= 0) {
+            errorDiv.style.display = 'block';
+            input.style.borderColor = 'var(--error-color)';
+        } else {
+            errorDiv.style.display = 'none';
+            input.style.borderColor = 'var(--border-color)';
+        }
+    }
+});
+
+// Global function to unselect category
+function unselectCategory(category) {
+    const checkbox = document.querySelector(`input[type="checkbox"][value="${category}"]`);
+    if (checkbox) {
+        checkbox.checked = false;
+        checkbox.dispatchEvent(new Event('change'));
+    }
 }
 
+// Global function to remove category
 function removeCategory(button) {
-    button.closest('.category-row').remove();
+    const row = button.closest('.category-row');
+    const category = row.getAttribute('data-category');
+    const checkbox = document.querySelector(`input[type="checkbox"][value="${category}"]`);
+    if (checkbox) {
+        checkbox.checked = false;
+        checkbox.dispatchEvent(new Event('change'));
+    }
+    row.remove();
 }
 
 function updateFileLabel(input) {
@@ -236,18 +351,47 @@ function removeLogo(button) {
     document.getElementById('tournament_logo').value = '';
 }
 
-function removeQR(button) {
-    const previewContainer = button.closest('.logo-preview-container');
-    previewContainer.remove();
-    document.getElementById('payment_qr').value = '';
+function removeQR() {
+    const qrPreview = document.getElementById('qr-preview');
+    const fileInput = document.getElementById('payment_qr');
+    const noFileText = document.querySelector('.no-file-text');
+    
+    qrPreview.innerHTML = '';
+    qrPreview.style.display = 'none';
+    fileInput.value = '';
+    noFileText.textContent = 'No file chosen';
 }
 
 document.getElementById('tournament_logo').addEventListener('change', function() {
     updateFileLabel(this);
 });
 
-document.getElementById('payment_qr').addEventListener('change', function() {
-    updateFileLabel(this);
+document.getElementById('payment_qr').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const noFileText = document.querySelector('.no-file-text');
+    const qrPreview = document.getElementById('qr-preview');
+    
+    if (file) {
+        noFileText.textContent = file.name;
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            qrPreview.innerHTML = `
+                <div class="preview-container">
+                    <img src="${e.target.result}" alt="QR Code Preview" class="qr-preview-image">
+                    <button type="button" class="remove-qr-btn" onclick="removeQR()">
+                        <i class="material-icons">close</i>
+                    </button>
+                </div>
+            `;
+            qrPreview.style.display = 'block';
+        };
+        
+        reader.readAsDataURL(file);
+    } else {
+        noFileText.textContent = 'No file chosen';
+        qrPreview.style.display = 'none';
+    }
 });
 </script>
 
@@ -470,6 +614,7 @@ select:focus {
     display: flex;
     align-items: center;
     gap: 1rem;
+    margin-bottom: 1rem;
 }
 
 .choose-file-btn {
@@ -568,6 +713,178 @@ select:focus {
         padding-left: 0;
         margin-top: 0.5rem;
     }
+}
+
+.category-select-container {
+    position: relative;
+    width: 100%;
+}
+
+.category-select-dropdown {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.category-select-dropdown::after {
+    content: '▼';
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.category-options {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    margin-top: 4px;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.category-options.show {
+    display: block;
+}
+
+.category-option {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    min-height: 32px;
+}
+
+.category-option:hover {
+    background-color: var(--primary-light);
+}
+
+.category-option input[type="checkbox"] {
+    margin: 0;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    margin-top: 2px;
+}
+
+.category-option label {
+    cursor: pointer;
+    font-size: 0.9rem;
+    flex: 1;
+    line-height: 1.2;
+    padding-top: 2px;
+}
+
+.selected-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.selected-category {
+    background: var(--primary-light);
+    color: var(--primary);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.selected-category .remove-category {
+    cursor: pointer;
+    font-size: 1.2rem;
+    line-height: 1;
+}
+
+.fee-input-container {
+    position: relative;
+}
+
+.fee-error {
+    display: none;
+    color: var(--error-color);
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}
+
+.prize-section {
+    border-left: 2px solid var(--primary-light);
+    padding-left: 1rem;
+}
+
+.prize-section > div {
+    color: var(--primary-color);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.qr-preview {
+    margin-top: 1rem;
+}
+
+.preview-container {
+    position: relative;
+    display: inline-block;
+}
+
+.qr-preview-image {
+    max-width: 200px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+.remove-qr-btn {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: #d32f2f;
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-size: 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.remove-qr-btn:hover {
+    background-color: #b71c1c;
+}
+
+textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 1rem;
+    resize: vertical;
+    min-height: 80px;
+}
+
+textarea:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px var(--primary-light);
+    outline: none;
 }
 </style>
 {% endblock %}
