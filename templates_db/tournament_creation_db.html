@@ -246,6 +246,25 @@
         color: var(--error-color);
     }
 
+    .fee-input-container {
+        position: relative;
+    }
+
+    .required-asterisk {
+        position: absolute;
+        top: 0;
+        right: 0;
+        color: var(--error-color);
+        font-size: 0.8rem;
+    }
+
+    .fee-error {
+        display: none;
+        color: var(--error-color);
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+    }
+
     .category-row {
         display: grid;
         grid-template-columns: 2fr 1.5fr 1fr 3fr 0.5fr;
@@ -307,19 +326,6 @@
 
     .remove-category i {
         font-size: 1.5rem;
-    }
-
-    .fee-input-container {
-        position: relative;
-    }
-
-    .required-asterisk {
-        color: var(--error-color);
-        position: absolute;
-        right: 8px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-weight: bold;
     }
 
     .logo-preview-container {
@@ -697,7 +703,11 @@
                         <option value="Knockout" selected>Knockout</option>
                         <option value="Two Stage">Two Stage</option>
                     </select>
-                    <input type="number" name="categories[${rowCount}][fee]" placeholder="Entry Fee" step="0.01" min="0" required>
+                    <div class="fee-input-container">
+                        <input type="number" name="categories[${rowCount}][fee]" placeholder="Fee" step="0.01" min="0" required>
+                        <span class="required-asterisk">*</span>
+                        <div class="fee-error">Fee is required for this category</div>
+                    </div>
                     <div class="prize-section">
                         <div class="prize-section-header">Prizes</div>
                         <input type="number" name="categories[${rowCount}][first_prize]" placeholder="First Prize" step="0.01" min="0">
@@ -717,6 +727,14 @@
                         updateSelectedCategories();
                     }
                     newRow.remove();
+                });
+
+                // Add fee validation
+                const feeInput = newRow.querySelector('input[name^="categories"][name$="[fee]"]');
+                const feeError = newRow.querySelector('.fee-error');
+                
+                feeInput.addEventListener('input', function() {
+                    validateFeeField(this, feeError);
                 });
                 
                 categoriesContainer.appendChild(newRow);
@@ -853,6 +871,17 @@
                 e.preventDefault();
             }
         });
+
+        // Function to validate fee field
+        function validateFeeField(input, errorDiv) {
+            if (!input.value || input.value <= 0) {
+                errorDiv.style.display = 'block';
+                input.style.borderColor = 'var(--error-color)';
+            } else {
+                errorDiv.style.display = 'none';
+                input.style.borderColor = 'var(--border-color)';
+            }
+        }
     });
 </script>
 {% endblock %}
