@@ -6102,6 +6102,11 @@
                                 console.log(`Auto-filled seed ${validOptions[0]} for player ${player.name} (position ${index + 1})`);
                             }
                         });
+                        
+                        // Update dropdowns to grey out any used seeds after all rows are added
+                        setTimeout(() => {
+                            updateSeedDropdowns();
+                        }, 100);
                     }
                 })
                 .catch(error => {
@@ -6154,6 +6159,11 @@
                             console.log(`Auto-filled seed ${validOptions[0]} for player ${player.name} (position ${index + 1}) - fallback case`);
                         }
                     });
+                    
+                    // Update dropdowns to grey out any used seeds after all rows are added (fallback case)
+                    setTimeout(() => {
+                        updateSeedDropdowns();
+                    }, 100);
                 });
         }
 
@@ -6340,7 +6350,11 @@
             const selectedValue = selectElement.value;
             const currentPlayerIndex = parseInt(selectElement.getAttribute('data-player-index'));
             
-            if (!selectedValue) return; // Allow empty selection
+            if (!selectedValue) {
+                // If clearing selection, update all dropdowns to remove grey-out
+                updateSeedDropdowns();
+                return;
+            }
             
             // Get all seed selects in the table
             const allSeedSelects = document.querySelectorAll('.seed-select');
@@ -6361,6 +6375,58 @@
                 // Reset to empty and show error message
                 selectElement.value = '';
                 showDrawMessage(`Seed ${selectedValue} is already assigned to ${duplicatePlayerName}. Please select a different seed.`, 'error');
+                // Update dropdowns after clearing
+                updateSeedDropdowns();
+            } else {
+                // Valid selection, update all dropdowns to grey out used seeds
+                updateSeedDropdowns();
+            }
+        }
+
+        // Function to update all seed dropdowns to grey out used seeds
+        function updateSeedDropdowns() {
+            try {
+                const allSeedSelects = document.querySelectorAll('.seed-select');
+                if (allSeedSelects.length === 0) {
+                    console.log('No seed dropdowns found, skipping update');
+                    return;
+                }
+                
+                const usedSeeds = new Set();
+                
+                // Collect all currently used seeds
+                allSeedSelects.forEach(select => {
+                    if (select.value && select.value !== '') {
+                        usedSeeds.add(parseInt(select.value));
+                    }
+                });
+                
+                // Update each dropdown to grey out used seeds
+                allSeedSelects.forEach(select => {
+                    const currentValue = select.value;
+                    const options = select.querySelectorAll('option');
+                    
+                    options.forEach(option => {
+                        if (option.value && option.value !== '') {
+                            const seedValue = parseInt(option.value);
+                            if (usedSeeds.has(seedValue) && seedValue !== parseInt(currentValue)) {
+                                // Grey out this option (already used by another player)
+                                option.disabled = true;
+                                option.style.color = '#999';
+                                option.style.backgroundColor = '#f5f5f5';
+                            } else {
+                                // Enable this option (not used or used by current player)
+                                option.disabled = false;
+                                option.style.color = '';
+                                option.style.backgroundColor = '';
+                            }
+                        }
+                    });
+                });
+                
+                console.log('Updated seed dropdowns, used seeds:', Array.from(usedSeeds));
+            } catch (error) {
+                console.error('Error updating seed dropdowns:', error);
             }
         }
     </script>
