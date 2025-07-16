@@ -2170,16 +2170,6 @@
                                     </select>
                                 </div>
                                 
-                                <!-- Manual/Automatic Toggle Switch -->
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <span id="drawManualLabel" style="color: #9c27b0; font-weight: 500;">Manual</span>
-                                    <label class="switch">
-                                        <input type="checkbox" id="drawModeSwitch" onchange="toggleDrawMode()">
-                                        <span class="slider"></span>
-                                    </label>
-                                    <span id="drawAutoLabel" style="color: #64748b; font-weight: 500;">Automatic</span>
-                                </div>
-                                
                                 <!-- Group Selection and Save Button -->
                                 <div style="display: flex; align-items: center; gap: 15px;">
                                     <div class="form-group" style="margin: 0;">
@@ -2194,9 +2184,15 @@
                                         </select>
                                     </div>
                                     
-                                    <!-- Save Button -->
-                                    <div class="form-group" style="margin: 0; margin-top: 20px;">
-                                        <button id="saveDrawButton" class="btn btn-primary" style="background-color: #1e3c72; border: none; padding: 10px 20px; font-size: 14px; font-weight: 500; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" onclick="saveDrawChanges()">
+                                    <!-- Action Buttons -->
+                                    <div class="form-group" style="margin: 0; display: flex; gap: 10px;">
+                                        <button id="autoAssignButton" class="btn btn-success" style="background-color: #28a745; border: none; padding: 8px 16px; font-size: 14px; font-weight: 500; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); height: 38px;" onclick="assignSeedsAutomatically()">
+                                            <i class="fas fa-magic"></i> Auto Assign
+                                        </button>
+                                        <button id="clearSeedsButton" class="btn btn-warning" style="background-color: #ffc107; border: none; padding: 8px 16px; font-size: 14px; font-weight: 500; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); height: 38px;" onclick="clearAllSeedSelections()">
+                                            <i class="fas fa-eraser"></i> Clear Seeds
+                                        </button>
+                                        <button id="saveDrawButton" class="btn btn-primary" style="background-color: #1e3c72; border: none; padding: 8px 16px; font-size: 14px; font-weight: 500; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); height: 38px;" onclick="saveDrawChanges()">
                                             <i class="fas fa-save"></i> Save
                                         </button>
                                     </div>
@@ -5976,23 +5972,120 @@
 
     <!-- Create Draws Functions -->
     <script>
-        // Function to toggle draw mode between manual and automatic
-        function toggleDrawMode() {
-            const switchElement = document.getElementById('drawModeSwitch');
-            const manualLabel = document.getElementById('drawManualLabel');
-            const autoLabel = document.getElementById('drawAutoLabel');
+        // Function to toggle draw mode between manual and automatic (removed - now using buttons)
+        // The toggleDrawMode function has been removed as the toggle switch is no longer present
+        // Users can now use the "Auto Assign" and "Clear Seeds" buttons for manual control
+
+        // Function to assign seeds automatically
+        function assignSeedsAutomatically() {
+            const tbody = document.getElementById('drawPlayersTableBody');
+            const rows = tbody.querySelectorAll('tr');
             
-            if (switchElement.checked) {
-                // Automatic mode
-                manualLabel.style.color = '#64748b';
-                autoLabel.style.color = '#2196f3';
-                console.log('Switched to Automatic mode');
-            } else {
-                // Manual mode
-                manualLabel.style.color = '#9c27b0';
-                autoLabel.style.color = '#64748b';
-                console.log('Switched to Manual mode');
+            if (rows.length === 0) {
+                showDrawMessage('No players to assign seeds to', 'error');
+                return;
             }
+
+            // Get all available seeds for each position
+            const availableSeeds = [];
+            rows.forEach((row, index) => {
+                const seedSelect = row.querySelector('.seed-select');
+                if (seedSelect) {
+                    const options = Array.from(seedSelect.querySelectorAll('option'));
+                    const validOptions = options
+                        .filter(option => option.value && option.value !== '')
+                        .map(option => parseInt(option.value));
+                    availableSeeds.push({
+                        position: index,
+                        seeds: validOptions,
+                        row: row
+                    });
+                }
+            });
+
+            console.log('Available seeds for each position:', availableSeeds);
+
+            // Assign seeds randomly starting from top
+            const usedSeeds = new Set();
+            const assignments = [];
+
+            availableSeeds.forEach((positionData, index) => {
+                const availableForPosition = positionData.seeds.filter(seed => !usedSeeds.has(seed));
+                
+                if (availableForPosition.length > 0) {
+                    // Randomly select a seed from available options
+                    const randomIndex = Math.floor(Math.random() * availableForPosition.length);
+                    const selectedSeed = availableForPosition[randomIndex];
+                    
+                    assignments.push({
+                        position: index,
+                        seed: selectedSeed,
+                        row: positionData.row
+                    });
+                    
+                    usedSeeds.add(selectedSeed);
+                    console.log(`Assigned seed ${selectedSeed} to position ${index + 1}`);
+                }
+            });
+
+            // Animate the seed assignments
+            animateSeedAssignments(assignments);
+        }
+
+        // Function to animate seed assignments
+        function animateSeedAssignments(assignments) {
+            const animationDuration = 500; // 500ms per assignment
+            const delayBetweenAssignments = 300; // 300ms delay between assignments
+
+            assignments.forEach((assignment, index) => {
+                const delay = index * delayBetweenAssignments;
+                
+                setTimeout(() => {
+                    const row = assignment.row;
+                    const seedSelect = row.querySelector('.seed-select');
+                    
+                    if (seedSelect) {
+                        // Highlight the row being assigned
+                        row.style.backgroundColor = '#e3f2fd';
+                        row.style.transition = 'background-color 0.3s ease';
+                        
+                        // Set the seed value
+                        seedSelect.value = assignment.seed;
+                        
+                        // Trigger change event to update dropdowns
+                        const event = new Event('change');
+                        seedSelect.dispatchEvent(event);
+                        
+                        console.log(`Animated assignment: Position ${assignment.position + 1} -> Seed ${assignment.seed}`);
+                        
+                        // Remove highlight after animation
+                        setTimeout(() => {
+                            row.style.backgroundColor = '';
+                            row.style.transition = '';
+                        }, animationDuration);
+                    }
+                }, delay);
+            });
+
+            // Show completion message
+            setTimeout(() => {
+                showDrawMessage(`Automatically assigned ${assignments.length} seeds successfully!`, 'success');
+            }, assignments.length * delayBetweenAssignments + animationDuration);
+        }
+
+        // Function to clear all seed selections
+        function clearAllSeedSelections() {
+            const tbody = document.getElementById('drawPlayersTableBody');
+            const seedSelects = tbody.querySelectorAll('.seed-select');
+            
+            seedSelects.forEach(select => {
+                select.value = '';
+                // Trigger change event to update dropdowns
+                const event = new Event('change');
+                select.dispatchEvent(event);
+            });
+            
+            showDrawMessage('All seed selections cleared', 'success');
         }
 
         // Function to load draw players
