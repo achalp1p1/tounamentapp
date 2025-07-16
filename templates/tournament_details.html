@@ -6093,6 +6093,14 @@
                                 </td>
                             `;
                             tbody.appendChild(row);
+                            
+                            // Auto-fill if only one valid option exists
+                            const seedSelect = row.querySelector('.seed-select');
+                            const validOptions = getValidSeedRangeForPosition(index + 1, seedRanges);
+                            if (validOptions.length === 1) {
+                                seedSelect.value = validOptions[0];
+                                console.log(`Auto-filled seed ${validOptions[0]} for player ${player.name} (position ${index + 1})`);
+                            }
                         });
                     }
                 })
@@ -6137,6 +6145,14 @@
                             </td>
                         `;
                         tbody.appendChild(row);
+                        
+                        // Auto-fill if only one valid option exists (fallback case)
+                        const seedSelect = row.querySelector('.seed-select');
+                        const validOptions = getValidSeedRangeForPosition(index + 1, seedRanges);
+                        if (validOptions.length === 1) {
+                            seedSelect.value = validOptions[0];
+                            console.log(`Auto-filled seed ${validOptions[0]} for player ${player.name} (position ${index + 1}) - fallback case`);
+                        }
                     });
                 });
         }
