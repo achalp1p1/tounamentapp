@@ -2214,7 +2214,7 @@
                                             <th style="padding: 16px; text-align: left; background: #1e3c72; color: white; font-weight: 500; font-size: 0.95em; border-bottom: 2px solid #2a5298;">S.No.</th>
                                             <th style="padding: 16px; text-align: left; background: #1e3c72; color: white; font-weight: 500; font-size: 0.95em; border-bottom: 2px solid #2a5298;">Name</th>
                                             <th style="padding: 16px; text-align: left; background: #1e3c72; color: white; font-weight: 500; font-size: 0.95em; border-bottom: 2px solid #2a5298;">Group</th>
-                                            <th style="padding: 16px; text-align: left; background: #1e3c72; color: white; font-weight: 500; font-size: 0.95em; border-bottom: 2px solid #2a5298;">Seed</th>
+                                            <th style="padding: 16px; text-align: left; background: #1e3c72; color: white; font-weight: 500; font-size: 0.95em; border-bottom: 2px solid #2a5298; cursor: pointer;" onclick="sortTableBySeed()" title="Click to sort by seed">Seed <i class="fas fa-sort" style="margin-left: 5px;"></i></th>
                                         </tr>
                                     </thead>
                                     <tbody id="drawPlayersTableBody">
@@ -6263,6 +6263,151 @@
                 drawGroupSelect.addEventListener('change', loadDrawPlayers);
             }
         });
+
+        // Function to sort table by seed with animation
+        function sortTableBySeed() {
+            const tbody = document.getElementById('drawPlayersTableBody');
+            if (!tbody) {
+                console.error('Table body not found');
+                return;
+            }
+
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            if (rows.length === 0) {
+                console.log('No rows to sort');
+                return;
+            }
+
+            // Get current sort direction from the header
+            const seedHeader = document.querySelector('th[onclick="sortTableBySeed()"]');
+            const sortIcon = seedHeader.querySelector('i');
+            const isAscending = !sortIcon.classList.contains('fa-sort-up');
+
+            // Update sort icon
+            sortIcon.className = isAscending ? 'fas fa-sort-up' : 'fas fa-sort-down';
+
+            // Create array of row data with seed values
+            const rowData = rows.map((row, index) => {
+                const cells = row.querySelectorAll('td');
+                const seedSelect = cells[3].querySelector('select');
+                const seedValue = seedSelect ? seedSelect.value : '';
+                // Treat blank/empty values as highest seed (999999)
+                const numericSeed = seedValue === '' ? 999999 : parseInt(seedValue) || 999999;
+                
+                return {
+                    row: row,
+                    seedValue: numericSeed,
+                    originalSeed: seedValue,
+                    originalIndex: index,
+                    sno: cells[0].textContent.trim() // Preserve S.No.
+                };
+            });
+
+            // Sort by seed value - blank rows treated as highest seed
+            rowData.sort((a, b) => {
+                if (isAscending) {
+                    return a.seedValue - b.seedValue;
+                } else {
+                    return b.seedValue - a.seedValue;
+                }
+            });
+
+            // Animate the sorting sequentially
+            animateTableSortSequential(tbody, rowData, isAscending);
+        }
+
+        // Function to animate table sorting with cascading movement
+        function animateTableSortSequential(tbody, sortedRowData, isAscending) {
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const animationDuration = 300; // 300ms per movement
+            const delayBetweenMovements = 150; // 150ms delay between movements
+
+            // Store original positions
+            const originalPositions = rows.map(row => {
+                const rect = row.getBoundingClientRect();
+                return {
+                    top: rect.top,
+                    height: rect.height
+                };
+            });
+
+            // Create movement plan - sort by seed value first (lowest to highest)
+            const movements = [];
+            sortedRowData.forEach((rowData, targetIndex) => {
+                const currentIndex = rowData.originalIndex;
+                if (currentIndex !== targetIndex) {
+                    movements.push({
+                        row: rowData.row,
+                        fromIndex: currentIndex,
+                        toIndex: targetIndex,
+                        seedValue: rowData.seedValue,
+                        originalSeed: rowData.originalSeed
+                    });
+                }
+            });
+
+            // Sort movements by seed value (lowest first for ascending, highest first for descending)
+            movements.sort((a, b) => {
+                if (isAscending) {
+                    return a.seedValue - b.seedValue;
+                } else {
+                    return b.seedValue - a.seedValue;
+                }
+            });
+
+            console.log('Movement plan:', movements.map(m => `${m.originalSeed} (${m.seedValue}): ${m.fromIndex} -> ${m.toIndex}`));
+
+            // Execute movements sequentially
+            movements.forEach((movement, movementIndex) => {
+                const delay = movementIndex * delayBetweenMovements;
+                
+                setTimeout(() => {
+                    const row = movement.row;
+                    const fromPos = originalPositions[movement.fromIndex];
+                    const toPos = originalPositions[movement.toIndex];
+                    
+                    if (fromPos && toPos) {
+                        // Calculate the movement distance
+                        const moveDistance = toPos.top - fromPos.top;
+                        
+                        console.log(`Moving row ${movement.originalSeed} (${movement.seedValue}) from ${movement.fromIndex} to ${movement.toIndex}, distance: ${moveDistance}px`);
+                        
+                        // Apply transform to move row
+                        row.style.transform = `translateY(${moveDistance}px)`;
+                        row.style.transition = `transform ${animationDuration}ms ease-in-out`;
+                        row.style.zIndex = '2';
+                        
+                        // After row moves, handle cascading effects
+                        setTimeout(() => {
+                            // Reset moved row styles
+                            row.style.transform = '';
+                            row.style.transition = '';
+                            row.style.zIndex = '';
+                            
+                            // If this is the last movement, finalize the sorting
+                            if (movementIndex === movements.length - 1) {
+                                setTimeout(() => {
+                                    // Reorder DOM and update S.No.
+                                    sortedRowData.forEach((rowData, finalIndex) => {
+                                        const finalRow = rowData.row;
+                                        const cells = finalRow.querySelectorAll('td');
+                                        cells[0].textContent = rowData.sno;
+                                        tbody.appendChild(finalRow);
+                                    });
+                                    
+                                    // Update dropdowns
+                                    setTimeout(() => {
+                                        updateSeedDropdowns();
+                                    }, 100);
+                                    
+                                    console.log(`Table sorted by seed in ${isAscending ? 'ascending' : 'descending'} order`);
+                                }, 200);
+                            }
+                        }, animationDuration);
+                    }
+                }, delay);
+            });
+        }
     </script>
 
     <script>
