@@ -6064,7 +6064,7 @@
             animateSeedAssignments(assignments);
         }
 
-        // Function to animate seed assignments
+        // Function to animate seed assignments with scrolling
         function animateSeedAssignments(assignments) {
             const animationDuration = 500; // 500ms per assignment
             const delayBetweenAssignments = 300; // 300ms delay between assignments
@@ -6080,6 +6080,13 @@
                         // Highlight the row being assigned
                         row.style.backgroundColor = '#e3f2fd';
                         row.style.transition = 'background-color 0.3s ease';
+                        
+                        // Scroll the row into view and center it
+                        row.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'center',
+                            inline: 'nearest'
+                        });
                         
                         // Set the seed value
                         seedSelect.value = assignment.seed;
