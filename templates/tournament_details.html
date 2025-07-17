@@ -5976,7 +5976,7 @@
         // The toggleDrawMode function has been removed as the toggle switch is no longer present
         // Users can now use the "Auto Assign" and "Clear Seeds" buttons for manual control
 
-        // Function to assign seeds automatically
+        // Function to assign seeds automatically (only to empty cells with valid unused values)
         function assignSeedsAutomatically() {
             const tbody = document.getElementById('drawPlayersTableBody');
             const rows = tbody.querySelectorAll('tr');
@@ -5986,48 +5986,80 @@
                 return;
             }
 
-            // Get all available seeds for each position
-            const availableSeeds = [];
+            // First, collect all currently used seeds
+            const usedSeeds = new Set();
             rows.forEach((row, index) => {
                 const seedSelect = row.querySelector('.seed-select');
-                if (seedSelect) {
-                    const options = Array.from(seedSelect.querySelectorAll('option'));
-                    const validOptions = options
-                        .filter(option => option.value && option.value !== '')
-                        .map(option => parseInt(option.value));
-                    availableSeeds.push({
-                        position: index,
-                        seeds: validOptions,
-                        row: row
-                    });
+                if (seedSelect && seedSelect.value && seedSelect.value !== '') {
+                    usedSeeds.add(parseInt(seedSelect.value));
                 }
             });
 
-            console.log('Available seeds for each position:', availableSeeds);
+            console.log('Currently used seeds:', Array.from(usedSeeds));
 
-            // Assign seeds randomly starting from top
-            const usedSeeds = new Set();
+            // Get all available seeds for each position (only for empty cells)
+            const emptyPositions = [];
+            rows.forEach((row, index) => {
+                const seedSelect = row.querySelector('.seed-select');
+                if (seedSelect) {
+                    // Only process if the cell is empty
+                    if (!seedSelect.value || seedSelect.value === '') {
+                        const options = Array.from(seedSelect.querySelectorAll('option'));
+                        const validOptions = options
+                            .filter(option => option.value && option.value !== '')
+                            .map(option => parseInt(option.value))
+                            .filter(seed => !usedSeeds.has(seed)); // Only unused seeds
+                        
+                        if (validOptions.length > 0) {
+                            emptyPositions.push({
+                                position: index,
+                                availableSeeds: validOptions,
+                                row: row
+                            });
+                        }
+                    }
+                }
+            });
+
+            console.log('Empty positions with available unused seeds:', emptyPositions);
+
+            if (emptyPositions.length === 0) {
+                showDrawMessage('No empty cells with available seeds to assign', 'info');
+                return;
+            }
+
+            // Assign seeds randomly to empty cells
             const assignments = [];
+            const newlyUsedSeeds = new Set();
 
-            availableSeeds.forEach((positionData, index) => {
-                const availableForPosition = positionData.seeds.filter(seed => !usedSeeds.has(seed));
+            emptyPositions.forEach((positionData) => {
+                // Get seeds that are still available (not used by others and not newly assigned)
+                const availableSeeds = positionData.availableSeeds.filter(seed => 
+                    !newlyUsedSeeds.has(seed)
+                );
                 
-                if (availableForPosition.length > 0) {
+                if (availableSeeds.length > 0) {
                     // Randomly select a seed from available options
-                    const randomIndex = Math.floor(Math.random() * availableForPosition.length);
-                    const selectedSeed = availableForPosition[randomIndex];
+                    const randomIndex = Math.floor(Math.random() * availableSeeds.length);
+                    const selectedSeed = availableSeeds[randomIndex];
                     
                     assignments.push({
-                        position: index,
+                        position: positionData.position,
                         seed: selectedSeed,
                         row: positionData.row
                     });
                     
-                    usedSeeds.add(selectedSeed);
-                    console.log(`Assigned seed ${selectedSeed} to position ${index + 1}`);
+                    newlyUsedSeeds.add(selectedSeed);
+                    console.log(`Assigned seed ${selectedSeed} to position ${positionData.position + 1}`);
                 }
             });
 
+            if (assignments.length === 0) {
+                showDrawMessage('No valid seeds available for assignment', 'error');
+                return;
+            }
+
+            console.log(`Auto-assigned ${assignments.length} seeds to empty cells`);
             // Animate the seed assignments
             animateSeedAssignments(assignments);
         }
@@ -6292,67 +6324,73 @@
                 return;
             }
 
-            const tbody = document.getElementById('drawPlayersTableBody');
-            const rows = tbody.querySelectorAll('tr');
-            const drawData = [];
+            // First, sort the table in ascending order
+            sortTableBySeed();
 
-            // Collect data from the table
-            rows.forEach((row, index) => {
-                const cells = row.querySelectorAll('td');
-                if (cells.length >= 4) {
-                    const name = cells[1].textContent.trim();
-                    const seedSelect = cells[3].querySelector('select');
-                    const selectedSeed = seedSelect ? seedSelect.value : '';
-                    
-                    if (name && selectedSeed) {
-                        drawData.push({
-                            name: name,
-                            seeding: selectedSeed
-                        });
+            // Wait a moment for sorting to complete, then save
+            setTimeout(() => {
+                const tbody = document.getElementById('drawPlayersTableBody');
+                const rows = tbody.querySelectorAll('tr');
+                const drawData = [];
+
+                // Collect data from the sorted table
+                rows.forEach((row, index) => {
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length >= 4) {
+                        const name = cells[1].textContent.trim();
+                        const seedSelect = cells[3].querySelector('select');
+                        const selectedSeed = seedSelect ? seedSelect.value : '';
+                        
+                        if (name && selectedSeed) {
+                            drawData.push({
+                                name: name,
+                                seeding: selectedSeed
+                            });
+                        }
                     }
+                });
+
+                if (drawData.length === 0) {
+                    showDrawMessage('No valid draw data to save', 'error');
+                    return;
                 }
-            });
 
-            if (drawData.length === 0) {
-                showDrawMessage('No valid draw data to save', 'error');
-                return;
-            }
+                // Show loading state
+                const saveButton = document.getElementById('saveDrawButton');
+                const originalText = saveButton.innerHTML;
+                saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+                saveButton.disabled = true;
 
-            // Show loading state
-            const saveButton = document.getElementById('saveDrawButton');
-            const originalText = saveButton.innerHTML;
-            saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-            saveButton.disabled = true;
-
-            // Send data to server
-            fetch('/save_tournament_draw', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    tournamentId: '{{ tournament["Tournament Id"] }}',
-                    category: category,
-                    drawData: drawData
+                // Send data to server
+                fetch('/save_tournament_draw', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        tournamentId: '{{ tournament["Tournament Id"] }}',
+                        category: category,
+                        drawData: drawData
+                    })
                 })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showDrawMessage('Draw saved successfully!', 'success');
-                } else {
-                    showDrawMessage('Error saving draw: ' + data.message, 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showDrawMessage('Error saving draw', 'error');
-            })
-            .finally(() => {
-                // Restore button state
-                saveButton.innerHTML = originalText;
-                saveButton.disabled = false;
-            });
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showDrawMessage('Draw saved successfully!', 'success');
+                    } else {
+                        showDrawMessage('Error saving draw: ' + data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showDrawMessage('Error saving draw', 'error');
+                })
+                .finally(() => {
+                    // Restore button state
+                    saveButton.innerHTML = originalText;
+                    saveButton.disabled = false;
+                });
+            }, 100); // Small delay to ensure sorting completes
         }
 
         // Add event listeners for Create Draws
