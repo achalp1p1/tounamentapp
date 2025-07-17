@@ -1502,6 +1502,60 @@
         input:checked + .slider:before {
           transform: translateX(26px);
         }
+        
+        /* Enhanced cascaded animation styles for row movement */
+        .players-table tr {
+          transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .players-table tr.moving {
+          z-index: 1000;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+          border-radius: 4px;
+        }
+        
+        .players-table tr.moving-up {
+          background-color: #fff3cd;
+          border: 2px solid #ffc107;
+        }
+        
+        .players-table tr.moving-down {
+          background-color: #d4edda;
+          border: 2px solid #28a745;
+        }
+        
+        /* Cascaded animation specific styles */
+        .players-table tr.cascaded-moving {
+          position: relative;
+          z-index: 1000;
+          box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+          border-radius: 6px;
+          transition: transform 1s cubic-bezier(0.4,0,0.2,1), 
+                      background-color 1s ease, 
+                      box-shadow 1s ease, 
+                      border 1s ease;
+        }
+        
+        .players-table tr.cascaded-moving.up {
+          background-color: #fff3cd;
+          border: 2px solid #ffc107;
+        }
+        
+        .players-table tr.cascaded-moving.down {
+          background-color: #e8f5e8;
+          border: 2px solid #28a745;
+        }
+        
+        /* Animation progress indicators */
+        .players-table tr.cascaded-moving.up.animating {
+          background-color: #d4edda;
+          border-color: #28a745;
+        }
+        
+        .players-table tr.cascaded-moving.down.animating {
+          background-color: #fff3cd;
+          border-color: #ffc107;
+        }
 
         /* Toggle Switch Styles */
         .switch {
@@ -4409,6 +4463,28 @@
         return ''; // Default styling if no range matches
     }
 
+    // Function to get seed range class based on actual seed value (not S.No.)
+    window.getSeedRangeClassBySeedValue = function(seedValue, seedRanges) {
+        const seedNumber = parseInt(seedValue);
+        
+        console.log(`getSeedRangeClassBySeedValue called with seedValue: ${seedValue}, seedNumber: ${seedNumber}`);
+        console.log('Available seed ranges:', seedRanges);
+        
+        // Find the matching seed range
+        for (let i = 0; i < seedRanges.length; i++) {
+            const range = seedRanges[i];
+            if (seedNumber >= range.min && seedNumber <= range.max) {
+                // Use the range index instead of description for CSS class
+                const className = `seed-range-${i}`;
+                console.log(`Seed ${seedNumber} matches range ${range.min}-${range.max} (${range.description}) -> CSS class: ${className}`);
+                return className;
+            }
+        }
+        
+        console.log(`Seed ${seedNumber} - no matching range found, using default styling`);
+        return ''; // Default styling if no range matches
+    }
+
     // Function to detect seeding clashes
     function detectSeedingClash(player, players, index, seedRanges) {
         const seed = parseInt(player.seeding);
@@ -4689,10 +4765,18 @@
             }
         }
         
+        // Trigger animation by sorting the table after seed change
+        setTimeout(() => {
+            sortTableBySeedClash();
+        }, 100);
+        
         // Re-detect clashes after resolution
         const category = document.getElementById('clashCategorySelect').value;
         if (category) {
-            loadClashPlayers(); // Reload to re-detect clashes
+            // Don't reload immediately to allow animation to complete
+            setTimeout(() => {
+                loadClashPlayers(); // Reload to re-detect clashes
+            }, 2000); // Wait for animation to complete
         }
     }
 
@@ -5274,10 +5358,17 @@
             document.getElementById('popupOverlay').style.display = 'none';
         });
 
-        // Function to sort table rows by seed while preserving S.No. column
-        function sortTableBySeed() {
-            console.log('sortTableBySeed called');
+        // Function to sort table rows by seed while preserving S.No. column and range colors
+        // Features:
+        // - Sorts rows in ascending order of seed values
+        // - Preserves original range colors during sorting
+        // - Cascaded animation: upward movements animate first, then downward movements
+        // - Different visual feedback for upward vs downward movements
+        // - Enhanced performance using CSS classes instead of inline styles
+        window.sortTableBySeedClash = function() {
+            console.log('sortTableBySeedClash called');
             const tbody = document.getElementById('clashTableBody');
+            console.log('Found tbody:', tbody);
             if (!tbody) {
                 console.error('clashTableBody not found');
                 return;
@@ -5315,7 +5406,8 @@
                 return {
                     row: row,
                     seed: seedValue,
-                    originalIndex: index
+                    originalIndex: index,
+                    originalClass: row.className // Preserve original color class
                 };
             });
             
@@ -5341,12 +5433,19 @@
                 const snoCell = data.row.cells[0];
                 snoCell.textContent = (newIndex + 1).toString();
                 
+                // Preserve the original color class (range colors) - this maintains the animation
+                data.row.className = data.originalClass;
+                
                 // Add the row back to the table
                 tbody.appendChild(data.row);
             });
             
-            // FLIP Animation: Show rows actually moving
+            // Enhanced Cascaded FLIP Animation: Show rows moving in a cascaded sequence
             requestAnimationFrame(() => {
+                // Add loading indicator during animation
+                tbody.style.opacity = '0.8';
+                tbody.style.pointerEvents = 'none';
+                
                 // Get new positions AFTER moving rows
                 const newPositions = [];
                 rowData.forEach((data, index) => {
@@ -5368,67 +5467,102 @@
                             row: original.row,
                             dy: dy,
                             originalIndex: original.originalIndex,
-                            newIndex: newPos.newIndex
+                            newIndex: newPos.newIndex,
+                            direction: dy > 0 ? 'up' : 'down'
                         });
-                        console.log(`Row ${original.originalIndex} moved by ${dy}px`);
+                        console.log(`Row ${original.originalIndex} moved by ${dy}px (${dy > 0 ? 'up' : 'down'})`);
                     }
                 });
                 
                 console.log(`Found ${movedRows.length} rows that moved`);
+                console.log('Moved rows details:', movedRows.map(move => ({
+                    originalIndex: move.originalIndex,
+                    newIndex: move.newIndex,
+                    direction: move.direction,
+                    dy: move.dy
+                })));
                 
                 if (movedRows.length === 0) {
                     console.log('No rows moved, skipping animation');
+                    // Restore table interactivity immediately if no animation
+                    tbody.style.opacity = '';
+                    tbody.style.pointerEvents = '';
                     return;
                 }
                 
-                // Step 1: Move rows back to their original positions
-                movedRows.forEach(move => {
-                    move.row.style.transition = 'none';
-                    move.row.style.transform = `translateY(${move.dy}px)`;
-                    move.row.style.backgroundColor = '#ffeb3b';
-                    move.row.style.zIndex = '1000';
-                    move.row.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+                // Sort moved rows by direction and distance for cascaded effect
+                movedRows.sort((a, b) => {
+                    // First sort by direction (up first, then down)
+                    if (a.direction !== b.direction) {
+                        return a.direction === 'up' ? -1 : 1;
+                    }
+                    // Then sort by distance (larger movements first)
+                    return Math.abs(b.dy) - Math.abs(a.dy);
                 });
                 
-                // Step 2: Animate to new positions sequentially
+                // Step 1: Move rows back to their original positions with enhanced styling
+                movedRows.forEach((move, index) => {
+                    move.row.style.transition = 'none';
+                    move.row.style.transform = `translateY(${move.dy}px)`;
+                    move.row.style.zIndex = 1000 + index; // Stack order for cascaded effect
+                    
+                    // Add CSS classes for better performance
+                    move.row.classList.add('cascaded-moving', move.direction);
+                });
+                
+                // Step 2: Cascaded animation to new positions
                 let i = 0;
                 function animateNext() {
                     if (i >= movedRows.length) {
-                        return;
-                    }
+                        // Clean up after all animations complete
+                        setTimeout(() => {
+                            movedRows.forEach(move => {
+                                move.row.classList.remove('cascaded-moving', 'up', 'down', 'animating');
+                                move.row.style.zIndex = '';
+                                move.row.style.transform = '';
+                            });
+                            
+                                                    // Restore table interactivity
+                        tbody.style.opacity = '';
+                        tbody.style.pointerEvents = '';
+                        
+                        // Update colors based on actual seed values after animation completes
+                        updateRowColorsAfterSort();
+                    }, 300);
+                    return;
+                }
                     
                     const move = movedRows[i];
-                    console.log(`Animating row ${move.originalIndex} to position ${move.newIndex}`);
+                    console.log(`Animating row ${move.originalIndex} to position ${move.newIndex} (${move.direction})`);
                     
-                    move.row.style.transition = 'transform 1000ms cubic-bezier(0.4,0,0.2,1), background-color 1000ms ease, box-shadow 1000ms ease';
+                    // Enhanced cascaded animation with different timing based on direction
+                    const animationDuration = move.direction === 'up' ? 1000 : 1200;
+                    move.row.style.transition = `transform ${animationDuration}ms cubic-bezier(0.4,0,0.2,1), background-color ${animationDuration}ms ease, box-shadow ${animationDuration}ms ease, border ${animationDuration}ms ease`;
                     move.row.style.transform = '';
                     
-                    // Remove highlight and z-index after animation
+                    // Change color during animation to show progress
                     setTimeout(() => {
-                        move.row.style.backgroundColor = '';
-                        move.row.style.zIndex = '';
-                        move.row.style.boxShadow = '';
-                    }, 1000);
+                        move.row.classList.add('animating');
+                    }, 200);
                     
                     i++;
-                    setTimeout(animateNext, 400); // 400ms delay between each row
+                    // Cascaded delay: shorter delay for upward movements, longer for downward
+                    const delay = move.direction === 'up' ? 200 : 400;
+                    setTimeout(animateNext, delay);
                 }
                 
-                // Start animation after a small delay
-                setTimeout(animateNext, 100);
+                // Start cascaded animation after a small delay
+                setTimeout(animateNext, 200);
             });
             
-            console.log('Table sorted successfully');
-            
-            // Update color coding based on new S.No. positions
-            updateColorCodingAfterSort();
+            console.log('Table sorted successfully with cascaded animation');
             
             // Update clash detection based on current input values
             updateClashDetection();
         }
 
         // Function to update clash detection based on current input values
-        function updateClashDetection() {
+        window.updateClashDetection = function() {
             const tbody = document.getElementById('clashTableBody');
             if (!tbody) return;
             
@@ -5490,6 +5624,46 @@
                 })
                 .catch(error => {
                     console.error('Error updating clash detection:', error);
+                });
+        }
+
+        // Function to update row colors based on actual seed values after sorting
+        function updateRowColorsAfterSort() {
+            const tbody = document.getElementById('clashTableBody');
+            if (!tbody) return;
+            
+            const rows = Array.from(tbody.getElementsByTagName('tr'));
+            
+            // Fetch seed ranges and update colors
+            fetch('/get_seeding_ranges')
+                .then(response => response.json())
+                .then(seedRangesData => {
+                    if (seedRangesData.success) {
+                        const seedRanges = seedRangesData.seeding_ranges;
+                        
+                        rows.forEach((row, index) => {
+                            // Get the current seed value for this row
+                            let currentSeedValue = 999999;
+                            const seedCell = row.cells[2];
+                            if (seedCell.innerHTML.includes('<input')) {
+                                const input = seedCell.querySelector('input');
+                                currentSeedValue = input ? (parseInt(input.value) || 999999) : 999999;
+                            } else if (seedCell.innerHTML.includes('<select')) {
+                                const select = seedCell.querySelector('select');
+                                currentSeedValue = select ? (parseInt(select.value) || 999999) : 999999;
+                            } else {
+                                currentSeedValue = parseInt(seedCell.textContent.trim()) || 999999;
+                            }
+                            
+                            // Assign color class based on actual seed value
+                            const colorClass = getSeedRangeClassBySeedValue(currentSeedValue, seedRanges);
+                            row.className = colorClass;
+                            console.log(`Updated row ${index + 1}: Seed ${currentSeedValue} -> Color class: ${colorClass}`);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating row colors after sort:', error);
                 });
         }
 
@@ -5638,7 +5812,7 @@
                 tbody.appendChild(data.row);
             });
             
-            // FLIP Animation: Show rows actually moving
+            // Enhanced FLIP Animation: Show rows actually moving with better visual feedback
             requestAnimationFrame(() => {
                 // Get new positions AFTER moving rows
                 const newPositions = [];
@@ -5674,41 +5848,53 @@
                     return;
                 }
                 
-                // Step 1: Move rows back to their original positions
+                // Step 1: Move rows back to their original positions with enhanced styling
                 movedRows.forEach(move => {
                     move.row.style.transition = 'none';
                     move.row.style.transform = `translateY(${move.dy}px)`;
-                    move.row.style.backgroundColor = '#ffeb3b';
+                    move.row.style.backgroundColor = '#fff3cd'; // Light yellow background
                     move.row.style.zIndex = '1000';
-                    move.row.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+                    move.row.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+                    move.row.style.border = '2px solid #ffc107'; // Yellow border
+                    move.row.style.borderRadius = '4px';
                 });
                 
-                // Step 2: Animate to new positions sequentially
+                // Step 2: Animate to new positions sequentially with improved timing
                 let i = 0;
                 function animateNext() {
                     if (i >= movedRows.length) {
+                        // Clean up after all animations complete
+                        setTimeout(() => {
+                            movedRows.forEach(move => {
+                                move.row.style.backgroundColor = '';
+                                move.row.style.zIndex = '';
+                                move.row.style.boxShadow = '';
+                                move.row.style.border = '';
+                                move.row.style.borderRadius = '';
+                            });
+                        }, 200);
                         return;
                     }
                     
                     const move = movedRows[i];
                     console.log(`Animating row ${move.originalIndex} to position ${move.newIndex}`);
                     
-                    move.row.style.transition = 'transform 1000ms cubic-bezier(0.4,0,0.2,1), background-color 1000ms ease, box-shadow 1000ms ease';
+                    // Enhanced animation with better easing and longer duration
+                    move.row.style.transition = 'transform 1200ms cubic-bezier(0.4,0,0.2,1), background-color 1200ms ease, box-shadow 1200ms ease, border 1200ms ease';
                     move.row.style.transform = '';
                     
-                    // Remove highlight and z-index after animation
+                    // Change color during animation to show progress
                     setTimeout(() => {
-                        move.row.style.backgroundColor = '';
-                        move.row.style.zIndex = '';
-                        move.row.style.boxShadow = '';
-                    }, 1000);
+                        move.row.style.backgroundColor = '#d4edda'; // Light green during movement
+                        move.row.style.borderColor = '#28a745'; // Green border
+                    }, 300);
                     
                     i++;
-                    setTimeout(animateNext, 400); // 400ms delay between each row
+                    setTimeout(animateNext, 300); // 300ms delay between each row for better visibility
                 }
                 
                 // Start animation after a small delay
-                setTimeout(animateNext, 100);
+                setTimeout(animateNext, 150);
             });
             
             console.log('Table sorted successfully');
@@ -5721,7 +5907,7 @@
         }
 
         // Function to get valid seed range for a clash group
-        function getValidSeedRangeForClash(playersWithRankings, currentSeed) {
+        window.getValidSeedRangeForClash = function(playersWithRankings, currentSeed) {
             // Find all players with the same seed value
             const clashPlayers = playersWithRankings.filter(p => parseInt(p.seeding) === parseInt(currentSeed));
             
@@ -5766,6 +5952,23 @@
             return colorMap[seedValue] || 'rgba(76, 175, 80, 0.8)'; // Default to green for any other seed values
         }
 
+        // Function to handle seed change events
+        function handleSeedChange(event) {
+            console.log('handleSeedChange called with event:', event);
+            const input = event.target;
+            if (validateSeedInput(input)) {
+                console.log('Validation passed, triggering animation');
+                // Trigger animation after validation passes
+                setTimeout(() => {
+                    // Call the enhanced sortTableBySeed function for clash resolution
+                    console.log('Calling sortTableBySeedClash...');
+                    sortTableBySeedClash();
+                }, 100);
+            } else {
+                console.log('Validation failed, not triggering animation');
+            }
+        }
+
         // Function to validate seed input against clash group range
         function validateSeedInput(input) {
             const newSeed = parseInt(input.value);
@@ -5803,7 +6006,16 @@
                 return false;
             }
             
-            console.log('Validation passed');
+            // Update the player's seeding in the global data
+            currentPlayer.seeding = newSeed.toString();
+            
+            console.log('Validation passed, triggering animation');
+            
+            // Trigger animation with a slight delay to ensure the value is updated
+            setTimeout(() => {
+                sortTableBySeedClash();
+            }, 100);
+            
             return true;
         }
 
@@ -5921,7 +6133,7 @@
             });
             
             // Sort the table after shuffling
-            sortTableBySeed();
+            sortTableBySeedClash();
         }
 
         // Set default mode to Manual on page load
