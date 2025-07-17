@@ -6187,12 +6187,18 @@
                             `;
                             tbody.appendChild(row);
                             
-                            // Auto-fill if only one valid option exists
+                            // Pre-fill existing seeding value if available
                             const seedSelect = row.querySelector('.seed-select');
-                            const validOptions = getValidSeedRangeForPosition(index + 1, seedRanges);
-                            if (validOptions.length === 1) {
-                                seedSelect.value = validOptions[0];
-                                console.log(`Auto-filled seed ${validOptions[0]} for player ${player.name} (position ${index + 1})`);
+                            if (player.seeding && player.seeding !== '') {
+                                seedSelect.value = player.seeding;
+                                console.log(`Pre-filled existing seed ${player.seeding} for player ${player.name}`);
+                            } else {
+                                // Auto-fill if only one valid option exists
+                                const validOptions = getValidSeedRangeForPosition(index + 1, seedRanges);
+                                if (validOptions.length === 1) {
+                                    seedSelect.value = validOptions[0];
+                                    console.log(`Auto-filled seed ${validOptions[0]} for player ${player.name} (position ${index + 1})`);
+                                }
                             }
                         });
                         
@@ -6244,12 +6250,18 @@
                         `;
                         tbody.appendChild(row);
                         
-                        // Auto-fill if only one valid option exists (fallback case)
+                        // Pre-fill existing seeding value if available (fallback case)
                         const seedSelect = row.querySelector('.seed-select');
-                        const validOptions = getValidSeedRangeForPosition(index + 1, seedRanges);
-                        if (validOptions.length === 1) {
-                            seedSelect.value = validOptions[0];
-                            console.log(`Auto-filled seed ${validOptions[0]} for player ${player.name} (position ${index + 1}) - fallback case`);
+                        if (player.seeding && player.seeding !== '') {
+                            seedSelect.value = player.seeding;
+                            console.log(`Pre-filled existing seed ${player.seeding} for player ${player.name} (fallback case)`);
+                        } else {
+                            // Auto-fill if only one valid option exists (fallback case)
+                            const validOptions = getValidSeedRangeForPosition(index + 1, seedRanges);
+                            if (validOptions.length === 1) {
+                                seedSelect.value = validOptions[0];
+                                console.log(`Auto-filled seed ${validOptions[0]} for player ${player.name} (position ${index + 1}) - fallback case`);
+                            }
                         }
                     });
                     
