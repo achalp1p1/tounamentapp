@@ -6369,7 +6369,7 @@
             }
         });
 
-        // Function to sort table by seed with animation
+        // Function to sort table by seed with animation (ascending only)
         function sortTableBySeed() {
             const tbody = document.getElementById('drawPlayersTableBody');
             if (!tbody) {
@@ -6383,13 +6383,13 @@
                 return;
             }
 
-            // Get current sort direction from the header
+            // Always sort in ascending order
+            const isAscending = true;
+
+            // Update sort icon to show ascending
             const seedHeader = document.querySelector('th[onclick="sortTableBySeed()"]');
             const sortIcon = seedHeader.querySelector('i');
-            const isAscending = !sortIcon.classList.contains('fa-sort-up');
-
-            // Update sort icon
-            sortIcon.className = isAscending ? 'fas fa-sort-up' : 'fas fa-sort-down';
+            sortIcon.className = 'fas fa-sort-up';
 
             // Create array of row data with seed values
             const rowData = rows.map((row, index) => {
@@ -6408,14 +6408,8 @@
                 };
             });
 
-            // Sort by seed value - blank rows treated as highest seed
-            rowData.sort((a, b) => {
-                if (isAscending) {
-                    return a.seedValue - b.seedValue;
-                } else {
-                    return b.seedValue - a.seedValue;
-                }
-            });
+            // Sort by seed value in ascending order - blank rows treated as highest seed
+            rowData.sort((a, b) => a.seedValue - b.seedValue);
 
             // Animate the sorting sequentially
             animateTableSortSequential(tbody, rowData, isAscending);
@@ -6424,8 +6418,8 @@
         // Function to animate table sorting with cascading movement
         function animateTableSortSequential(tbody, sortedRowData, isAscending) {
             const rows = Array.from(tbody.querySelectorAll('tr'));
-            const animationDuration = 300; // 300ms per movement
-            const delayBetweenMovements = 150; // 150ms delay between movements
+            const animationDuration = 1200; // 1200ms per movement (much slower)
+            const delayBetweenMovements = 800; // 800ms delay between movements (much slower)
 
             // Store original positions
             const originalPositions = rows.map(row => {
@@ -6451,18 +6445,12 @@
                 }
             });
 
-            // Sort movements by seed value (lowest first for ascending, highest first for descending)
-            movements.sort((a, b) => {
-                if (isAscending) {
-                    return a.seedValue - b.seedValue;
-                } else {
-                    return b.seedValue - a.seedValue;
-                }
-            });
+            // Sort movements by seed value (lowest first for ascending order)
+            movements.sort((a, b) => a.seedValue - b.seedValue);
 
             console.log('Movement plan:', movements.map(m => `${m.originalSeed} (${m.seedValue}): ${m.fromIndex} -> ${m.toIndex}`));
 
-            // Execute movements sequentially
+            // Execute movements sequentially starting from top
             movements.forEach((movement, movementIndex) => {
                 const delay = movementIndex * delayBetweenMovements;
                 
@@ -6477,10 +6465,14 @@
                         
                         console.log(`Moving row ${movement.originalSeed} (${movement.seedValue}) from ${movement.fromIndex} to ${movement.toIndex}, distance: ${moveDistance}px`);
                         
+                        // Highlight the row being moved
+                        row.style.backgroundColor = '#e3f2fd';
+                        row.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+                        row.style.zIndex = '1000';
+                        
                         // Apply transform to move row
                         row.style.transform = `translateY(${moveDistance}px)`;
-                        row.style.transition = `transform ${animationDuration}ms ease-in-out`;
-                        row.style.zIndex = '2';
+                        row.style.transition = `transform ${animationDuration}ms cubic-bezier(0.4,0,0.2,1), background-color ${animationDuration}ms ease, box-shadow ${animationDuration}ms ease`;
                         
                         // After row moves, handle cascading effects
                         setTimeout(() => {
@@ -6488,6 +6480,8 @@
                             row.style.transform = '';
                             row.style.transition = '';
                             row.style.zIndex = '';
+                            row.style.backgroundColor = '';
+                            row.style.boxShadow = '';
                             
                             // If this is the last movement, finalize the sorting
                             if (movementIndex === movements.length - 1) {
