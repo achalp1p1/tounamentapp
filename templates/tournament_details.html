@@ -6411,102 +6411,31 @@
             // Sort by seed value in ascending order - blank rows treated as highest seed
             rowData.sort((a, b) => a.seedValue - b.seedValue);
 
-            // Animate the sorting sequentially
-            animateTableSortSequential(tbody, rowData, isAscending);
+            // Sort instantly without animation
+            sortTableInstantly(tbody, rowData, isAscending);
         }
 
-        // Function to animate table sorting with cascading movement
-        function animateTableSortSequential(tbody, sortedRowData, isAscending) {
-            const rows = Array.from(tbody.querySelectorAll('tr'));
-            const animationDuration = 1200; // 1200ms per movement (much slower)
-            const delayBetweenMovements = 800; // 800ms delay between movements (much slower)
-
-            // Store original positions
-            const originalPositions = rows.map(row => {
-                const rect = row.getBoundingClientRect();
-                return {
-                    top: rect.top,
-                    height: rect.height
-                };
+        // Function to sort table instantly without animation
+        function sortTableInstantly(tbody, sortedRowData, isAscending) {
+            console.log('Sorting table instantly in ascending order');
+            
+            // Reorder DOM and update S.No.
+            sortedRowData.forEach((rowData, finalIndex) => {
+                const finalRow = rowData.row;
+                const cells = finalRow.querySelectorAll('td');
+                cells[0].textContent = rowData.sno;
+                tbody.appendChild(finalRow);
             });
-
-            // Create movement plan - sort by seed value first (lowest to highest)
-            const movements = [];
-            sortedRowData.forEach((rowData, targetIndex) => {
-                const currentIndex = rowData.originalIndex;
-                if (currentIndex !== targetIndex) {
-                    movements.push({
-                        row: rowData.row,
-                        fromIndex: currentIndex,
-                        toIndex: targetIndex,
-                        seedValue: rowData.seedValue,
-                        originalSeed: rowData.originalSeed
-                    });
-                }
-            });
-
-            // Sort movements by seed value (lowest first for ascending order)
-            movements.sort((a, b) => a.seedValue - b.seedValue);
-
-            console.log('Movement plan:', movements.map(m => `${m.originalSeed} (${m.seedValue}): ${m.fromIndex} -> ${m.toIndex}`));
-
-            // Execute movements sequentially starting from top
-            movements.forEach((movement, movementIndex) => {
-                const delay = movementIndex * delayBetweenMovements;
-                
-                setTimeout(() => {
-                    const row = movement.row;
-                    const fromPos = originalPositions[movement.fromIndex];
-                    const toPos = originalPositions[movement.toIndex];
-                    
-                    if (fromPos && toPos) {
-                        // Calculate the movement distance
-                        const moveDistance = toPos.top - fromPos.top;
-                        
-                        console.log(`Moving row ${movement.originalSeed} (${movement.seedValue}) from ${movement.fromIndex} to ${movement.toIndex}, distance: ${moveDistance}px`);
-                        
-                        // Highlight the row being moved
-                        row.style.backgroundColor = '#e3f2fd';
-                        row.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
-                        row.style.zIndex = '1000';
-                        
-                        // Apply transform to move row
-                        row.style.transform = `translateY(${moveDistance}px)`;
-                        row.style.transition = `transform ${animationDuration}ms cubic-bezier(0.4,0,0.2,1), background-color ${animationDuration}ms ease, box-shadow ${animationDuration}ms ease`;
-                        
-                        // After row moves, handle cascading effects
-                        setTimeout(() => {
-                            // Reset moved row styles
-                            row.style.transform = '';
-                            row.style.transition = '';
-                            row.style.zIndex = '';
-                            row.style.backgroundColor = '';
-                            row.style.boxShadow = '';
-                            
-                            // If this is the last movement, finalize the sorting
-                            if (movementIndex === movements.length - 1) {
-                                setTimeout(() => {
-                                    // Reorder DOM and update S.No.
-                                    sortedRowData.forEach((rowData, finalIndex) => {
-                                        const finalRow = rowData.row;
-                                        const cells = finalRow.querySelectorAll('td');
-                                        cells[0].textContent = rowData.sno;
-                                        tbody.appendChild(finalRow);
-                                    });
-                                    
-                                    // Update dropdowns
-                                    setTimeout(() => {
-                                        updateSeedDropdowns();
-                                    }, 100);
-                                    
-                                    console.log(`Table sorted by seed in ${isAscending ? 'ascending' : 'descending'} order`);
-                                }, 200);
-                            }
-                        }, animationDuration);
-                    }
-                }, delay);
-            });
+            
+            // Update dropdowns
+            setTimeout(() => {
+                updateSeedDropdowns();
+            }, 100);
+            
+            console.log(`Table sorted by seed in ascending order`);
         }
+
+
     </script>
 
     <script>
