@@ -4761,8 +4761,8 @@
                 paddedPlayers.push({ name: 'BYE', seeding: 'BYE' });
             }
 
-            // Get bracket order
-            const bracketOrder = getBracketOrder(nextPowerOf2);
+            // Get bracket order with modified seeding (2nd seed at bottom)
+            const bracketOrder = getModifiedBracketOrder(nextPowerOf2);
 
             // Assign players to bracket positions
             const orderedPlayers = bracketOrder.map(idx => paddedPlayers[idx - 1]);
@@ -4872,6 +4872,27 @@
                 res.push(n + 1 - prev[i]);
             }
             return res;
+        }
+
+        function getModifiedBracketOrder(n) {
+            if (n <= 1) return [1];
+            if (n === 2) return [1, 2];
+            if (n === 4) return [1, 4, 3, 2];
+            if (n === 8) return [1, 8, 5, 4, 3, 6, 7, 2];
+            if (n === 16) return [1,16,9,8,5,12,13,4,3,14,11,6,7,10,15,2];
+            if (n === 32) return [1,32,17,16,9,24,25,8,5,28,21,12,13,20,29,4,3,30,19,14,11,22,27,6,7,26,23,10,15,18,31,2];
+            
+            // For larger brackets, generate recursively with modified pattern
+            const half = n / 2;
+            const firstHalf = getModifiedBracketOrder(half);
+            const secondHalf = firstHalf.map(x => n + 1 - x);
+            
+            const result = [];
+            for (let i = 0; i < half; i++) {
+                result.push(firstHalf[i]);
+                result.push(secondHalf[i]);
+            }
+            return result;
         }
 
         function getRoundLabel(roundIndex, totalRounds) {

@@ -4960,36 +4960,36 @@
                 positions[2] = players[2] || { name: 'BYE', seeding: 'BYE' };
                 positions[3] = players[1] || { name: 'BYE', seeding: 'BYE' };
             } else if (numPositions === 8) {
-                // 8-player bracket: 1-8, 4-5, 3-6, 2-7
+                // 8-player bracket: 1-8, 5-4, 3-6, 7-2
                 positions[0] = players[0] || { name: 'BYE', seeding: 'BYE' };
                 positions[1] = players[7] || { name: 'BYE', seeding: 'BYE' };
-                positions[2] = players[3] || { name: 'BYE', seeding: 'BYE' };
-                positions[3] = players[4] || { name: 'BYE', seeding: 'BYE' };
+                positions[2] = players[4] || { name: 'BYE', seeding: 'BYE' };
+                positions[3] = players[3] || { name: 'BYE', seeding: 'BYE' };
                 positions[4] = players[2] || { name: 'BYE', seeding: 'BYE' };
                 positions[5] = players[5] || { name: 'BYE', seeding: 'BYE' };
-                positions[6] = players[1] || { name: 'BYE', seeding: 'BYE' };
-                positions[7] = players[6] || { name: 'BYE', seeding: 'BYE' };
+                positions[6] = players[6] || { name: 'BYE', seeding: 'BYE' };
+                positions[7] = players[1] || { name: 'BYE', seeding: 'BYE' };
             } else if (numPositions === 16) {
                 // 16-player bracket
                 positions[0] = players[0] || { name: 'BYE', seeding: 'BYE' };   // 1
                 positions[1] = players[15] || { name: 'BYE', seeding: 'BYE' };  // 16
-                positions[2] = players[7] || { name: 'BYE', seeding: 'BYE' };   // 8
-                positions[3] = players[8] || { name: 'BYE', seeding: 'BYE' };   // 9
-                positions[4] = players[3] || { name: 'BYE', seeding: 'BYE' };   // 4
-                positions[5] = players[12] || { name: 'BYE', seeding: 'BYE' };  // 13
-                positions[6] = players[4] || { name: 'BYE', seeding: 'BYE' };   // 5
-                positions[7] = players[11] || { name: 'BYE', seeding: 'BYE' };  // 12
-                positions[8] = players[1] || { name: 'BYE', seeding: 'BYE' };   // 2
-                positions[9] = players[14] || { name: 'BYE', seeding: 'BYE' };  // 15
-                positions[10] = players[6] || { name: 'BYE', seeding: 'BYE' };  // 7
-                positions[11] = players[9] || { name: 'BYE', seeding: 'BYE' };  // 10
-                positions[12] = players[2] || { name: 'BYE', seeding: 'BYE' };  // 3
-                positions[13] = players[13] || { name: 'BYE', seeding: 'BYE' }; // 14
-                positions[14] = players[5] || { name: 'BYE', seeding: 'BYE' };  // 6
-                positions[15] = players[10] || { name: 'BYE', seeding: 'BYE' }; // 11
+                positions[2] = players[8] || { name: 'BYE', seeding: 'BYE' };   // 9
+                positions[3] = players[7] || { name: 'BYE', seeding: 'BYE' };   // 8
+                positions[4] = players[4] || { name: 'BYE', seeding: 'BYE' };   // 5
+                positions[5] = players[11] || { name: 'BYE', seeding: 'BYE' };  // 12
+                positions[6] = players[12] || { name: 'BYE', seeding: 'BYE' };  // 13
+                positions[7] = players[3] || { name: 'BYE', seeding: 'BYE' };   // 4
+                positions[8] = players[2] || { name: 'BYE', seeding: 'BYE' };   // 3
+                positions[9] = players[13] || { name: 'BYE', seeding: 'BYE' };  // 14
+                positions[10] = players[10] || { name: 'BYE', seeding: 'BYE' }; // 11
+                positions[11] = players[5] || { name: 'BYE', seeding: 'BYE' };  // 6
+                positions[12] = players[6] || { name: 'BYE', seeding: 'BYE' };  // 7
+                positions[13] = players[9] || { name: 'BYE', seeding: 'BYE' };  // 10
+                positions[14] = players[14] || { name: 'BYE', seeding: 'BYE' }; // 15
+                positions[15] = players[1] || { name: 'BYE', seeding: 'BYE' };  // 2
             } else if (numPositions === 32) {
                 // 32-player bracket - extended pattern
-                const seedOrder = [1,32,16,17,8,25,9,24,4,29,13,20,5,28,12,21,2,31,15,18,7,26,10,23,3,30,14,19,6,27,11,22];
+                const seedOrder = [1,32,17,16,9,24,25,8,5,28,21,12,13,20,29,4,3,30,19,14,11,22,27,6,7,26,23,10,15,18,31,2];
                 for (let i = 0; i < numPositions; i++) {
                     const seedIndex = seedOrder[i] - 1;
                     positions[i] = players[seedIndex] || { name: 'BYE', seeding: 'BYE' };
@@ -5010,9 +5010,9 @@
             if (n <= 1) return [1];
             if (n === 2) return [1, 2];
             if (n === 4) return [1, 4, 3, 2];
-            if (n === 8) return [1, 8, 4, 5, 3, 6, 2, 7];
-            if (n === 16) return [1,16,8,9,4,13,5,12,2,15,7,10,3,14,6,11];
-            if (n === 32) return [1,32,16,17,8,25,9,24,4,29,13,20,5,28,12,21,2,31,15,18,7,26,10,23,3,30,14,19,6,27,11,22];
+            if (n === 8) return [1, 8, 5, 4, 3, 6, 7, 2];
+            if (n === 16) return [1,16,9,8,5,12,13,4,3,14,11,6,7,10,15,2];
+            if (n === 32) return [1,32,17,16,9,24,25,8,5,28,21,12,13,20,29,4,3,30,19,14,11,22,27,6,7,26,23,10,15,18,31,2];
             
             // For larger brackets, generate recursively
             const half = n / 2;
@@ -5026,6 +5026,8 @@
             }
             return result;
         }
+
+
 
         function getBracketOrder(n) {
             if (n <= 1) return [1];
