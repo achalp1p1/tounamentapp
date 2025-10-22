@@ -2251,6 +2251,9 @@
     {% include 'footer_db.html' %}
 
     <script>
+        // Global variable to track last selected category across Manage tab steps
+        let lastSelectedCategory = null;
+
         function showTab(tabName) {
             // Hide all tab contents
             document.querySelectorAll('.tab-content').forEach(tab => {
@@ -3567,6 +3570,43 @@
                 drawCategorySelect.removeEventListener('change', handleCategoryChange);
                 drawCategorySelect.addEventListener('change', handleCategoryChange);
             }
+        } else if (stepNumber === 4) {
+            // Auto-sync category selection when switching to Step 4 (Create Brackets)
+            const categorySelect = document.getElementById('categorySelect');
+            const seedingCategorySelect = document.getElementById('seedingCategorySelect');
+            const clashCategorySelect = document.getElementById('clashCategorySelect');
+            const drawCategorySelect = document.getElementById('drawCategorySelect');
+            
+            console.log('Switching to Step 4 - Create Brackets');
+            
+            // Find the last selected category from other steps
+            let lastSelectedCategory = null;
+            
+            if (seedingCategorySelect && seedingCategorySelect.value) {
+                lastSelectedCategory = seedingCategorySelect.value;
+                console.log('Found category from Step 1:', lastSelectedCategory);
+            }
+            if (clashCategorySelect && clashCategorySelect.value) {
+                lastSelectedCategory = clashCategorySelect.value;
+                console.log('Found category from Step 2:', lastSelectedCategory);
+            }
+            if (drawCategorySelect && drawCategorySelect.value) {
+                lastSelectedCategory = drawCategorySelect.value;
+                console.log('Found category from Step 3:', lastSelectedCategory);
+            }
+            
+            // Sync category to Create Brackets if found
+            if (lastSelectedCategory && categorySelect) {
+                if (categorySelect.value !== lastSelectedCategory) {
+                    console.log('Syncing category to Create Brackets:', lastSelectedCategory);
+                    categorySelect.value = lastSelectedCategory;
+                    // Enable the generate button
+                    const generateBtn = document.getElementById('generateBracket');
+                    if (generateBtn) {
+                        generateBtn.disabled = false;
+                    }
+                }
+            }
         }
     }
 
@@ -4101,7 +4141,11 @@
         // Initialize Step 1
         const seedingCategorySelect = document.getElementById('seedingCategorySelect');
         if (seedingCategorySelect) {
-            seedingCategorySelect.addEventListener('change', loadPlayers);
+            seedingCategorySelect.addEventListener('change', function() {
+                lastSelectedCategory = this.value;
+                console.log('Category selected in Step 1:', lastSelectedCategory);
+                loadPlayers();
+            });
         }
 
         // Initialize seeding form
@@ -4113,13 +4157,21 @@
         // Initialize Step 2 (Resolve Seeding Clash)
         const clashCategorySelect = document.getElementById('clashCategorySelect');
         if (clashCategorySelect) {
-            clashCategorySelect.addEventListener('change', loadClashPlayers);
+            clashCategorySelect.addEventListener('change', function() {
+                lastSelectedCategory = this.value;
+                console.log('Category selected in Step 2:', lastSelectedCategory);
+                loadClashPlayers();
+            });
         }
 
         // Initialize Step 3
         const drawCategorySelect = document.getElementById('drawCategorySelect');
         if (drawCategorySelect) {
-            drawCategorySelect.addEventListener('change', handleCategoryChange);
+            drawCategorySelect.addEventListener('change', function() {
+                lastSelectedCategory = this.value;
+                console.log('Category selected in Step 3:', lastSelectedCategory);
+                handleCategoryChange.call(this);
+            });
         }
 
         const createDrawBtn = document.getElementById('create-draw-btn');
@@ -4135,6 +4187,21 @@
         const saveDrawBtn = document.getElementById('save-draw-btn');
         if (saveDrawBtn) {
             saveDrawBtn.addEventListener('click', saveDraw);
+        }
+
+        // Initialize Step 4 (Create Brackets)
+        const categorySelect = document.getElementById('categorySelect');
+        const generateBracketBtn = document.getElementById('generateBracket');
+        
+        if (categorySelect) {
+            categorySelect.addEventListener('change', function() {
+                lastSelectedCategory = this.value;
+                console.log('Category selected in Step 4:', lastSelectedCategory);
+                // Enable/disable generate button based on selection
+                if (generateBracketBtn) {
+                    generateBracketBtn.disabled = !this.value;
+                }
+            });
         }
 
         // Show the first step by default
