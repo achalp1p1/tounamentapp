@@ -4480,6 +4480,28 @@
         return ''; // Default styling if no range matches
     }
 
+    // Function to get seed range class based on actual seed value (not S.No.)
+    function getSeedRangeClassBySeedValue(seedValue, seedRanges) {
+        const seedNumber = parseInt(seedValue);
+        
+        console.log(`getSeedRangeClassBySeedValue called with seedValue: ${seedValue}, seedNumber: ${seedNumber}`);
+        console.log('Available seed ranges:', seedRanges);
+        
+        // Find the matching seed range
+        for (let i = 0; i < seedRanges.length; i++) {
+            const range = seedRanges[i];
+            if (seedNumber >= range.min && seedNumber <= range.max) {
+                // Use the range index instead of description for CSS class
+                const className = `seed-range-${i}`;
+                console.log(`Seed ${seedNumber} matches range ${range.min}-${range.max} (${range.description}) -> CSS class: ${className}`);
+                return className;
+            }
+        }
+        
+        console.log(`Seed ${seedNumber} - no matching range found, using default styling`);
+        return ''; // Default styling if no range matches
+    }
+
     // Function to detect seeding clashes
     function detectSeedingClash(player, players, index, seedRanges) {
         const seed = parseInt(player.seeding);
@@ -5814,12 +5836,25 @@
 
         // Function to get valid seed range for a clash group
         function getValidSeedRangeForClash(playersWithRankings, currentSeed) {
-            // For clash resolution, allow any seed value from 1 to total players
-            // This is more flexible than restricting to S.No. range
-            const totalPlayers = playersWithRankings.length;
+            // Find all players with the same seed value
+            const clashPlayers = playersWithRankings.filter(p => parseInt(p.seeding) === parseInt(currentSeed));
             
-            console.log(`Clash resolution: allowing seed range 1-${totalPlayers} for seed ${currentSeed}`);
-            return { min: 1, max: totalPlayers };
+            if (clashPlayers.length === 0) {
+                return { min: 1, max: playersWithRankings.length };
+            }
+            
+            // Get the S.No. values (index + 1) of all clash players
+            const clashSNoValues = clashPlayers.map((player, index) => {
+                const playerIndex = playersWithRankings.findIndex(p => p.player_id === player.player_id);
+                return playerIndex + 1;
+            });
+            
+            // Return the min and max S.No. values as the valid range
+            const min = Math.min(...clashSNoValues);
+            const max = Math.max(...clashSNoValues);
+            
+            console.log(`Clash group for seed ${currentSeed}: S.No. range ${min}-${max} (${clashPlayers.length} players)`);
+            return { min, max };
         }
 
         // Function to get dynamic color for seed value
@@ -5867,13 +5902,12 @@
             }
             
             const currentSeed = parseInt(currentPlayer.seeding);
-            const totalPlayers = playersWithRankings.length;
+            const validRange = getValidSeedRangeForClash(playersWithRankings, currentSeed);
             
-            console.log('Validation check:', { newSeed, currentSeed, totalPlayers });
+            console.log('Validation check:', { newSeed, currentSeed, validRange });
             
-            // For clash resolution, allow any seed from 1 to total players
-            if (newSeed < 1 || newSeed > totalPlayers) {
-                const errorMessage = `Add valid value (Range 1 to ${totalPlayers})`;
+            if (newSeed < validRange.min || newSeed > validRange.max) {
+                const errorMessage = `Add valid value (Range ${validRange.min} to ${validRange.max})`;
                 console.log('Validation failed:', errorMessage);
                 
                 // Show error message using local function
@@ -6029,7 +6063,7 @@
                     if (seedRangesData.success) {
                         const seedRanges = seedRangesData.seeding_ranges;
                         
-                        // Update color classes for each row based on its new S.No. position
+                        // Update color classes for each row based on its S.No. position
                         rows.forEach((row, index) => {
                             const snoCell = row.cells[0];
                             const serialNumber = parseInt(snoCell.textContent);
