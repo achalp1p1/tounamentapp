@@ -1645,8 +1645,8 @@
                                 <div class="detail-value">
                                     {% set start_date = tournament['Start Date'].split('-') %}
                                     {% set end_date = tournament['End Date'].split('-') %}
-                                    {{ start_date[2] }} {{ ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][start_date[1]|int - 1] }} {{ start_date[0] }} - 
-                                    {{ end_date[2] }} {{ ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][end_date[1]|int - 1] }} {{ end_date[0] }}
+                                    {{ start_date[2] }}/{{ start_date[1] }}/{{ start_date[0] }} - 
+                                    {{ end_date[2] }}/{{ end_date[1] }}/{{ end_date[0] }}
                                 </div>
                             </div>
                             {% if tournament_status == 'Upcoming' %}
@@ -1681,7 +1681,7 @@
                                 <div class="detail-label">Last Registration Date</div>
                                 <div class="detail-value">
                                     {% set reg_date = tournament['Last Registration Date'].split('-') %}
-                                    {{ reg_date[2] }} {{ ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][reg_date[1]|int - 1] }} {{ reg_date[0] }}
+                                    {{ reg_date[2] }}/{{ reg_date[1] }}/{{ reg_date[0] }}
                                 </div>
                             </div>
                             <div class="detail-item">
@@ -2396,7 +2396,7 @@
                     const day = parts[2].padStart(2, '0');
                     const month = months[parseInt(parts[1]) - 1];
                     const year = parts[0];
-                    return `${day} ${month} ${year}`;
+                    return `${day}/${parts[1].padStart(2, '0')}/${year}`;
                 }
                 return dob;
             }

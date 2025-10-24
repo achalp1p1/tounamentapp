@@ -35,7 +35,7 @@ def format_datetime(value, format='%Y-%m-%d'):
                 dt = datetime.strptime(value, '%Y-%m-%d')
             else:
                 dt = value
-            return dt.strftime('%d-%m-%y')
+            return dt.strftime('%d/%m/%Y')
         except:
             return value
     return value
