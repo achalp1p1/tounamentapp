@@ -540,7 +540,6 @@
                             Last Date of Entry
                             <i class="fas fa-sort"></i>
                         </th>
-                        <th>Categories</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -557,13 +556,6 @@
                         <td>{{ tournament['Venue'] }}</td>
                         <td>{{ tournament['Start Date'].split('-')[2] }}-{{ tournament['Start Date'].split('-')[1] }}-{{ tournament['Start Date'].split('-')[0][2:] }} - {{ tournament['End Date'].split('-')[2] }}-{{ tournament['End Date'].split('-')[1] }}-{{ tournament['End Date'].split('-')[0][2:] }}</td>
                         <td>{{ tournament['Last Registration Date'].split('-')[2] }}-{{ tournament['Last Registration Date'].split('-')[1] }}-{{ tournament['Last Registration Date'].split('-')[0][2:] }}</td>
-                        <td>
-                            <span class="category-link" onclick="showCategories('{{ tournament['Tournament Id'] }}')">
-                                {% for category in tournament['Categories'].split(',') %}
-                                <span class="category-list">{{ category.strip() }}</span>
-                                {% endfor %}
-                            </span>
-                        </td>
                         <td>
                             <a href="{{ url_for('tournament_info', tournament_id=tournament['Tournament Id']) }}" class="icon-btn info-icon" title="View Details">
                                 <i class="fas fa-info-circle"></i>

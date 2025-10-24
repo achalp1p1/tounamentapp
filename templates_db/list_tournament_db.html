@@ -26,7 +26,6 @@
                     <th>Venue</th>
                     <th>Tournament Dates</th>
                     <th>Last Registration Date</th>
-                    <th>Categories</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -41,11 +40,6 @@
                     <td>{{ tournament['venue'] }}</td>
                     <td>{{ tournament['start_date']|datetime }} to {{ tournament['end_date']|datetime }}</td>
                     <td>{{ tournament['last_registration_date']|datetime }}</td>
-                    <td class="category-list">
-                        {% for category in tournament['categories'].split(',') %}
-                        <span class="category-link">{{ category.strip() }}</span>
-                        {% endfor %}
-                    </td>
                     <td>
                         <a href="{{ url_for('tournament_info_db', tournament_id=tournament['tournament_id']) }}" class="icon-btn info-icon" title="View Details">
                             <i class="fas fa-info-circle"></i>
