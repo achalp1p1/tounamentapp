@@ -2980,6 +2980,9 @@
             document.getElementById('playersContainer').style.display = 'none';
             return;
         }
+        
+        // Force refresh to ensure we get the latest seeding data
+        console.log('Forcing refresh to get latest seeding data...');
 
         // Show loading state
         const tbody = document.getElementById('playersTableBody');
@@ -2988,6 +2991,7 @@
 
         const url = `/tournament/${tournamentId}/get_category_players/${category}?fields=full&t=${Date.now()}`;
         console.log('Fetching players from:', url);
+        console.log('Timestamp added to prevent caching:', Date.now());
         
         fetch(url)
             .then(response => response.json())
@@ -4195,6 +4199,20 @@
                 lastSelectedCategory = this.value;
                 console.log('Category selected in Step 1:', lastSelectedCategory);
                 loadPlayers();
+            });
+        }
+        
+        // Add event listener to refresh data when switching to Step 1 (Create Draws)
+        const step1Tab = document.querySelector('a[href="#step1"]');
+        if (step1Tab) {
+            step1Tab.addEventListener('click', function() {
+                console.log('Switched to Step 1 (Create Draws) - refreshing data...');
+                // Force refresh the current category if one is selected
+                if (lastSelectedCategory) {
+                    setTimeout(() => {
+                        loadPlayers();
+                    }, 100);
+                }
             });
         }
 
