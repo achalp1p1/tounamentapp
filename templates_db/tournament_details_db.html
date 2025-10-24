@@ -5814,25 +5814,12 @@
 
         // Function to get valid seed range for a clash group
         function getValidSeedRangeForClash(playersWithRankings, currentSeed) {
-            // Find all players with the same seed value
-            const clashPlayers = playersWithRankings.filter(p => parseInt(p.seeding) === parseInt(currentSeed));
+            // For clash resolution, allow any seed value from 1 to total players
+            // This is more flexible than restricting to S.No. range
+            const totalPlayers = playersWithRankings.length;
             
-            if (clashPlayers.length === 0) {
-                return { min: 1, max: playersWithRankings.length };
-            }
-            
-            // Get the S.No. values (index + 1) of all clash players
-            const clashSNoValues = clashPlayers.map((player, index) => {
-                const playerIndex = playersWithRankings.findIndex(p => p.player_id === player.player_id);
-                return playerIndex + 1;
-            });
-            
-            // Return the min and max S.No. values as the valid range
-            const min = Math.min(...clashSNoValues);
-            const max = Math.max(...clashSNoValues);
-            
-            console.log(`Clash group for seed ${currentSeed}: S.No. range ${min}-${max} (${clashPlayers.length} players)`);
-            return { min, max };
+            console.log(`Clash resolution: allowing seed range 1-${totalPlayers} for seed ${currentSeed}`);
+            return { min: 1, max: totalPlayers };
         }
 
         // Function to get dynamic color for seed value
@@ -5880,12 +5867,13 @@
             }
             
             const currentSeed = parseInt(currentPlayer.seeding);
-            const validRange = getValidSeedRangeForClash(playersWithRankings, currentSeed);
+            const totalPlayers = playersWithRankings.length;
             
-            console.log('Validation check:', { newSeed, currentSeed, validRange });
+            console.log('Validation check:', { newSeed, currentSeed, totalPlayers });
             
-            if (newSeed < validRange.min || newSeed > validRange.max) {
-                const errorMessage = `Add valid value (Range ${validRange.min} to ${validRange.max})`;
+            // For clash resolution, allow any seed from 1 to total players
+            if (newSeed < 1 || newSeed > totalPlayers) {
+                const errorMessage = `Add valid value (Range 1 to ${totalPlayers})`;
                 console.log('Validation failed:', errorMessage);
                 
                 // Show error message using local function
