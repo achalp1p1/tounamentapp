@@ -1133,6 +1133,26 @@
             box-shadow: 0 4px 12px rgba(30, 60, 114, 0.2);
             transform: translateY(-2px);
         }
+        
+        /* Connecting lines between rounds */
+        .bracket {
+            position: relative;
+        }
+        
+        .connecting-line {
+            position: absolute;
+            background: #1e3c72;
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        .horizontal-line {
+            height: 2px;
+        }
+        
+        .vertical-line {
+            width: 2px;
+        }
 
 
 
@@ -5342,8 +5362,61 @@
                         currentMatch.style.transform = `translateY(${offset}px)`;
                         currentMatch.style.transition = 'transform 0.3s ease';
                     }
+                    
+                    // Draw connecting lines after positioning
+                    setTimeout(() => {
+                        drawConnectingLines(parentMatch1, parentMatch2, currentMatch);
+                    }, 100);
                 }
             });
+        }
+        
+        function drawConnectingLines(parentMatch1, parentMatch2, childMatch) {
+            // Remove any existing lines for this connection
+            const existingLines = document.querySelectorAll(`[data-connection="${parentMatch1.id}-${parentMatch2.id}-${childMatch.id}"]`);
+            existingLines.forEach(line => line.remove());
+            
+            // Get positions after any transforms
+            const parent1Rect = parentMatch1.getBoundingClientRect();
+            const parent2Rect = parentMatch2.getBoundingClientRect();
+            const childRect = childMatch.getBoundingClientRect();
+            const bracketRect = document.querySelector('.bracket').getBoundingClientRect();
+            
+            // Calculate relative positions within the bracket
+            const parent1X = parent1Rect.right - bracketRect.left;
+            const parent1Y = parent1Rect.top + parent1Rect.height / 2 - bracketRect.top;
+            const parent2X = parent2Rect.right - bracketRect.left;
+            const parent2Y = parent2Rect.top + parent2Rect.height / 2 - bracketRect.top;
+            const childX = childRect.left - bracketRect.left;
+            const childY = childRect.top + childRect.height / 2 - bracketRect.top;
+            
+            // Create horizontal lines from parent matches
+            const line1 = document.createElement('div');
+            line1.className = 'connecting-line horizontal-line';
+            line1.style.left = `${parent1X}px`;
+            line1.style.top = `${parent1Y}px`;
+            line1.style.width = `${childX - parent1X}px`;
+            line1.setAttribute('data-connection', `${parentMatch1.id}-${parentMatch2.id}-${childMatch.id}`);
+            
+            const line2 = document.createElement('div');
+            line2.className = 'connecting-line horizontal-line';
+            line2.style.left = `${parent2X}px`;
+            line2.style.top = `${parent2Y}px`;
+            line2.style.width = `${childX - parent2X}px`;
+            line2.setAttribute('data-connection', `${parentMatch1.id}-${parentMatch2.id}-${childMatch.id}`);
+            
+            // Create vertical line connecting the horizontal lines
+            const verticalLine = document.createElement('div');
+            verticalLine.className = 'connecting-line vertical-line';
+            verticalLine.style.left = `${childX}px`;
+            verticalLine.style.top = `${Math.min(parent1Y, parent2Y)}px`;
+            verticalLine.style.height = `${Math.abs(parent2Y - parent1Y)}px`;
+            verticalLine.setAttribute('data-connection', `${parentMatch1.id}-${parentMatch2.id}-${childMatch.id}`);
+            
+            // Add lines to bracket
+            document.querySelector('.bracket').appendChild(line1);
+            document.querySelector('.bracket').appendChild(line2);
+            document.querySelector('.bracket').appendChild(verticalLine);
         }
 
         function alignBracketRounds() {
