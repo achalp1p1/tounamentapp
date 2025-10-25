@@ -5453,21 +5453,43 @@
 
         generateBracketBtn.addEventListener('click', async function() {
             const category = categorySelect.value;
-            if (!category) return;
+            if (!category) {
+                alert('Please select a category first');
+                return;
+            }
 
+            console.log('Generate Bracket clicked for category:', category);
+            
             try {
-                const response = await fetch(`/tournament/{{ tournament['Tournament Id'] }}/get_category_players/${category}`);
+                const url = `/tournament/{{ tournament['Tournament Id'] }}/get_category_players/${encodeURIComponent(category)}?fields=full&t=${Date.now()}`;
+                console.log('Fetching from URL:', url);
+                
+                const response = await fetch(url);
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const data = await response.json();
+                console.log('Response data:', data);
                 
                 if (data.error) {
-                    alert(data.error);
+                    alert(`Error: ${data.error}`);
                     return;
                 }
 
-                generateBracket(data.players);
+                if (data.success && data.players && data.players.length > 0) {
+                    console.log('Successfully loaded', data.players.length, 'players');
+                    generateBracket(data.players);
+                } else {
+                    console.log('No players found. Data:', data);
+                    alert('No players found for this category. Please check if players are registered for this category.');
+                }
             } catch (error) {
-                console.error('Error:', error);
-                alert('Error loading players');
+                console.error('Detailed error:', error);
+                alert(`Error loading players: ${error.message}`);
             }
         });
 
@@ -5528,13 +5550,13 @@
                     const match1 = currentRound[i];
                     if (match1[0].name === 'BYE') player1 = match1[1];
                     else if (match1[1].name === 'BYE') player1 = match1[0];
-                    else player1 = { name: `Winner of Match ${i + 1}`, seeding: '' };
+                    else player1 = { name: '', seeding: '' };
 
                     // Determine winner of match2
                     const match2 = currentRound[i + 1];
                     if (match2[0].name === 'BYE') player2 = match2[1];
                     else if (match2[1].name === 'BYE') player2 = match2[0];
-                    else player2 = { name: `Winner of Match ${i + 2}`, seeding: '' };
+                    else player2 = { name: '', seeding: '' };
 
                     nextRound.push([player1, player2]);
                 }
@@ -5639,9 +5661,9 @@
                             if (matchElement) {
                                 const matchText = matchElement.textContent.toLowerCase();
                                 if (matchText.includes('bye') || 
-                                    matchText.includes('winner of match') || 
                                     matchText.includes('tbd') || 
-                                    matchText.includes('to be determined')) {
+                                    matchText.includes('to be determined') ||
+                                    matchText.trim() === '') {
                                     console.log('Delayed check: Match should be disabled');
                                     delayedDisable = true;
                                     // Remove the arrow if it was already added
@@ -6061,6 +6083,7 @@
         function checkIfMatchShouldBeDisabled(match, roundIndex, matchIndex) {
             console.log('Checking match for disable - Match data:', match);
             console.log('Match type:', typeof match, 'Is array:', Array.isArray(match));
+            console.log('Round:', roundIndex + 1, 'Match:', matchIndex + 1);
             
             if (Array.isArray(match)) {
                 console.log('Match array length:', match.length);
@@ -6072,28 +6095,33 @@
                     }
                 });
                 
-                // Check if any player is BYE
+                // Check if any player is BYE, null, undefined, or empty string
                 const hasBYE = match.some(player => {
-                    const isBYE = player === 'BYE' || 
-                                 player === null || 
-                                 player === undefined ||
-                                 (typeof player === 'object' && player && player.Name === 'BYE');
-                    console.log('Checking player for BYE:', player, 'Is BYE:', isBYE);
-                    return isBYE;
+                    if (typeof player === 'string') {
+                        return player === 'BYE' || player === '';
+                    } else if (typeof player === 'object' && player) {
+                        return player.name === 'BYE' || player.name === '' || !player.name;
+                    } else {
+                        return player === null || player === undefined;
+                    }
                 });
                 
                 if (hasBYE) {
-                    console.log('Match disabled: Contains BYE');
+                    console.log('Match disabled: Contains BYE or empty player');
                     return true;
                 }
                 
-                // Check if any player name contains "Winner of Match"
+                // Check if any player name is empty (replaces Winner of Match check)
+                // Only check for empty strings if the player object exists but has no name
                 if (match.some(player => {
-                    const playerName = typeof player === 'string' ? player : 
-                                     (typeof player === 'object' && player && player.Name) ? player.Name : '';
-                    return playerName.toLowerCase().includes('winner of match');
+                    if (typeof player === 'string') {
+                        return player === '';
+                    } else if (typeof player === 'object' && player) {
+                        return !player.name || player.name === '' || player.name.trim() === '';
+                    }
+                    return false;
                 })) {
-                    console.log('Match disabled: Contains Winner of Match');
+                    console.log('Match disabled: Contains empty player name');
                     return true;
                 }
                 
@@ -6116,10 +6144,12 @@
                 console.log('Match element text content:', matchText);
                 
                 if (matchText.includes('bye') || 
-                    matchText.includes('winner of match') || 
                     matchText.includes('tbd') || 
-                    matchText.includes('to be determined')) {
-                    console.log('Match disabled: Text content contains disabled keywords');
+                    matchText.includes('to be determined') ||
+                    matchText.trim() === '' ||
+                    matchText.includes('empty') ||
+                    matchText.includes('blank')) {
+                    console.log('Match disabled: Text content contains disabled keywords or is empty');
                     return true;
                 }
             } else {
@@ -7018,11 +7048,13 @@
         function regenerateBracket() {
             const category = document.getElementById('categorySelect').value;
             if (category) {
-                fetch(`/tournament/{{ tournament['Tournament Id'] }}/get_category_players/${category}`)
+                fetch(`/tournament/{{ tournament['Tournament Id'] }}/get_category_players/${encodeURIComponent(category)}?fields=full&t=${Date.now()}`)
                     .then(response => response.json())
                     .then(data => {
-                        if (data.players) {
+                        if (data.success && data.players && data.players.length > 0) {
                             generateBracket(data.players);
+                        } else {
+                            console.error('No players found for this category');
                         }
                     })
                     .catch(error => {
