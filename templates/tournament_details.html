@@ -2650,11 +2650,8 @@
                                     </tbody>
                                 </table>
                                 
-                                <!-- Create Draw Button -->
+                                <!-- Action Buttons -->
                                 <div style="margin-top: 20px; text-align: center;">
-                                    <button id="create-draw-btn" class="btn btn-primary" style="background-color: #1e3c72; border: none; padding: 12px 24px; font-size: 16px; font-weight: 500; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); display: none;" onclick="startShuffling()">
-                                        <i class="fas fa-play"></i> Create Draw
-                                    </button>
                                     <button id="stop-shuffle-btn" class="btn btn-warning" style="background-color: #ff9800; border: none; padding: 12px 24px; font-size: 16px; font-weight: 500; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); display: none;" onclick="stopShuffling()">
                                         <i class="fas fa-stop"></i> Stop Shuffle
                                     </button>
@@ -4202,7 +4199,7 @@
             // Show loading message
             document.getElementById('players-table-container').innerHTML = '<p style="color:#1e3c72;">Loading players...</p>';
             document.getElementById('editable-table-container').innerHTML = '';
-            document.getElementById('create-draw-btn').style.display = 'none';
+            // Create Draw Button removed
             document.getElementById('save-draw-btn').style.display = 'none';
             document.getElementById('stop-shuffle-btn').style.display = 'none';
             document.getElementById('status-message').style.display = 'none';
@@ -4226,7 +4223,7 @@
                         console.log('No players found or invalid data');
                         document.getElementById('players-table-container').innerHTML = '<p style="color:#b00;">No players found for this category.</p>';
                         document.getElementById('editable-table-container').innerHTML = '';
-                        document.getElementById('create-draw-btn').style.display = 'none';
+                        // Create Draw Button removed
                         document.getElementById('save-draw-btn').style.display = 'none';
                         document.getElementById('stop-shuffle-btn').style.display = 'none';
                     }
@@ -4238,7 +4235,7 @@
         } else {
             document.getElementById('players-table-container').innerHTML = '';
             document.getElementById('editable-table-container').innerHTML = '';
-            document.getElementById('create-draw-btn').style.display = 'none';
+            // Create Draw Button removed
             document.getElementById('save-draw-btn').style.display = 'none';
             document.getElementById('stop-shuffle-btn').style.display = 'none';
             document.getElementById('status-message').style.display = 'none';
@@ -4261,7 +4258,7 @@
             document.getElementById('drawPlayersContainer').style.display = 'block';
             const tbody = document.getElementById('drawPlayersTableBody');
             tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Loading players...</td></tr>';
-            document.getElementById('create-draw-btn').style.display = 'none';
+            // Create Draw Button removed
             document.getElementById('save-draw-btn').style.display = 'none';
             document.getElementById('stop-shuffle-btn').style.display = 'none';
             document.getElementById('status-message').style.display = 'none';
@@ -4280,12 +4277,11 @@
                     if (data.success && data.players && data.players.length > 0) {
                         console.log('Players loaded successfully for draw creation:', data.players.length);
                         displayDrawPlayers(data.players, document.getElementById('drawGroupSelect').value);
-                        // Show the create draw button
-                        document.getElementById('create-draw-btn').style.display = 'block';
+                        // Create Draw Button removed
                     } else {
                         console.log('No players found or invalid data for draw creation');
                         tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">No players found for this category</td></tr>';
-                        document.getElementById('create-draw-btn').style.display = 'none';
+                        // Create Draw Button removed
                         document.getElementById('save-draw-btn').style.display = 'none';
                         document.getElementById('stop-shuffle-btn').style.display = 'none';
                     }
@@ -4299,7 +4295,7 @@
                 });
         } else {
             document.getElementById('drawPlayersContainer').style.display = 'none';
-            document.getElementById('create-draw-btn').style.display = 'none';
+            // Create Draw Button removed
             document.getElementById('save-draw-btn').style.display = 'none';
             document.getElementById('stop-shuffle-btn').style.display = 'none';
             document.getElementById('status-message').style.display = 'none';
@@ -4422,8 +4418,7 @@
             });
         });
         
-        // Show the create draw button
-        document.getElementById('create-draw-btn').style.display = 'block';
+        // Create Draw Button removed
         console.log('Tables created and displayed');
     }
 
@@ -4620,7 +4615,7 @@
         clearTimeout(shuffleInterval); // Clear any pending timeouts
         
         // Update UI
-        document.getElementById('create-draw-btn').style.display = 'none';
+        // Create Draw Button removed
         document.getElementById('stop-shuffle-btn').style.display = 'none';
         document.getElementById('save-draw-btn').style.display = 'block';
         document.getElementById('shuffleCounter').style.display = 'none';
@@ -4826,10 +4821,7 @@
 
         // Initialize Step 3 (REMOVED - event listener is managed in step switching)
 
-        const createDrawBtn = document.getElementById('create-draw-btn');
-        if (createDrawBtn) {
-            createDrawBtn.addEventListener('click', startShuffling);
-        }
+        // Create Draw Button removed - no event listener needed
 
         const stopShuffleBtn = document.getElementById('stop-shuffle-btn');
         if (stopShuffleBtn) {
@@ -8594,10 +8586,7 @@
 
         // Initialize Step 3 (REMOVED - event listener is managed in step switching)
 
-        const createDrawBtn = document.getElementById('create-draw-btn');
-        if (createDrawBtn) {
-            createDrawBtn.addEventListener('click', startShuffling);
-        }
+        // Create Draw Button removed - no event listener needed
 
         const stopShuffleBtn = document.getElementById('stop-shuffle-btn');
         if (stopShuffleBtn) {
