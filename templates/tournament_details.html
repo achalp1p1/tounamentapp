@@ -484,6 +484,145 @@
             padding: 20px;
             min-height: 200px;
         }
+        
+        /* Clash Resolution Toggle Styles - Compact and Fixed */
+        .clash-mode-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        
+        .clash-mode-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 100%;
+            overflow: hidden;
+        }
+        
+        .clash-mode-label {
+            font-weight: 500;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        
+        .clash-mode-label.manual {
+            color: #9c27b0;
+        }
+        
+        .clash-mode-label.auto {
+            color: #2196f3;
+        }
+        
+        .clash-save-btn {
+            background-color: #1e3c72;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            height: 32px;
+            min-width: 80px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .clash-save-btn:hover {
+            background-color: #2a5298;
+        }
+        
+        /* Toggle Switch Styles - Fixed and Visible with Smooth Animation */
+        #clashModeToggle .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+            margin: 0 8px;
+            vertical-align: middle;
+            overflow: hidden;
+        }
+        
+        #clashModeToggle .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            position: absolute;
+        }
+        
+        #clashModeToggle .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 24px;
+            border: 1px solid #bbb;
+            z-index: 1;
+        }
+        
+        #clashModeToggle .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 2;
+        }
+        
+        #clashModeToggle input:checked + .slider {
+            background-color: #2196f3;
+            border-color: #1976d2;
+        }
+        
+        #clashModeToggle input:checked + .slider:before {
+            transform: translateX(26px);
+            box-shadow: 0 2px 6px rgba(33, 150, 243, 0.3);
+        }
+        
+        #clashModeToggle .slider:hover {
+            box-shadow: 0 0 8px rgba(0,0,0,0.1);
+        }
+        
+        #clashModeToggle input:checked + .slider:hover {
+            box-shadow: 0 0 8px rgba(33, 150, 243, 0.3);
+        }
+        
+        /* Responsive design for clash toggle */
+        @media (max-width: 768px) {
+            .clash-mode-toggle {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+                padding: 12px;
+            }
+            
+            .clash-mode-controls {
+                justify-content: center;
+            }
+            
+            .clash-save-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
 
         .draws-content {
             background: #f8fafc;
@@ -1808,39 +1947,7 @@
         tr.seed-range-8 { background-color: #fce4ec !important; border-left: 4px solid #e91e63 !important; }
         tr.seed-range-9 { background-color: #f1f8e9 !important; border-left: 4px solid #8bc34a !important; }
 
-        /* Seeding Clash Styles */
-        .switch {
-          position: relative;
-          display: inline-block;
-          width: 50px;
-          height: 24px;
-        }
-        .switch input {display:none;}
-        .slider {
-          position: absolute;
-          cursor: pointer;
-          top: 0; left: 0; right: 0; bottom: 0;
-          background-color: #ccc;
-          transition: .4s;
-          border-radius: 24px;
-        }
-        .slider:before {
-          position: absolute;
-          content: "";
-          height: 18px;
-          width: 18px;
-          left: 3px;
-          bottom: 3px;
-          background-color: white;
-          transition: .4s;
-          border-radius: 50%;
-        }
-        input:checked + .slider {
-          background-color: #2196f3;
-        }
-        input:checked + .slider:before {
-          transform: translateX(26px);
-        }
+        /* Seeding Clash Styles - Removed duplicate switch CSS */
         
         /* Enhanced cascaded animation styles for row movement */
         .players-table tr {
@@ -1896,51 +2003,7 @@
           border-color: #ffc107;
         }
 
-        /* Toggle Switch Styles */
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .switch .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 24px;
-        }
-
-        .switch .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        .switch input:checked + .slider {
-            background-color: #2196f3;
-        }
-
-        .switch input:checked + .slider:before {
-            transform: translateX(26px);
-        }
+        /* Toggle Switch Styles - Removed duplicate CSS */
 
         /* Message Box Styles */
         .message {
@@ -2479,16 +2542,16 @@
                                 </div>
                                 
                                 <!-- Clash Resolution Mode Toggle -->
-                                <div id="clashModeToggle" style="display: flex; align-items: center; gap: 16px;">
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <span id="manualLabel" style="font-weight: 500; color: #9c27b0;">Manual</span>
+                                <div id="clashModeToggle" class="clash-mode-toggle">
+                                    <div class="clash-mode-controls">
+                                        <span id="manualLabel" class="clash-mode-label manual">Manual</span>
                                         <label class="switch">
                                             <input type="checkbox" id="clashModeSwitch" onchange="toggleClashMode()">
                                             <span class="slider round"></span>
                                         </label>
-                                        <span id="autoLabel" style="font-weight: 500; color: #2196f3;">Automatic</span>
+                                        <span id="autoLabel" class="clash-mode-label auto">Automatic</span>
                                     </div>
-                                    <button id="saveSeedsBtn" class="form-control" style="background-color: #1e3c72; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; height: 38px; min-width: 120px;" onclick="saveAllSeedChanges()">
+                                    <button id="saveSeedsBtn" class="clash-save-btn" onclick="saveAllSeedChanges()">
                                         <i class="fas fa-save"></i> Save
                                     </button>
                                 </div>
@@ -2510,40 +2573,7 @@
                                     </tbody>
                                 </table>
 
-                                <style>
-                                .switch {
-                                  position: relative;
-                                  display: inline-block;
-                                  width: 50px;
-                                  height: 24px;
-                                }
-                                .switch input {display:none;}
-                                .slider {
-                                  position: absolute;
-                                  cursor: pointer;
-                                  top: 0; left: 0; right: 0; bottom: 0;
-                                  background-color: #ccc;
-                                  transition: .4s;
-                                  border-radius: 24px;
-                                }
-                                .slider:before {
-                                  position: absolute;
-                                  content: "";
-                                  height: 18px;
-                                  width: 18px;
-                                  left: 3px;
-                                  bottom: 3px;
-                                  background-color: white;
-                                  transition: .4s;
-                                  border-radius: 50%;
-                                }
-                                input:checked + .slider {
-                                  background-color: #2196f3;
-                                }
-                                input:checked + .slider:before {
-                                  transform: translateX(26px);
-                                }
-                                </style>
+                                <!-- Removed duplicate switch CSS that was causing blue bar -->
 
                                 <!-- Clash Summary Container -->
                                 <div id="clashSummary" class="clash-summary" style="display: none;">
