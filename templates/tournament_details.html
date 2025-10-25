@@ -1154,6 +1154,50 @@
             width: 2px;
         }
         
+        .score-display {
+            position: absolute;
+            background: #fff;
+            border: 1px solid #1e3c72;
+            border-radius: 3px;
+            padding: 1px 4px;
+            font-size: 0.6em;
+            color: #1e3c72;
+            font-weight: bold;
+            z-index: 10;
+            pointer-events: none;
+            white-space: nowrap;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+            min-width: 20px;
+            text-align: center;
+            line-height: 1.2;
+        }
+        
+        .final-winner-display {
+            position: absolute;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.9em;
+            font-weight: bold;
+            z-index: 15;
+            pointer-events: none;
+            white-space: nowrap;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+            text-align: center;
+            min-width: 120px;
+        }
+        
+        .final-winner-name {
+            font-size: 1.1em;
+            margin-bottom: 2px;
+        }
+        
+        .final-winner-score {
+            font-size: 0.8em;
+            opacity: 0.9;
+        }
+        
         /* Match Results Modal */
         .modal {
             display: none;
@@ -5586,7 +5630,7 @@
             });
         }
         
-        function drawConnectingLines(parentMatch1, parentMatch2, childMatch) {
+        function drawConnectingLines(parentMatch1, parentMatch2, childMatch, scores = null) {
             // Remove any existing lines for this connection
             const existingLines = document.querySelectorAll(`[data-connection="${parentMatch1.id}-${parentMatch2.id}-${childMatch.id}"]`);
             existingLines.forEach(line => line.remove());
@@ -5632,6 +5676,228 @@
             document.querySelector('.bracket').appendChild(line1);
             document.querySelector('.bracket').appendChild(line2);
             document.querySelector('.bracket').appendChild(verticalLine);
+            
+            // Add score display if scores are provided
+            if (scores && scores.length > 0) {
+                const scoreStrings = [];
+                for (let i = 0; i < scores[0].length; i++) {
+                    if (scores[0][i] > 0 || scores[1][i] > 0) {
+                        scoreStrings.push(`${scores[0][i]}-${scores[1][i]}`);
+                    }
+                }
+                
+                if (scoreStrings.length > 0) {
+                    const scoreDisplay = document.createElement('div');
+                    scoreDisplay.className = 'score-display';
+                    scoreDisplay.textContent = scoreStrings.join(', ');
+                    
+                    // Position the score display on the vertical line
+                    const scoreX = childX - 10; // Slightly to the left of the vertical line
+                    const scoreY = childY - 10; // Slightly above the center
+                    
+                    scoreDisplay.style.left = `${scoreX}px`;
+                    scoreDisplay.style.top = `${scoreY}px`;
+                    scoreDisplay.setAttribute('data-connection', `${parentMatch1.id}-${parentMatch2.id}-${childMatch.id}`);
+                    
+                    document.querySelector('.bracket').appendChild(scoreDisplay);
+                }
+            }
+        }
+        
+        function addScoreToConnectionLine(matchData) {
+            console.log('Adding score to connection line for match:', matchData);
+            
+            // Check if this is the final match first
+            const matchElement = document.getElementById(matchData.matchId);
+            if (!matchElement) {
+                console.log('Match element not found:', matchData.matchId);
+                return;
+            }
+            
+            // Get the current round
+            const currentRound = matchElement.closest('.round');
+            if (!currentRound) return;
+            
+            // Check if this is the last round (final match)
+            const allRounds = document.querySelectorAll('.round');
+            const isLastRound = currentRound === allRounds[allRounds.length - 1];
+            
+            if (isLastRound) {
+                // For final match, only add winner display, no score on arrow
+                checkAndAddFinalWinnerDisplay(matchData);
+                console.log('Final match - winner display added, no score on arrow');
+                return;
+            }
+            
+            // For non-final matches, add score display on arrow
+            // Remove any existing score display for this match first
+            const existingScore = document.getElementById(`score-${matchData.matchId}`);
+            if (existingScore) {
+                existingScore.remove();
+            }
+            
+            // Get the scores
+            const scores = matchData.scores;
+            if (!scores || !scores.player1 || !scores.player2) {
+                console.log('No scores found for match:', matchData);
+                return;
+            }
+            
+            // Format scores in concise format
+            const conciseScore = formatConciseScore(scores, matchData.winner);
+            if (!conciseScore) {
+                console.log('No valid scores to display');
+                return;
+            }
+            
+            // Create score display element
+            const scoreDisplay = document.createElement('div');
+            scoreDisplay.className = 'score-display';
+            scoreDisplay.textContent = conciseScore;
+            scoreDisplay.id = `score-${matchData.matchId}`;
+            
+            // Position the score display near the match
+            const matchRect = matchElement.getBoundingClientRect();
+            const bracketRect = document.querySelector('.bracket').getBoundingClientRect();
+            
+            const scoreX = matchRect.right - bracketRect.left + 10; // 10px to the right of the match
+            const scoreY = matchRect.top + matchRect.height / 2 - bracketRect.top - 10; // 10px above center
+            
+            scoreDisplay.style.left = `${scoreX}px`;
+            scoreDisplay.style.top = `${scoreY}px`;
+            
+            // Add to bracket
+            document.querySelector('.bracket').appendChild(scoreDisplay);
+            
+            console.log('Score display added:', conciseScore);
+        }
+        
+        function formatConciseScore(scores, winner) {
+            const scoreStrings = [];
+            let player1SetsWon = 0;
+            let player2SetsWon = 0;
+            let totalSetsPlayed = 0;
+            
+            // Count sets and collect scores
+            for (let i = 0; i < scores.player1.length; i++) {
+                const p1Score = parseInt(scores.player1[i]) || 0;
+                const p2Score = parseInt(scores.player2[i]) || 0;
+                
+                if (p1Score > 0 || p2Score > 0) {
+                    totalSetsPlayed++;
+                    if (p1Score > p2Score) {
+                        player1SetsWon++;
+                    } else if (p2Score > p1Score) {
+                        player2SetsWon++;
+                    }
+                    
+                    scoreStrings.push(`${p1Score}-${p2Score}`);
+                }
+            }
+            
+            if (scoreStrings.length === 0) return null;
+            
+            // If only 1 set is played, show full score from winner's perspective
+            if (totalSetsPlayed === 1) {
+                const p1Score = parseInt(scores.player1[0]) || 0;
+                const p2Score = parseInt(scores.player2[0]) || 0;
+                
+                if (player1SetsWon > player2SetsWon) {
+                    // Player 1 won - show winner's score first
+                    return `${p1Score}-${p2Score}`;
+                } else if (player2SetsWon > player1SetsWon) {
+                    // Player 2 won - show winner's score first
+                    return `${p2Score}-${p1Score}`;
+                }
+            }
+            
+            // For multiple sets, use concise format
+            let conciseFormat = [];
+            
+            if (player1SetsWon > player2SetsWon) {
+                // Player 1 won - show opponent's scores (lower scores where winner won)
+                for (let i = 0; i < scores.player1.length; i++) {
+                    const p1Score = parseInt(scores.player1[i]) || 0;
+                    const p2Score = parseInt(scores.player2[i]) || 0;
+                    
+                    if (p1Score > 0 || p2Score > 0) {
+                        if (p1Score > p2Score) {
+                            conciseFormat.push(p2Score.toString()); // Winner won, show opponent's score
+                        } else if (p2Score > p1Score) {
+                            conciseFormat.push(`-${p1Score}`); // Winner lost, show winner's score with minus
+                        }
+                    }
+                }
+            } else if (player2SetsWon > player1SetsWon) {
+                // Player 2 won - show opponent's scores (lower scores where winner won)
+                for (let i = 0; i < scores.player1.length; i++) {
+                    const p1Score = parseInt(scores.player1[i]) || 0;
+                    const p2Score = parseInt(scores.player2[i]) || 0;
+                    
+                    if (p1Score > 0 || p2Score > 0) {
+                        if (p2Score > p1Score) {
+                            conciseFormat.push(p1Score.toString()); // Winner won, show opponent's score
+                        } else if (p1Score > p2Score) {
+                            conciseFormat.push(`-${p2Score}`); // Winner lost, show winner's score with minus
+                        }
+                    }
+                }
+            }
+            
+            return conciseFormat.length > 0 ? `(${conciseFormat.join(', ')})` : null;
+        }
+        
+        function checkAndAddFinalWinnerDisplay(matchData) {
+            // Check if this is the final match (last round)
+            const matchElement = document.getElementById(matchData.matchId);
+            if (!matchElement) return;
+            
+            // Get the current round
+            const currentRound = matchElement.closest('.round');
+            if (!currentRound) return;
+            
+            // Check if this is the last round
+            const allRounds = document.querySelectorAll('.round');
+            const isLastRound = currentRound === allRounds[allRounds.length - 1];
+            
+            if (isLastRound && matchData.winner) {
+                // Remove any existing final winner display
+                const existingFinalWinner = document.getElementById('final-winner-display');
+                if (existingFinalWinner) {
+                    existingFinalWinner.remove();
+                }
+                
+                // Create final winner display
+                const finalWinnerDisplay = document.createElement('div');
+                finalWinnerDisplay.className = 'final-winner-display';
+                finalWinnerDisplay.id = 'final-winner-display';
+                
+                // Get the concise score format
+                const conciseScore = formatConciseScore(matchData.scores, matchData.winner);
+                
+                // Create the display content
+                finalWinnerDisplay.innerHTML = `
+                    <div class="final-winner-name">🏆 ${matchData.winner}</div>
+                    <div class="final-winner-score">${conciseScore || 'Winner'}</div>
+                `;
+                
+                // Position the final winner display
+                const matchRect = matchElement.getBoundingClientRect();
+                const bracketRect = document.querySelector('.bracket').getBoundingClientRect();
+                
+                const winnerX = matchRect.right - bracketRect.left + 50; // 50px to the right of the match
+                const winnerY = matchRect.top + matchRect.height / 2 - bracketRect.top - 15; // 15px above center
+                
+                finalWinnerDisplay.style.left = `${winnerX}px`;
+                finalWinnerDisplay.style.top = `${winnerY}px`;
+                
+                // No connecting line needed for final winner - score is already in the winner box
+                
+                // Add to bracket
+                document.querySelector('.bracket').appendChild(finalWinnerDisplay);
+                
+                console.log('Final winner display added:', matchData.winner);
+            }
         }
         
         // Function to check if a match should be disabled
@@ -5879,8 +6145,15 @@
             currentMatchData.winner = matchResult.winner;
             currentMatchData.displayScores = matchResult.displayScores;
             
+            // Store scores for connection line display
+            const matchId = currentMatchData.matchId;
+            matchScores[matchId] = scores;
+            
             // Update the match display in the bracket
             updateMatchDisplay(currentMatchData);
+            
+            // Add score display to connection line
+            addScoreToConnectionLine(currentMatchData);
             
             // Close modal
             closeMatchResultsModal();
@@ -6374,6 +6647,9 @@
 
         // Store match results
         const matchResults = {};
+        
+        // Store match scores for display on connection lines
+        const matchScores = {};
 
         function showScorePopup(roundIndex, matchIndex, match) {
             const popup = document.getElementById('successPopup');
@@ -6527,13 +6803,13 @@
             };
             
             // Update the bracket with the winner
-            updateBracketWithWinner(roundIndex, matchIndex, winner);
+            updateBracketWithWinner(roundIndex, matchIndex, winner, scores);
             
             document.getElementById('successPopup').style.display = 'none';
             document.getElementById('popupOverlay').style.display = 'none';
         });
 
-        function updateBracketWithWinner(roundIndex, matchIndex, winner) {
+        function updateBracketWithWinner(roundIndex, matchIndex, winner, scores = null) {
             // Calculate the next round and match indices
             const nextRoundIndex = roundIndex + 1;
             const nextMatchIndex = Math.floor(matchIndex / 2);
