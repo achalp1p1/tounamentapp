@@ -1273,6 +1273,16 @@
             background-color: #5a6268;
         }
         
+        /* Match info above match box */
+        .match-info-above {
+            text-align: center;
+            margin-bottom: 12px;
+            font-weight: bold;
+            color: #1e3c72;
+            font-size: 12px;
+            display: block;
+        }
+        
 
 
 
@@ -5333,6 +5343,7 @@
 
             // Render bracket
             bracketContainer.innerHTML = '';
+            let globalMatchCounter = 1; // Global counter for sequential match numbering
             rounds.forEach((round, roundIndex) => {
                 const roundDiv = document.createElement('div');
                 roundDiv.className = 'round';
@@ -5359,6 +5370,7 @@
                         matchDiv.style.marginBottom = '40px';
                     }
                     
+                    // Add players to match (original 2-player layout)
                     match.forEach((player, playerIndex) => {
                         const playerDiv = document.createElement('div');
                         playerDiv.className = `player ${player.name === 'BYE' ? 'bye' : ''}`;
@@ -5413,7 +5425,7 @@
                         
                         matchDiv.appendChild(playerDiv);
                     });
-
+                    
                     // Only add arrow for non-final rounds and non-disabled matches
                     if (!isLastRound) {
                         // Check if this match should be disabled
@@ -5476,6 +5488,16 @@
                     }
                     
 
+                    // Add match number above the match (skip for BYE matches)
+                    const hasBye = match.some(player => player.name === 'BYE');
+                    if (!hasBye) {
+                        const matchInfoDiv = document.createElement('div');
+                        matchInfoDiv.className = 'match-info-above';
+                        matchInfoDiv.textContent = `M${globalMatchCounter}`;
+                        roundDiv.appendChild(matchInfoDiv);
+                        globalMatchCounter++; // Increment for next match
+                    }
+                    
                     roundDiv.appendChild(matchDiv);
                 });
 
@@ -5547,6 +5569,13 @@
                     if (Math.abs(offset) > 2) {
                         currentMatch.style.transform = `translateY(${offset}px)`;
                         currentMatch.style.transition = 'transform 0.3s ease';
+                        
+                        // Also move the match number if it exists
+                        const matchNumber = currentMatch.previousElementSibling;
+                        if (matchNumber && matchNumber.classList.contains('match-info-above')) {
+                            matchNumber.style.transform = `translateY(${offset}px)`;
+                            matchNumber.style.transition = 'transform 0.3s ease';
+                        }
                     }
                     
                     // Draw connecting lines after positioning
