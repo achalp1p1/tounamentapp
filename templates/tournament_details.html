@@ -1153,6 +1153,143 @@
         .vertical-line {
             width: 2px;
         }
+        
+        /* Match Results Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 2% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        
+        @media (max-width: 768px) {
+            .modal-content {
+                width: 95%;
+                margin: 1% auto;
+                padding: 15px;
+            }
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            z-index: 1001;
+        }
+        
+        .close:hover {
+            color: #000;
+        }
+        
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .results-table th,
+        .results-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+        
+        .results-table th {
+            background-color: #1e3c72;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .results-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        
+        .score-input {
+            width: 60px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .player-name {
+            font-weight: bold;
+            color: #1e3c72;
+        }
+        
+        .modal-buttons {
+            margin-top: 20px;
+            text-align: right;
+        }
+        
+        .btn-save {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        
+        .btn-cancel {
+            background-color: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .btn-save:hover {
+            background-color: #218838;
+        }
+        
+        .btn-cancel:hover {
+            background-color: #5a6268;
+        }
+        
+        /* Disabled match arrow */
+        .match-arrow.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        
+        .match-arrow.disabled::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.1);
+            border-radius: 50%;
+        }
 
 
 
@@ -2425,6 +2562,21 @@
                             <div class="bracket-container">
                                 <div id="bracket" class="bracket">
                                     <!-- Bracket will be generated here -->
+                                </div>
+                            </div>
+                            
+                            <!-- Match Results Modal -->
+                            <div id="matchResultsModal" class="modal">
+                                <div class="modal-content">
+                                    <span class="close" id="modalClose">&times;</span>
+                                    <h3 id="modalTitle">Update Match Results</h3>
+                                    <div id="modalContent">
+                                        <!-- Results table will be generated here -->
+                                    </div>
+                                    <div class="modal-buttons">
+                                        <button class="btn-cancel" id="modalCancel">Cancel</button>
+                                        <button class="btn-save" id="modalSave">Save Results</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -5283,12 +5435,62 @@
                     if (!isLastRound) {
                         const arrowDiv = document.createElement('div');
                         arrowDiv.className = 'match-arrow';
-                        arrowDiv.addEventListener('click', function(e) {
-                            e.stopPropagation();
-                            showScorePopup(roundIndex, matchIndex, match);
-                        });
+                        
+                        // Check if this match should be disabled
+                        const shouldDisableMatch = checkIfMatchShouldBeDisabled(match, roundIndex, matchIndex);
+                        
+                        // Also check after a short delay to ensure DOM is ready
+                        setTimeout(() => {
+                            const matchElement = document.getElementById(`round-${roundIndex + 1}-match-${matchIndex + 1}`);
+                            if (matchElement) {
+                                const matchText = matchElement.textContent.toLowerCase();
+                                if (matchText.includes('bye') || 
+                                    matchText.includes('winner of match') || 
+                                    matchText.includes('tbd') || 
+                                    matchText.includes('to be determined')) {
+                                    console.log('Delayed check: Match should be disabled');
+                                    arrowDiv.classList.add('disabled');
+                                    arrowDiv.title = 'Match not ready for score entry';
+                                    // Remove any existing click listeners
+                                    arrowDiv.onclick = null;
+                                }
+                            }
+                        }, 100);
+                        
+                        if (shouldDisableMatch) {
+                            arrowDiv.classList.add('disabled');
+                            arrowDiv.title = 'Match not ready for score entry';
+                        } else {
+                            arrowDiv.addEventListener('click', function(e) {
+                                e.stopPropagation();
+                                
+                                // Get actual player names from the match element
+                                let player1Name = 'Player 1';
+                                let player2Name = 'Player 2';
+                                
+                                const playerDivs = matchDiv.querySelectorAll('.player');
+                                if (playerDivs.length >= 2) {
+                                    const player1Text = playerDivs[0].textContent.trim();
+                                    player1Name = player1Text.replace(/\(\d+\)$/, '').replace(/\(\d+-\d+\)$/, '').trim();
+                                    
+                                    const player2Text = playerDivs[1].textContent.trim();
+                                    player2Name = player2Text.replace(/\(\d+\)$/, '').replace(/\(\d+-\d+\)$/, '').trim();
+                                }
+                                
+                                // Create match data for the modal
+                                const matchData = {
+                                    matchId: matchDiv.id,
+                                    player1: player1Name,
+                                    player2: player2Name,
+                                    scores: match.scores || null
+                                };
+                                openMatchResultsModal(matchData);
+                            });
+                        }
+                        
                         matchDiv.appendChild(arrowDiv);
                     }
+                    
 
                     roundDiv.appendChild(matchDiv);
                 });
@@ -5417,6 +5619,284 @@
             document.querySelector('.bracket').appendChild(line1);
             document.querySelector('.bracket').appendChild(line2);
             document.querySelector('.bracket').appendChild(verticalLine);
+        }
+        
+        // Function to check if a match should be disabled
+        function checkIfMatchShouldBeDisabled(match, roundIndex, matchIndex) {
+            console.log('Checking match for disable - Match data:', match);
+            console.log('Match type:', typeof match, 'Is array:', Array.isArray(match));
+            
+            if (Array.isArray(match)) {
+                console.log('Match array length:', match.length);
+                match.forEach((player, index) => {
+                    console.log(`Player ${index}:`, player, 'Type:', typeof player);
+                    if (typeof player === 'object' && player) {
+                        console.log(`Player ${index} object keys:`, Object.keys(player));
+                        console.log(`Player ${index} Name:`, player.Name);
+                    }
+                });
+                
+                // Check if any player is BYE
+                const hasBYE = match.some(player => {
+                    const isBYE = player === 'BYE' || 
+                                 player === null || 
+                                 player === undefined ||
+                                 (typeof player === 'object' && player && player.Name === 'BYE');
+                    console.log('Checking player for BYE:', player, 'Is BYE:', isBYE);
+                    return isBYE;
+                });
+                
+                if (hasBYE) {
+                    console.log('Match disabled: Contains BYE');
+                    return true;
+                }
+                
+                // Check if any player name contains "Winner of Match"
+                if (match.some(player => {
+                    const playerName = typeof player === 'string' ? player : 
+                                     (typeof player === 'object' && player && player.Name) ? player.Name : '';
+                    return playerName.toLowerCase().includes('winner of match');
+                })) {
+                    console.log('Match disabled: Contains Winner of Match');
+                    return true;
+                }
+                
+                // Check if any player name contains "TBD" or "To Be Determined"
+                if (match.some(player => {
+                    const playerName = typeof player === 'string' ? player : 
+                                     (typeof player === 'object' && player && player.Name) ? player.Name : '';
+                    return playerName.toLowerCase().includes('tbd') || 
+                           playerName.toLowerCase().includes('to be determined');
+                })) {
+                    console.log('Match disabled: Contains TBD');
+                    return true;
+                }
+            }
+            
+            // Also check the match element's text content as fallback
+            const matchElement = document.getElementById(`round-${roundIndex + 1}-match-${matchIndex + 1}`);
+            if (matchElement) {
+                const matchText = matchElement.textContent.toLowerCase();
+                console.log('Match element text content:', matchText);
+                
+                if (matchText.includes('bye') || 
+                    matchText.includes('winner of match') || 
+                    matchText.includes('tbd') || 
+                    matchText.includes('to be determined')) {
+                    console.log('Match disabled: Text content contains disabled keywords');
+                    return true;
+                }
+            } else {
+                console.log('Match element not found:', `round-${roundIndex + 1}-match-${matchIndex + 1}`);
+            }
+            
+            // Additional check: look for any element with BYE text in the match
+            const matchElementByClass = document.querySelector(`#round-${roundIndex + 1}-match-${matchIndex + 1}`);
+            if (matchElementByClass) {
+                const byeElements = matchElementByClass.querySelectorAll('*');
+                for (let element of byeElements) {
+                    if (element.textContent && element.textContent.toLowerCase().includes('bye')) {
+                        console.log('Match disabled: Found BYE in child element:', element.textContent);
+                        return true;
+                    }
+                }
+            }
+            
+            return false;
+        }
+        
+        // Match Results Modal Functions
+        let currentMatchData = null;
+        
+        function openMatchResultsModal(matchData) {
+            currentMatchData = matchData;
+            const modal = document.getElementById('matchResultsModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalContent = document.getElementById('modalContent');
+            
+            // Get actual player names from the match element
+            const matchElement = document.getElementById(matchData.matchId);
+            let player1Name = 'Player 1';
+            let player2Name = 'Player 2';
+            
+            if (matchElement) {
+                // Try to find player divs with different selectors
+                const playerDivs = matchElement.querySelectorAll('.player');
+                if (playerDivs.length >= 2) {
+                    // Get first player name
+                    const player1Text = playerDivs[0].textContent.trim();
+                    player1Name = player1Text.replace(/\(\d+\)$/, '').replace(/\(\d+-\d+\)$/, '').trim();
+                    
+                    // Get second player name
+                    const player2Text = playerDivs[1].textContent.trim();
+                    player2Name = player2Text.replace(/\(\d+\)$/, '').replace(/\(\d+-\d+\)$/, '').trim();
+                } else {
+                    // Fallback: try to get names from any text content
+                    const allText = matchElement.textContent;
+                    const lines = allText.split('\n').filter(line => line.trim());
+                    if (lines.length >= 2) {
+                        player1Name = lines[0].replace(/\(\d+\)$/, '').replace(/\(\d+-\d+\)$/, '').trim();
+                        player2Name = lines[1].replace(/\(\d+\)$/, '').replace(/\(\d+-\d+\)$/, '').trim();
+                    }
+                }
+                
+                console.log('Extracted player names:', player1Name, player2Name);
+            }
+            
+            // Update match data with actual names
+            currentMatchData.player1 = player1Name;
+            currentMatchData.player2 = player2Name;
+            
+            // Set modal title
+            modalTitle.textContent = `Update Results - ${player1Name} vs ${player2Name}`;
+            
+            // Generate results table
+            const resultsTable = generateResultsTable(currentMatchData);
+            modalContent.innerHTML = resultsTable;
+            
+            // Add event listeners
+            setupModalEventListeners();
+            
+            // Show modal
+            modal.style.display = 'block';
+        }
+        
+        function setupModalEventListeners() {
+            // Close button
+            const closeBtn = document.getElementById('modalClose');
+            if (closeBtn) {
+                closeBtn.onclick = closeMatchResultsModal;
+            }
+            
+            // Cancel button
+            const cancelBtn = document.getElementById('modalCancel');
+            if (cancelBtn) {
+                cancelBtn.onclick = closeMatchResultsModal;
+            }
+            
+            // Save button
+            const saveBtn = document.getElementById('modalSave');
+            if (saveBtn) {
+                saveBtn.onclick = saveMatchResults;
+            }
+        }
+        
+        function closeMatchResultsModal() {
+            const modal = document.getElementById('matchResultsModal');
+            modal.style.display = 'none';
+            currentMatchData = null;
+        }
+        
+        function generateResultsTable(matchData) {
+            const maxSets = 5; // Maximum number of sets to display
+            
+            let tableHTML = `
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+            `;
+            
+            // Add set columns
+            for (let i = 1; i <= maxSets; i++) {
+                tableHTML += `<th>Set ${i}</th>`;
+            }
+            
+            tableHTML += `
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="player-name">${matchData.player1}</td>
+            `;
+            
+            // Add score inputs for player 1
+            for (let i = 1; i <= maxSets; i++) {
+                const existingScore = matchData.scores && matchData.scores.player1 && matchData.scores.player1[i-1] ? matchData.scores.player1[i-1] : '';
+                tableHTML += `<td><input type="number" class="score-input" id="p1_set${i}" value="${existingScore}" min="0" max="99"></td>`;
+            }
+            
+            tableHTML += `
+                        </tr>
+                        <tr>
+                            <td class="player-name">${matchData.player2}</td>
+            `;
+            
+            // Add score inputs for player 2
+            for (let i = 1; i <= maxSets; i++) {
+                const existingScore = matchData.scores && matchData.scores.player2 && matchData.scores.player2[i-1] ? matchData.scores.player2[i-1] : '';
+                tableHTML += `<td><input type="number" class="score-input" id="p2_set${i}" value="${existingScore}" min="0" max="99"></td>`;
+            }
+            
+            tableHTML += `
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+            
+            return tableHTML;
+        }
+        
+        function saveMatchResults() {
+            if (!currentMatchData) return;
+            
+            // Collect scores
+            const scores = {
+                player1: [],
+                player2: []
+            };
+            
+            for (let i = 1; i <= 5; i++) {
+                const p1Score = document.getElementById(`p1_set${i}`).value;
+                const p2Score = document.getElementById(`p2_set${i}`).value;
+                
+                scores.player1.push(p1Score || '');
+                scores.player2.push(p2Score || '');
+            }
+            
+            // Update match data
+            currentMatchData.scores = scores;
+            
+            // Update the match display in the bracket
+            updateMatchDisplay(currentMatchData);
+            
+            // Close modal
+            closeMatchResultsModal();
+            
+            // Show success message
+            alert('Match results saved successfully!');
+        }
+        
+        function updateMatchDisplay(matchData) {
+            // Find the match element in the bracket and update its display
+            const matchElement = document.getElementById(matchData.matchId);
+            if (matchElement) {
+                // Update the match display with results
+                const player1Div = matchElement.querySelector('.player1');
+                const player2Div = matchElement.querySelector('.player2');
+                
+                if (player1Div && player2Div) {
+                    // Add scores to player names if available
+                    const scores = matchData.scores;
+                    if (scores && scores.player1 && scores.player2) {
+                        const p1Scores = scores.player1.filter(score => score !== '').join('-');
+                        const p2Scores = scores.player2.filter(score => score !== '').join('-');
+                        
+                        if (p1Scores && p2Scores) {
+                            player1Div.innerHTML = `${matchData.player1} <span style="color: #28a745; font-weight: bold;">(${p1Scores})</span>`;
+                            player2Div.innerHTML = `${matchData.player2} <span style="color: #28a745; font-weight: bold;">(${p2Scores})</span>`;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('matchResultsModal');
+            if (event.target === modal) {
+                closeMatchResultsModal();
+            }
         }
 
         function alignBracketRounds() {
