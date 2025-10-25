@@ -1069,30 +1069,124 @@
         .bracket {
             display: flex;
             flex-direction: row;
-            gap: 30px;
+            gap: 50px;
             min-width: max-content;
             padding: 20px;
+            position: relative;
+            align-items: flex-start;
         }
 
         .round {
             display: flex;
             flex-direction: column;
             position: relative;
+            align-items: center;
+            width: 220px;
+            min-width: 220px;
         }
+
+        .round:first-child {
+            align-items: flex-start;
+        }
+
+        .round:not(:first-child) {
+            align-items: center;
+            justify-content: flex-start;
+            position: relative;
+        }
+
+        /* Perfect alignment for subsequent rounds */
+        .round:nth-child(2) {
+            margin-top: 0;
+        }
+
+        .round:nth-child(3) {
+            margin-top: 0;
+        }
+
+        .round:nth-child(4) {
+            margin-top: 0;
+        }
+
 
         .match {
             background: white;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 8px;
-            min-width: 160px;
+            border: 2px solid #1e3c72;
+            border-radius: 8px;
+            padding: 12px;
+            width: 200px;
+            min-width: 200px;
+            max-width: 200px;
             position: relative;
-            height: 60px;
+            height: 70px;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            margin-bottom: 15px;
-            transition: box-shadow 0.2s;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            z-index: 2;
+            flex-shrink: 0;
+        }
+
+        .match:hover {
+            box-shadow: 0 4px 12px rgba(30, 60, 114, 0.2);
+            transform: translateY(-2px);
+        }
+
+
+
+        /* Round titles */
+        .round-title {
+            font-weight: bold;
+            font-size: 16px;
+            color: #1e3c72;
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #1e3c72, #2a4f9e);
+            color: white;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 200px;
+            position: relative;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        /* Player styling */
+        .player {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 24px;
+        }
+
+        .player.bye {
+            opacity: 0.6;
+            font-style: italic;
+        }
+
+        .seed {
+            font-size: 0.85em;
+            color: #666;
+            font-weight: 400;
+        }
+
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .bracket {
+                gap: 30px;
+            }
+            
+            .match {
+                width: 160px;
+                min-width: 160px;
+                max-width: 160px;
+                height: 60px;
+            }
         }
 
         .match-arrow {
@@ -5093,22 +5187,57 @@
                 roundTitle.textContent = getRoundLabel(roundIndex, rounds.length);
                 roundDiv.appendChild(roundTitle);
 
+                // Calculate spacing for proper alignment
+                const totalMatches = round.length;
+                const isFirstRound = roundIndex === 0;
+                const isLastRound = roundIndex === rounds.length - 1;
+
                 round.forEach((match, matchIndex) => {
                     const matchDiv = document.createElement('div');
                     matchDiv.className = 'match';
                     matchDiv.id = `round-${roundIndex + 1}-match-${matchIndex + 1}`;
                     
+                    // Add specific styling for different rounds
+                    if (isFirstRound) {
+                        matchDiv.style.marginBottom = '20px';
+                    } else {
+                        matchDiv.style.marginBottom = '40px';
+                    }
+                    
                     match.forEach((player, playerIndex) => {
                         const playerDiv = document.createElement('div');
                         playerDiv.className = `player ${player.name === 'BYE' ? 'bye' : ''}`;
+                        playerDiv.style.cssText = `
+                            padding: 4px 8px;
+                            margin: 2px 0;
+                            border-radius: 4px;
+                            background: ${player.name === 'BYE' ? '#f0f0f0' : '#f8f9fa'};
+                            border: 1px solid ${player.name === 'BYE' ? '#ddd' : '#e9ecef'};
+                            cursor: ${player.name !== 'BYE' && !player.name.startsWith('Winner of Match') ? 'pointer' : 'default'};
+                            transition: all 0.2s ease;
+                        `;
                         
                         const nameSpan = document.createElement('span');
                         nameSpan.textContent = player.name;
+                        nameSpan.style.cssText = `
+                            font-weight: 500;
+                            color: ${player.name === 'BYE' ? '#666' : '#1e3c72'};
+                        `;
                         
                         if (player.name !== 'BYE' && !player.name.startsWith('Winner of Match')) {
                             nameSpan.addEventListener('click', function(e) {
                                 e.stopPropagation();
                                 showSwapPopup(roundIndex, matchIndex, playerIndex, player);
+                            });
+                            
+                            playerDiv.addEventListener('mouseenter', function() {
+                                this.style.background = '#e3f2fd';
+                                this.style.borderColor = '#1e3c72';
+                            });
+                            
+                            playerDiv.addEventListener('mouseleave', function() {
+                                this.style.background = '#f8f9fa';
+                                this.style.borderColor = '#e9ecef';
                             });
                         }
                         
@@ -5118,19 +5247,28 @@
                             const seedSpan = document.createElement('span');
                             seedSpan.className = 'seed';
                             seedSpan.textContent = `(${player.seeding})`;
+                            seedSpan.style.cssText = `
+                                margin-left: 8px;
+                                color: #666;
+                                font-size: 0.9em;
+                                font-weight: 400;
+                            `;
                             playerDiv.appendChild(seedSpan);
                         }
                         
                         matchDiv.appendChild(playerDiv);
                     });
 
-                    const arrowDiv = document.createElement('div');
-                    arrowDiv.className = 'match-arrow';
-                    arrowDiv.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        showScorePopup(roundIndex, matchIndex, match);
-                    });
-                    matchDiv.appendChild(arrowDiv);
+                    // Only add arrow for non-final rounds
+                    if (!isLastRound) {
+                        const arrowDiv = document.createElement('div');
+                        arrowDiv.className = 'match-arrow';
+                        arrowDiv.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            showScorePopup(roundIndex, matchIndex, match);
+                        });
+                        matchDiv.appendChild(arrowDiv);
+                    }
 
                     roundDiv.appendChild(matchDiv);
                 });
@@ -5139,6 +5277,145 @@
             });
             
             bracketData.currentRounds = rounds;
+            
+            // Apply perfect alignment after a short delay to ensure DOM is ready
+            setTimeout(() => {
+                alignBracketRounds();
+            }, 300);
+            
+            // Also try a simpler approach after a longer delay
+            setTimeout(() => {
+                alignBracketRoundsSimple();
+            }, 500);
+        }
+
+        function alignBracketRounds() {
+            const rounds = document.querySelectorAll('.round');
+            if (rounds.length < 2) return;
+
+            console.log('Starting bracket alignment...');
+
+            // First, align all round titles to the same height
+            const firstRoundTitle = rounds[0].querySelector('.round-title');
+            const firstRoundTitleTop = firstRoundTitle.offsetTop;
+
+            for (let i = 1; i < rounds.length; i++) {
+                const round = rounds[i];
+                const roundTitle = round.querySelector('.round-title');
+                
+                if (roundTitle) {
+                    const currentTop = roundTitle.offsetTop;
+                    const titleOffset = firstRoundTitleTop - currentTop;
+                    round.style.transform = `translateY(${titleOffset}px)`;
+                    console.log(`Round ${i + 1} title offset: ${titleOffset}px`);
+                }
+            }
+
+            // Now align matches using the working approach for 2nd round, improved for subsequent rounds
+            for (let roundIndex = 1; roundIndex < rounds.length; roundIndex++) {
+                const currentRound = rounds[roundIndex];
+                const previousRound = rounds[roundIndex - 1];
+                const currentMatches = currentRound.querySelectorAll('.match');
+                const previousMatches = previousRound.querySelectorAll('.match');
+
+                console.log(`Aligning round ${roundIndex + 1} with ${currentMatches.length} matches`);
+
+                currentMatches.forEach((currentMatch, matchIndex) => {
+                    // Each current match is fed by two previous matches
+                    const parentMatch1Index = matchIndex * 2;
+                    const parentMatch2Index = matchIndex * 2 + 1;
+                    
+                    if (parentMatch1Index < previousMatches.length && parentMatch2Index < previousMatches.length) {
+                        const parentMatch1 = previousMatches[parentMatch1Index];
+                        const parentMatch2 = previousMatches[parentMatch2Index];
+                        
+                        // Get the positions of parent matches
+                        const parent1Top = parentMatch1.offsetTop;
+                        const parent2Top = parentMatch2.offsetTop;
+                        const parent1Height = parentMatch1.offsetHeight;
+                        const parent2Height = parentMatch2.offsetHeight;
+                        
+                        // Calculate the center between the two parent matches
+                        const parent1Center = parent1Top + parent1Height / 2;
+                        const parent2Center = parent2Top + parent2Height / 2;
+                        const targetCenter = (parent1Center + parent2Center) / 2;
+                        
+                        // Get current match position
+                        const currentMatchTop = currentMatch.offsetTop;
+                        const currentMatchHeight = currentMatch.offsetHeight;
+                        const currentMatchCenter = currentMatchTop + currentMatchHeight / 2;
+                        
+                        // Calculate the offset needed
+                        const offset = targetCenter - currentMatchCenter;
+                        
+                        console.log(`Round ${roundIndex + 1}, Match ${matchIndex + 1}: Parent1 center: ${parent1Center}, Parent2 center: ${parent2Center}, Target: ${targetCenter}, Current: ${currentMatchCenter}, Offset: ${offset}`);
+                        
+                        // Apply the offset
+                        if (Math.abs(offset) > 2) {
+                            currentMatch.style.transform = `translateY(${offset}px)`;
+                            currentMatch.style.transition = 'transform 0.3s ease';
+                        }
+                    }
+                });
+            }
+            
+            console.log('Bracket alignment completed');
+        }
+
+        function alignBracketRoundsSimple() {
+            const rounds = document.querySelectorAll('.round');
+            if (rounds.length < 2) return;
+
+            console.log('Starting simple bracket alignment...');
+
+            // Simple approach: use the same parent-match reference method
+            for (let roundIndex = 1; roundIndex < rounds.length; roundIndex++) {
+                const currentRound = rounds[roundIndex];
+                const previousRound = rounds[roundIndex - 1];
+                const currentMatches = currentRound.querySelectorAll('.match');
+                const previousMatches = previousRound.querySelectorAll('.match');
+
+                console.log(`Simple alignment - Round ${roundIndex + 1} with ${currentMatches.length} matches`);
+
+                currentMatches.forEach((currentMatch, matchIndex) => {
+                    const parentMatch1Index = matchIndex * 2;
+                    const parentMatch2Index = matchIndex * 2 + 1;
+                    
+                    if (parentMatch1Index < previousMatches.length && parentMatch2Index < previousMatches.length) {
+                        const parentMatch1 = previousMatches[parentMatch1Index];
+                        const parentMatch2 = previousMatches[parentMatch2Index];
+                        
+                        // Get the top positions of parent matches
+                        const parent1Top = parentMatch1.offsetTop;
+                        const parent2Top = parentMatch2.offsetTop;
+                        const parent1Height = parentMatch1.offsetHeight;
+                        const parent2Height = parentMatch2.offsetHeight;
+                        
+                        // Calculate the center between the two parent matches
+                        const parent1Center = parent1Top + parent1Height / 2;
+                        const parent2Center = parent2Top + parent2Height / 2;
+                        const targetCenter = (parent1Center + parent2Center) / 2;
+                        
+                        // Get current match position
+                        const currentMatchTop = currentMatch.offsetTop;
+                        const currentMatchHeight = currentMatch.offsetHeight;
+                        const currentMatchCenter = currentMatchTop + currentMatchHeight / 2;
+                        
+                        // Calculate offset
+                        const offset = targetCenter - currentMatchCenter;
+                        
+                        console.log(`Simple alignment - Round ${roundIndex + 1}, Match ${matchIndex + 1}: Target center: ${targetCenter}, Current center: ${currentMatchCenter}, Offset: ${offset}`);
+                        
+                        // Apply offset
+                        if (Math.abs(offset) > 2) {
+                            currentMatch.style.transform = `translateY(${offset}px)`;
+                            currentMatch.style.transition = 'transform 0.3s ease';
+                        }
+                    }
+                });
+            }
+            
+            console.log('Simple bracket alignment completed');
         }
 
         function generateSeededBracketOrder(players, numPositions) {
