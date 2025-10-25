@@ -1086,7 +1086,7 @@
         }
 
         .round:first-child {
-            align-items: flex-start;
+            align-items: center;
         }
 
         .round:not(:first-child) {
@@ -5884,9 +5884,6 @@
             
             // Close modal
             closeMatchResultsModal();
-            
-            // Show success message
-            alert(`Match results saved! Winner: ${matchResult.winner}`);
         }
         
         function calculateMatchResult(scores) {
