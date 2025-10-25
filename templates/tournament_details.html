@@ -5797,7 +5797,9 @@
             // Add score inputs for player 1
             for (let i = 1; i <= maxSets; i++) {
                 const existingScore = matchData.scores && matchData.scores.player1 && matchData.scores.player1[i-1] ? matchData.scores.player1[i-1] : '';
-                tableHTML += `<td><input type="number" class="score-input" id="p1_set${i}" value="${existingScore}" min="0" max="99"></td>`;
+                // Tab order: Set1 P1 (1), Set1 P2 (2), Set2 P1 (3), Set2 P2 (4), etc.
+                const tabIndex = (i - 1) * 2 + 1;
+                tableHTML += `<td><input type="number" class="score-input" id="p1_set${i}" value="${existingScore}" min="0" max="99" tabindex="${tabIndex}"></td>`;
             }
             
             tableHTML += `
@@ -5809,7 +5811,9 @@
             // Add score inputs for player 2
             for (let i = 1; i <= maxSets; i++) {
                 const existingScore = matchData.scores && matchData.scores.player2 && matchData.scores.player2[i-1] ? matchData.scores.player2[i-1] : '';
-                tableHTML += `<td><input type="number" class="score-input" id="p2_set${i}" value="${existingScore}" min="0" max="99"></td>`;
+                // Tab order: Set1 P1 (1), Set1 P2 (2), Set2 P1 (3), Set2 P2 (4), etc.
+                const tabIndex = (i - 1) * 2 + 2;
+                tableHTML += `<td><input type="number" class="score-input" id="p2_set${i}" value="${existingScore}" min="0" max="99" tabindex="${tabIndex}"></td>`;
             }
             
             tableHTML += `
@@ -5838,8 +5842,13 @@
                 scores.player2.push(p2Score || '');
             }
             
+            // Calculate winner and format scores
+            const matchResult = calculateMatchResult(scores);
+            
             // Update match data
             currentMatchData.scores = scores;
+            currentMatchData.winner = matchResult.winner;
+            currentMatchData.displayScores = matchResult.displayScores;
             
             // Update the match display in the bracket
             updateMatchDisplay(currentMatchData);
@@ -5848,31 +5857,244 @@
             closeMatchResultsModal();
             
             // Show success message
-            alert('Match results saved successfully!');
+            alert(`Match results saved! Winner: ${matchResult.winner}`);
         }
         
-        function updateMatchDisplay(matchData) {
-            // Find the match element in the bracket and update its display
-            const matchElement = document.getElementById(matchData.matchId);
-            if (matchElement) {
-                // Update the match display with results
-                const player1Div = matchElement.querySelector('.player1');
-                const player2Div = matchElement.querySelector('.player2');
+        function calculateMatchResult(scores) {
+            let player1SetsWon = 0;
+            let player2SetsWon = 0;
+            const displayScores = [];
+            
+            // Count sets won by each player
+            for (let i = 0; i < 5; i++) {
+                const p1Score = parseInt(scores.player1[i]) || 0;
+                const p2Score = parseInt(scores.player2[i]) || 0;
                 
-                if (player1Div && player2Div) {
-                    // Add scores to player names if available
-                    const scores = matchData.scores;
-                    if (scores && scores.player1 && scores.player2) {
-                        const p1Scores = scores.player1.filter(score => score !== '').join('-');
-                        const p2Scores = scores.player2.filter(score => score !== '').join('-');
-                        
-                        if (p1Scores && p2Scores) {
-                            player1Div.innerHTML = `${matchData.player1} <span style="color: #28a745; font-weight: bold;">(${p1Scores})</span>`;
-                            player2Div.innerHTML = `${matchData.player2} <span style="color: #28a745; font-weight: bold;">(${p2Scores})</span>`;
-                        }
+                if (p1Score > 0 || p2Score > 0) { // Only count sets that have scores
+                    if (p1Score > p2Score) {
+                        player1SetsWon++;
+                        displayScores.push(`${p1Score}-${p2Score}`);
+                    } else if (p2Score > p1Score) {
+                        player2SetsWon++;
+                        displayScores.push(`${p1Score}-${p2Score}`);
                     }
                 }
             }
+            
+            // Determine winner
+            let winner;
+            if (player1SetsWon > player2SetsWon) {
+                winner = currentMatchData.player1;
+            } else if (player2SetsWon > player1SetsWon) {
+                winner = currentMatchData.player2;
+            } else {
+                winner = 'Tie'; // Handle tie situation
+            }
+            
+            return {
+                winner: winner,
+                displayScores: displayScores.join(', '),
+                player1SetsWon: player1SetsWon,
+                player2SetsWon: player2SetsWon
+            };
+        }
+        
+        function updateMatchDisplay(matchData) {
+            console.log('Updating match display for:', matchData);
+            
+            // Find the match element in the bracket and update its display
+            const matchElement = document.getElementById(matchData.matchId);
+            console.log('Match element found:', matchElement);
+            
+            if (matchElement) {
+                // Update the match display with results
+                const playerDivs = matchElement.querySelectorAll('.player');
+                console.log('Player divs found:', playerDivs.length);
+                
+                if (playerDivs.length >= 2) {
+                    const player1Div = playerDivs[0];
+                    const player2Div = playerDivs[1];
+                    
+                    console.log('Player 1 div:', player1Div);
+                    console.log('Player 2 div:', player2Div);
+                    
+                    // Show winner with simple tick
+                    if (matchData.winner) {
+                        console.log('Winner:', matchData.winner);
+                        
+                        const isPlayer1Winner = matchData.winner === matchData.player1;
+                        const isPlayer2Winner = matchData.winner === matchData.player2;
+                        
+                        // Update player 1 display - just add tick if winner
+                        if (isPlayer1Winner) {
+                            player1Div.innerHTML = `${matchData.player1} <span style="color: #28a745; font-weight: bold; margin-left: 5px;">✓</span>`;
+                        } else {
+                            player1Div.innerHTML = matchData.player1;
+                        }
+                        
+                        // Update player 2 display - just add tick if winner
+                        if (isPlayer2Winner) {
+                            player2Div.innerHTML = `${matchData.player2} <span style="color: #28a745; font-weight: bold; margin-left: 5px;">✓</span>`;
+                        } else {
+                            player2Div.innerHTML = matchData.player2;
+                        }
+                        
+                        console.log('Updated player displays with simple ticks');
+                    } else {
+                        console.log('No winner found');
+                    }
+                } else {
+                    console.log('Not enough player divs found');
+                }
+                
+                // Update the match data for progression to next round
+                updateMatchProgression(matchData);
+            } else {
+                console.log('Match element not found:', matchData.matchId);
+            }
+        }
+        
+        function updateMatchProgression(matchData) {
+            console.log(`Winner of ${matchData.matchId}: ${matchData.winner}`);
+            
+            // Extract round and match numbers from matchId (e.g., "round-2-match-1")
+            const matchIdParts = matchData.matchId.split('-');
+            const currentRound = parseInt(matchIdParts[1]);
+            const currentMatch = parseInt(matchIdParts[3]);
+            
+            console.log('Current round:', currentRound, 'Current match:', currentMatch);
+            
+            // Calculate next round and match
+            const nextRound = currentRound + 1;
+            const nextMatch = Math.ceil(currentMatch / 2);
+            const nextMatchId = `round-${nextRound}-match-${nextMatch}`;
+            
+            console.log('Next round:', nextRound, 'Next match:', nextMatch, 'Next match ID:', nextMatchId);
+            
+            // Find the next round match element
+            const nextMatchElement = document.getElementById(nextMatchId);
+            if (nextMatchElement) {
+                console.log('Next match element found:', nextMatchElement);
+                
+                // Determine which position in the next match this winner should fill
+                const isFirstPosition = (currentMatch % 2 === 1);
+                const targetPlayerIndex = isFirstPosition ? 0 : 1;
+                
+                console.log('Is first position:', isFirstPosition, 'Target player index:', targetPlayerIndex);
+                
+                // Update the next match with the winner
+                const nextMatchPlayerDivs = nextMatchElement.querySelectorAll('.player');
+                if (nextMatchPlayerDivs[targetPlayerIndex]) {
+                    const winnerName = matchData.winner;
+                    // Use the same styling as original players - just plain text
+                    nextMatchPlayerDivs[targetPlayerIndex].innerHTML = winnerName;
+                    
+                    console.log(`Updated next match position ${targetPlayerIndex} with winner: ${winnerName}`);
+                    
+                    // Update the bracket data to reflect the progression
+                    updateBracketData(currentRound, currentMatch, nextRound, nextMatch, winnerName);
+                    
+                    // Check if both players are now known and add arrow if ready
+                    checkAndAddArrowToNextMatch(nextMatchElement, nextRound, nextMatch);
+                } else {
+                    console.log('Target player div not found in next match');
+                }
+            } else {
+                console.log('Next match element not found:', nextMatchId);
+            }
+        }
+        
+        function updateBracketData(currentRound, currentMatch, nextRound, nextMatch, winnerName) {
+            // Update the bracket data structure to reflect the winner progression
+            if (bracketData.currentRounds && bracketData.currentRounds.length > nextRound - 1) {
+                const nextRoundData = bracketData.currentRounds[nextRound - 1];
+                if (nextRoundData && nextRoundData.length > nextMatch - 1) {
+                    // Update the bracket data with the winner
+                    const targetPosition = (currentMatch % 2 === 1) ? 0 : 1;
+                    nextRoundData[nextMatch - 1][targetPosition] = winnerName;
+                    
+                    console.log('Updated bracket data:', nextRoundData[nextMatch - 1]);
+                }
+            }
+        }
+        
+        function checkAndAddArrowToNextMatch(nextMatchElement, nextRound, nextMatch) {
+            console.log('Checking if next match is ready for arrow:', nextRound, nextMatch);
+            
+            // Check if both players are known (not BYE, not "Winner of Match", not TBD)
+            const playerDivs = nextMatchElement.querySelectorAll('.player');
+            if (playerDivs.length >= 2) {
+                const player1Text = playerDivs[0].textContent.trim();
+                const player2Text = playerDivs[1].textContent.trim();
+                
+                console.log('Player 1 text:', player1Text);
+                console.log('Player 2 text:', player2Text);
+                
+                // Check if both players are valid (not BYE, not placeholder text)
+                const isPlayer1Valid = isValidPlayer(player1Text);
+                const isPlayer2Valid = isValidPlayer(player2Text);
+                
+                console.log('Player 1 valid:', isPlayer1Valid);
+                console.log('Player 2 valid:', isPlayer2Valid);
+                
+                if (isPlayer1Valid && isPlayer2Valid) {
+                    // Both players are known, add arrow if not already present
+                    const existingArrow = nextMatchElement.querySelector('.match-arrow');
+                    if (!existingArrow) {
+                        console.log('Adding arrow to next match');
+                        addArrowToMatch(nextMatchElement, nextRound, nextMatch);
+                    } else {
+                        console.log('Arrow already exists for next match');
+                    }
+                } else {
+                    console.log('Next match not ready - one or both players not valid');
+                }
+            }
+        }
+        
+        function isValidPlayer(playerText) {
+            // Check if player text is valid (not BYE, not placeholder text)
+            const lowerText = playerText.toLowerCase();
+            return !lowerText.includes('bye') && 
+                   !lowerText.includes('winner of match') && 
+                   !lowerText.includes('tbd') && 
+                   !lowerText.includes('to be determined') &&
+                   playerText.trim().length > 0;
+        }
+        
+        function addArrowToMatch(matchElement, roundIndex, matchIndex) {
+            // Create and add arrow to the match
+            const arrowDiv = document.createElement('div');
+            arrowDiv.className = 'match-arrow';
+            
+            arrowDiv.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
+                // Get actual player names from the match element
+                let player1Name = 'Player 1';
+                let player2Name = 'Player 2';
+                
+                const playerDivs = matchElement.querySelectorAll('.player');
+                if (playerDivs.length >= 2) {
+                    const player1Text = playerDivs[0].textContent.trim();
+                    player1Name = player1Text.replace(/✓$/, '').trim();
+                    
+                    const player2Text = playerDivs[1].textContent.trim();
+                    player2Name = player2Text.replace(/✓$/, '').trim();
+                }
+                
+                // Create match data for the modal
+                const matchData = {
+                    matchId: matchElement.id,
+                    player1: player1Name,
+                    player2: player2Name,
+                    scores: null
+                };
+                openMatchResultsModal(matchData);
+            });
+            
+            matchElement.appendChild(arrowDiv);
+            console.log('Arrow added to match:', matchElement.id);
         }
         
         // Close modal when clicking outside of it
