@@ -5278,15 +5278,72 @@
             
             bracketData.currentRounds = rounds;
             
-            // Apply perfect alignment after a short delay to ensure DOM is ready
+            // Apply sequential alignment - align each round one by one
             setTimeout(() => {
-                alignBracketRounds();
+                alignBracketRoundsSequential();
             }, 300);
+        }
+
+
+        function alignBracketRoundsSequential() {
+            const rounds = document.querySelectorAll('.round');
+            if (rounds.length < 2) return;
             
-            // Also try a simpler approach after a longer delay
-            setTimeout(() => {
-                alignBracketRoundsSimple();
-            }, 500);
+            console.log('Starting sequential alignment...');
+            
+            // Align each round sequentially with proper delays
+            for (let roundIndex = 1; roundIndex < rounds.length; roundIndex++) {
+                setTimeout(() => {
+                    alignSingleRound(roundIndex);
+                }, roundIndex * 200); // 200ms delay between each round
+            }
+        }
+        
+        function alignSingleRound(roundIndex) {
+            const rounds = document.querySelectorAll('.round');
+            if (roundIndex >= rounds.length) return;
+            
+            const currentRound = rounds[roundIndex];
+            const previousRound = rounds[roundIndex - 1];
+            const currentMatches = currentRound.querySelectorAll('.match');
+            const previousMatches = previousRound.querySelectorAll('.match');
+            
+            console.log(`Aligning Round ${roundIndex + 1} with ${currentMatches.length} matches...`);
+            
+            currentMatches.forEach((currentMatch, matchIndex) => {
+                // Calculate which parent matches this current match should be centered between
+                const parentMatch1Index = matchIndex * 2;
+                const parentMatch2Index = parentMatch1Index + 1;
+                
+                if (parentMatch1Index < previousMatches.length && parentMatch2Index < previousMatches.length) {
+                    const parentMatch1 = previousMatches[parentMatch1Index];
+                    const parentMatch2 = previousMatches[parentMatch2Index];
+                    
+                    // Get positions using getBoundingClientRect for accuracy
+                    const parent1Rect = parentMatch1.getBoundingClientRect();
+                    const parent2Rect = parentMatch2.getBoundingClientRect();
+                    const currentRect = currentMatch.getBoundingClientRect();
+                    
+                    // Calculate the center between the two parent matches
+                    const parent1Center = parent1Rect.top + parent1Rect.height / 2;
+                    const parent2Center = parent2Rect.top + parent2Rect.height / 2;
+                    const targetCenter = (parent1Center + parent2Center) / 2;
+                    
+                    // Get current match position
+                    const currentMatchCenter = currentRect.top + currentRect.height / 2;
+                    
+                    // Calculate the offset needed
+                    const offset = targetCenter - currentMatchCenter;
+                    
+                    console.log(`Round ${roundIndex + 1}, Match ${matchIndex + 1}: Target: ${targetCenter}, Current: ${currentMatchCenter}, Offset: ${offset}`);
+                    
+                    // Apply the offset
+                    if (Math.abs(offset) > 2) {
+                        currentMatch.style.transform = `translateY(${offset}px)`;
+                        currentMatch.style.transition = 'transform 0.3s ease';
+                    }
+                }
+            });
         }
 
         function alignBracketRounds() {
@@ -5311,44 +5368,27 @@
                 }
             }
 
-            // Now align matches using the working approach for 2nd round, improved for subsequent rounds
+            // Now align matches - handle each round progressively
             for (let roundIndex = 1; roundIndex < rounds.length; roundIndex++) {
                 const currentRound = rounds[roundIndex];
-                const previousRound = rounds[roundIndex - 1];
                 const currentMatches = currentRound.querySelectorAll('.match');
-                const previousMatches = previousRound.querySelectorAll('.match');
 
                 console.log(`Aligning round ${roundIndex + 1} with ${currentMatches.length} matches`);
 
                 currentMatches.forEach((currentMatch, matchIndex) => {
-                    // Each current match is fed by two previous matches
-                    const parentMatch1Index = matchIndex * 2;
-                    const parentMatch2Index = matchIndex * 2 + 1;
+                    // Calculate the target position based on the first round matches
+                    const targetPosition = calculateTargetPosition(roundIndex, matchIndex, rounds);
                     
-                    if (parentMatch1Index < previousMatches.length && parentMatch2Index < previousMatches.length) {
-                        const parentMatch1 = previousMatches[parentMatch1Index];
-                        const parentMatch2 = previousMatches[parentMatch2Index];
-                        
-                        // Get the positions of parent matches
-                        const parent1Top = parentMatch1.offsetTop;
-                        const parent2Top = parentMatch2.offsetTop;
-                        const parent1Height = parentMatch1.offsetHeight;
-                        const parent2Height = parentMatch2.offsetHeight;
-                        
-                        // Calculate the center between the two parent matches
-                        const parent1Center = parent1Top + parent1Height / 2;
-                        const parent2Center = parent2Top + parent2Height / 2;
-                        const targetCenter = (parent1Center + parent2Center) / 2;
-                        
+                    if (targetPosition !== null) {
                         // Get current match position
                         const currentMatchTop = currentMatch.offsetTop;
                         const currentMatchHeight = currentMatch.offsetHeight;
                         const currentMatchCenter = currentMatchTop + currentMatchHeight / 2;
                         
                         // Calculate the offset needed
-                        const offset = targetCenter - currentMatchCenter;
+                        const offset = targetPosition - currentMatchCenter;
                         
-                        console.log(`Round ${roundIndex + 1}, Match ${matchIndex + 1}: Parent1 center: ${parent1Center}, Parent2 center: ${parent2Center}, Target: ${targetCenter}, Current: ${currentMatchCenter}, Offset: ${offset}`);
+                        console.log(`Round ${roundIndex + 1}, Match ${matchIndex + 1}: Target: ${targetPosition}, Current: ${currentMatchCenter}, Offset: ${offset}`);
                         
                         // Apply the offset
                         if (Math.abs(offset) > 2) {
@@ -5362,49 +5402,67 @@
             console.log('Bracket alignment completed');
         }
 
+        function calculateTargetPosition(roundIndex, matchIndex, rounds) {
+            // Use the immediate previous round matches as reference (this was working well for 2nd round)
+            const previousRound = rounds[roundIndex - 1];
+            const previousMatches = previousRound.querySelectorAll('.match');
+            
+            if (previousMatches.length === 0) return null;
+            
+            // Calculate which parent matches this current match should be centered between
+            const parentMatch1Index = matchIndex * 2;
+            const parentMatch2Index = parentMatch1Index + 1;
+            
+            if (parentMatch1Index >= previousMatches.length || parentMatch2Index >= previousMatches.length) {
+                return null;
+            }
+            
+            const parentMatch1 = previousMatches[parentMatch1Index];
+            const parentMatch2 = previousMatches[parentMatch2Index];
+            
+            // Get the positions of the parent matches
+            const parent1Top = parentMatch1.offsetTop;
+            const parent2Top = parentMatch2.offsetTop;
+            const parent1Height = parentMatch1.offsetHeight;
+            const parent2Height = parentMatch2.offsetHeight;
+            
+            // Calculate the center between these parent matches
+            const parent1Center = parent1Top + parent1Height / 2;
+            const parent2Center = parent2Top + parent2Height / 2;
+            const targetCenter = (parent1Center + parent2Center) / 2;
+            
+            console.log(`Calculating target for round ${roundIndex + 1}, match ${matchIndex + 1}: Parent matches ${parentMatch1Index + 1} and ${parentMatch2Index + 1}, Target center: ${targetCenter}`);
+            
+            return targetCenter;
+        }
+
         function alignBracketRoundsSimple() {
             const rounds = document.querySelectorAll('.round');
             if (rounds.length < 2) return;
 
             console.log('Starting simple bracket alignment...');
 
-            // Simple approach: use the same parent-match reference method
+            // Simple approach: use the same first-round reference method
             for (let roundIndex = 1; roundIndex < rounds.length; roundIndex++) {
                 const currentRound = rounds[roundIndex];
-                const previousRound = rounds[roundIndex - 1];
                 const currentMatches = currentRound.querySelectorAll('.match');
-                const previousMatches = previousRound.querySelectorAll('.match');
 
                 console.log(`Simple alignment - Round ${roundIndex + 1} with ${currentMatches.length} matches`);
 
                 currentMatches.forEach((currentMatch, matchIndex) => {
-                    const parentMatch1Index = matchIndex * 2;
-                    const parentMatch2Index = matchIndex * 2 + 1;
+                    // Calculate the target position based on the first round matches
+                    const targetPosition = calculateTargetPosition(roundIndex, matchIndex, rounds);
                     
-                    if (parentMatch1Index < previousMatches.length && parentMatch2Index < previousMatches.length) {
-                        const parentMatch1 = previousMatches[parentMatch1Index];
-                        const parentMatch2 = previousMatches[parentMatch2Index];
-                        
-                        // Get the top positions of parent matches
-                        const parent1Top = parentMatch1.offsetTop;
-                        const parent2Top = parentMatch2.offsetTop;
-                        const parent1Height = parentMatch1.offsetHeight;
-                        const parent2Height = parentMatch2.offsetHeight;
-                        
-                        // Calculate the center between the two parent matches
-                        const parent1Center = parent1Top + parent1Height / 2;
-                        const parent2Center = parent2Top + parent2Height / 2;
-                        const targetCenter = (parent1Center + parent2Center) / 2;
-                        
+                    if (targetPosition !== null) {
                         // Get current match position
                         const currentMatchTop = currentMatch.offsetTop;
                         const currentMatchHeight = currentMatch.offsetHeight;
                         const currentMatchCenter = currentMatchTop + currentMatchHeight / 2;
                         
                         // Calculate offset
-                        const offset = targetCenter - currentMatchCenter;
+                        const offset = targetPosition - currentMatchCenter;
                         
-                        console.log(`Simple alignment - Round ${roundIndex + 1}, Match ${matchIndex + 1}: Target center: ${targetCenter}, Current center: ${currentMatchCenter}, Offset: ${offset}`);
+                        console.log(`Simple alignment - Round ${roundIndex + 1}, Match ${matchIndex + 1}: Target: ${targetPosition}, Current: ${currentMatchCenter}, Offset: ${offset}`);
                         
                         // Apply offset
                         if (Math.abs(offset) > 2) {
