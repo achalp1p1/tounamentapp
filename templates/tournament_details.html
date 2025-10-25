@@ -429,9 +429,104 @@
         .draws-container {
             margin-top: 20px;
         }
-
+        
         .draws-filters {
             margin-bottom: 20px;
+        }
+        
+        /* Category Sub Tabs */
+        .category-tabs {
+            margin-top: 20px;
+        }
+        
+        .category-tab-header {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+        
+        .category-tab-button {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            color: #666;
+        }
+        
+        .category-tab-button:hover {
+            background: #e9ecef;
+            border-color: #1e3c72;
+            color: #1e3c72;
+        }
+        
+        .category-tab-button.active {
+            background: #1e3c72;
+            border-color: #1e3c72;
+            color: white;
+        }
+        
+        .category-tab-content {
+            padding: 20px 0;
+        }
+        
+        .category-draws-content h3 {
+            color: #1e3c72;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        
+        .draws-actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .draws-actions .btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .draws-actions .btn-primary {
+            background: #1e3c72;
+            color: white;
+            border: none;
+        }
+        
+        .draws-actions .btn-primary:hover {
+            background: #2a5298;
+            transform: translateY(-2px);
+        }
+        
+        .draws-actions .btn-secondary {
+            background: #f8f9fa;
+            color: #1e3c72;
+            border: 2px solid #1e3c72;
+        }
+        
+        .draws-actions .btn-secondary:hover {
+            background: #1e3c72;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .draws-display {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 200px;
         }
 
         .draws-content {
@@ -2304,17 +2399,35 @@
                 <div id="section-draws" class="detail-card">
                     <h2 class="section-title">Tournament Draws</h2>
                     <div class="draws-container">
-                        <div class="draws-filters">
-                            <select id="drawCategoryFilter" class="filter-select">
-                                <option value="">Select Category</option>
+                        <!-- Category Sub Tabs -->
+                        <div class="category-tabs">
+                            <div class="category-tab-header">
                                 {% for category in categories %}
-                                <option value="{{ category['Category'] }}">{{ category['Category'] }}</option>
+                                <button class="category-tab-button" onclick="showCategoryTab('{{ category['Category'] }}')" id="category-tab-{{ loop.index0 }}">
+                                    {{ category['Category'] }}
+                                </button>
                                 {% endfor %}
-                            </select>
-                        </div>
-                        <div class="draws-content">
-                            <!-- Draws will be loaded dynamically -->
-                            <div class="loading">Select a category to view draws</div>
+                            </div>
+                            
+                            <!-- Category Tab Contents -->
+                            {% for category in categories %}
+                            <div id="category-content-{{ category['Category'] }}" class="category-tab-content" style="display: none;">
+                                <div class="category-draws-content">
+                                    <h3>{{ category['Category'] }} Draws</h3>
+                                    <div class="draws-actions">
+                                        <button class="btn btn-primary" onclick="createDraw('{{ category['Category'] }}')">
+                                            <i class="fas fa-plus"></i> Create Draw
+                                        </button>
+                                        <button class="btn btn-secondary" onclick="viewDraw('{{ category['Category'] }}')">
+                                            <i class="fas fa-eye"></i> View Draw
+                                        </button>
+                                    </div>
+                                    <div class="draws-display" id="draws-display-{{ category['Category'] }}">
+                                        <div class="loading">No draws available for this category</div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>
@@ -2647,6 +2760,13 @@
             
             // Update URL hash without scrolling
             history.pushState(null, null, '#' + tabName);
+            
+            // Initialize category tabs if draws tab is shown
+            if (tabName === 'draws') {
+                setTimeout(() => {
+                    initializeCategoryTabs();
+                }, 100);
+            }
         }
 
         // Handle initial tab based on URL hash or parameters
@@ -2690,6 +2810,79 @@
         function loadDraws(category) {
             // Implementation will be added
         }
+        
+        // Category tab functions
+        function showCategoryTab(categoryName) {
+            // Hide all category tab contents
+            const allCategoryContents = document.querySelectorAll('.category-tab-content');
+            allCategoryContents.forEach(content => {
+                content.style.display = 'none';
+            });
+            
+            // Remove active class from all category tab buttons
+            const allCategoryButtons = document.querySelectorAll('.category-tab-button');
+            allCategoryButtons.forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Show selected category content
+            const selectedContent = document.getElementById(`category-content-${categoryName}`);
+            if (selectedContent) {
+                selectedContent.style.display = 'block';
+            }
+            
+            // Add active class to selected button
+            const selectedButton = document.querySelector(`[onclick="showCategoryTab('${categoryName}')"]`);
+            if (selectedButton) {
+                selectedButton.classList.add('active');
+            }
+            
+            // Load draws for this category
+            loadCategoryDraws(categoryName);
+        }
+        
+        function loadCategoryDraws(categoryName) {
+            const drawsDisplay = document.getElementById(`draws-display-${categoryName}`);
+            if (drawsDisplay) {
+                drawsDisplay.innerHTML = '<div class="loading">Loading draws for ' + categoryName + '...</div>';
+                
+                // Here you would typically fetch draws from the server
+                // For now, show a placeholder
+                setTimeout(() => {
+                    drawsDisplay.innerHTML = `
+                        <div class="no-draws">
+                            <i class="fas fa-trophy" style="font-size: 3em; color: #ccc; margin-bottom: 15px;"></i>
+                            <h4>No draws created yet</h4>
+                            <p>Click "Create Draw" to generate draws for this category.</p>
+                        </div>
+                    `;
+                }, 1000);
+            }
+        }
+        
+        function createDraw(categoryName) {
+            // Redirect to create draw page for this category
+            window.location.href = `/tournament/{{ tournament['Tournament Id'] }}/create_draw?category=${encodeURIComponent(categoryName)}`;
+        }
+        
+        function viewDraw(categoryName) {
+            // Load and display existing draws for this category
+            const drawsDisplay = document.getElementById(`draws-display-${categoryName}`);
+            if (drawsDisplay) {
+                drawsDisplay.innerHTML = '<div class="loading">Loading draws...</div>';
+                
+                // Here you would fetch actual draws from the server
+                // For now, show a placeholder
+                setTimeout(() => {
+                    drawsDisplay.innerHTML = `
+                        <div class="draws-info">
+                            <h4>Draws for ${categoryName}</h4>
+                            <p>Draw functionality will be implemented here.</p>
+                        </div>
+                    `;
+                }, 1000);
+            }
+        }
 
         // Event listeners for filters
         document.getElementById('categoryFilter')?.addEventListener('change', function() {
@@ -2702,6 +2895,25 @@
 
         document.getElementById('drawCategoryFilter')?.addEventListener('change', function() {
             loadDraws(this.value);
+        });
+        
+        // Initialize category tabs when draws tab is shown
+        function initializeCategoryTabs() {
+            const categories = document.querySelectorAll('.category-tab-button');
+            if (categories.length > 0) {
+                // Show first category by default
+                const firstCategory = categories[0];
+                const categoryName = firstCategory.textContent.trim();
+                showCategoryTab(categoryName);
+            }
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize category tabs if we're on the draws tab
+            if (document.getElementById('draws').style.display !== 'none') {
+                initializeCategoryTabs();
+            }
         });
     </script>
 
