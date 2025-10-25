@@ -2271,6 +2271,27 @@
                                         <!-- Players will be loaded here -->
                                     </tbody>
                                 </table>
+                                
+                                <!-- Create Draw Button -->
+                                <div style="margin-top: 20px; text-align: center;">
+                                    <button id="create-draw-btn" class="btn btn-primary" style="background-color: #1e3c72; border: none; padding: 12px 24px; font-size: 16px; font-weight: 500; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); display: none;" onclick="startShuffling()">
+                                        <i class="fas fa-play"></i> Create Draw
+                                    </button>
+                                    <button id="stop-shuffle-btn" class="btn btn-warning" style="background-color: #ff9800; border: none; padding: 12px 24px; font-size: 16px; font-weight: 500; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); display: none;" onclick="stopShuffling()">
+                                        <i class="fas fa-stop"></i> Stop Shuffle
+                                    </button>
+                                    <button id="save-draw-btn" class="btn btn-success" style="background-color: #28a745; border: none; padding: 12px 24px; font-size: 16px; font-weight: 500; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.15); display: none;" onclick="saveDraw()">
+                                        <i class="fas fa-save"></i> Save Draw
+                                    </button>
+                                </div>
+                                
+                                <!-- Status Message -->
+                                <div id="status-message" class="message" style="display: none; margin-top: 20px;"></div>
+                                
+                                <!-- Shuffle Counter -->
+                                <div id="shuffleCounter" style="display: none; text-align: center; margin-top: 20px; font-size: 18px; color: #1e3c72; font-weight: bold;">
+                                    Shuffling... <span id="shuffleCount">0</span>
+                                </div>
                             </div>
                         </div>
 
@@ -3587,8 +3608,8 @@
             }
             
             if (drawCategorySelect) {
-                drawCategorySelect.removeEventListener('change', handleCategoryChange);
-                drawCategorySelect.addEventListener('change', handleCategoryChange);
+                drawCategorySelect.removeEventListener('change', handleDrawCategoryChange);
+                drawCategorySelect.addEventListener('change', handleDrawCategoryChange);
             }
         } else if (stepNumber === 2) {
             // Auto-refresh clash players when switching to Step 2
@@ -3621,8 +3642,53 @@
             }
             
             if (drawCategorySelect) {
-                drawCategorySelect.removeEventListener('change', handleCategoryChange);
-                drawCategorySelect.addEventListener('change', handleCategoryChange);
+                drawCategorySelect.removeEventListener('change', handleDrawCategoryChange);
+                drawCategorySelect.addEventListener('change', handleDrawCategoryChange);
+            }
+        } else if (stepNumber === 3) {
+            // Auto-sync category selection when switching to Step 3 (Create Draws)
+            const drawCategorySelect = document.getElementById('drawCategorySelect');
+            const seedingCategorySelect = document.getElementById('seedingCategorySelect');
+            const clashCategorySelect = document.getElementById('clashCategorySelect');
+            
+            console.log('Switching to Step 3 - Create Draws');
+            
+            // Sync category selection from Step 1 (if available)
+            if (seedingCategorySelect && seedingCategorySelect.value && drawCategorySelect) {
+                if (drawCategorySelect.value !== seedingCategorySelect.value) {
+                    console.log('Syncing category from Step 1 to Create Draw:', seedingCategorySelect.value);
+                    drawCategorySelect.value = seedingCategorySelect.value;
+                    // Force refresh with cache busting
+                    setTimeout(() => {
+                        const event = new Event('change');
+                        drawCategorySelect.dispatchEvent(event);
+                    }, 100);
+                }
+            }
+            
+            // Sync with Create Draw view from Step 2 (clash resolution)
+            if (drawCategorySelect && clashCategorySelect && clashCategorySelect.value) {
+                if (drawCategorySelect.value !== clashCategorySelect.value) {
+                    console.log('Syncing category from Step 2 to Create Draw:', clashCategorySelect.value);
+                    drawCategorySelect.value = clashCategorySelect.value;
+                    // Force refresh with cache busting to ensure updated seedings are loaded
+                    setTimeout(() => {
+                        const event = new Event('change');
+                        drawCategorySelect.dispatchEvent(event);
+                    }, 100);
+                } else if (drawCategorySelect.value === clashCategorySelect.value) {
+                    // Even if the category is the same, force refresh to get updated seedings
+                    console.log('Forcing refresh of existing category to get updated seedings');
+                    setTimeout(() => {
+                        const event = new Event('change');
+                        drawCategorySelect.dispatchEvent(event);
+                    }, 100);
+                }
+            }
+            
+            if (drawCategorySelect) {
+                drawCategorySelect.removeEventListener('change', handleDrawCategoryChange);
+                drawCategorySelect.addEventListener('change', handleDrawCategoryChange);
             }
         } else if (stepNumber === 4) {
             // Auto-sync category selection when switching to Step 4 (Create Brackets)
@@ -3664,7 +3730,7 @@
         }
     }
 
-    // Function to handle category change in Step 2
+    // Function to handle category change in Step 2 (Seeding Clash Resolution)
     function handleCategoryChange() {
         const category = this.value;
         if (category) {
@@ -3707,6 +3773,56 @@
         } else {
             document.getElementById('players-table-container').innerHTML = '';
             document.getElementById('editable-table-container').innerHTML = '';
+            document.getElementById('create-draw-btn').style.display = 'none';
+            document.getElementById('save-draw-btn').style.display = 'none';
+            document.getElementById('stop-shuffle-btn').style.display = 'none';
+            document.getElementById('status-message').style.display = 'none';
+        }
+    }
+
+    // Function to handle category change in Step 3 (Create Draws)
+    function handleDrawCategoryChange() {
+        const category = this.value;
+        if (category) {
+            // Show loading message
+            document.getElementById('drawPlayersContainer').style.display = 'block';
+            const tbody = document.getElementById('drawPlayersTableBody');
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Loading players...</td></tr>';
+            document.getElementById('create-draw-btn').style.display = 'none';
+            document.getElementById('save-draw-btn').style.display = 'none';
+            document.getElementById('stop-shuffle-btn').style.display = 'none';
+            document.getElementById('status-message').style.display = 'none';
+            
+            // Fetch players for the selected category with cache busting
+            const url = `/tournament/{{ tournament['Tournament Id'] }}/get_category_players/${encodeURIComponent(category)}?fields=full&t=${Date.now()}`;
+            console.log('Fetching players for draw creation from:', url);
+            
+            fetch(url)
+                .then(response => {
+                    console.log('Response status for draw creation:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Received data for draw creation:', data);
+                    if (data.success && data.players && data.players.length > 0) {
+                        console.log('Players loaded successfully for draw creation:', data.players.length);
+                        displayDrawPlayers(data.players, document.getElementById('drawGroupSelect').value);
+                        // Show the create draw button
+                        document.getElementById('create-draw-btn').style.display = 'block';
+                    } else {
+                        console.log('No players found or invalid data for draw creation');
+                        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">No players found for this category</td></tr>';
+                        document.getElementById('create-draw-btn').style.display = 'none';
+                        document.getElementById('save-draw-btn').style.display = 'none';
+                        document.getElementById('stop-shuffle-btn').style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching players for draw creation:', error);
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Error loading players</td></tr>';
+                });
+        } else {
+            document.getElementById('drawPlayersContainer').style.display = 'none';
             document.getElementById('create-draw-btn').style.display = 'none';
             document.getElementById('save-draw-btn').style.display = 'none';
             document.getElementById('stop-shuffle-btn').style.display = 'none';
@@ -4238,7 +4354,7 @@
             drawCategorySelect.addEventListener('change', function() {
                 lastSelectedCategory = this.value;
                 console.log('Category selected in Step 3:', lastSelectedCategory);
-                handleCategoryChange.call(this);
+                handleDrawCategoryChange.call(this);
             });
         }
 
@@ -6914,7 +7030,7 @@
         // Initialize Step 3
         const drawCategorySelect = document.getElementById('drawCategorySelect');
         if (drawCategorySelect) {
-            drawCategorySelect.addEventListener('change', handleCategoryChange);
+            drawCategorySelect.addEventListener('change', handleDrawCategoryChange);
         }
 
         const createDrawBtn = document.getElementById('create-draw-btn');
