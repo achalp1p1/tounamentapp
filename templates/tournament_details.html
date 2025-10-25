@@ -1273,23 +1273,6 @@
             background-color: #5a6268;
         }
         
-        /* Disabled match arrow */
-        .match-arrow.disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-            pointer-events: none;
-        }
-        
-        .match-arrow.disabled::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.1);
-            border-radius: 50%;
-        }
 
 
 
@@ -5431,15 +5414,13 @@
                         matchDiv.appendChild(playerDiv);
                     });
 
-                    // Only add arrow for non-final rounds
+                    // Only add arrow for non-final rounds and non-disabled matches
                     if (!isLastRound) {
-                        const arrowDiv = document.createElement('div');
-                        arrowDiv.className = 'match-arrow';
-                        
                         // Check if this match should be disabled
                         const shouldDisableMatch = checkIfMatchShouldBeDisabled(match, roundIndex, matchIndex);
                         
                         // Also check after a short delay to ensure DOM is ready
+                        let delayedDisable = false;
                         setTimeout(() => {
                             const matchElement = document.getElementById(`round-${roundIndex + 1}-match-${matchIndex + 1}`);
                             if (matchElement) {
@@ -5449,18 +5430,21 @@
                                     matchText.includes('tbd') || 
                                     matchText.includes('to be determined')) {
                                     console.log('Delayed check: Match should be disabled');
-                                    arrowDiv.classList.add('disabled');
-                                    arrowDiv.title = 'Match not ready for score entry';
-                                    // Remove any existing click listeners
-                                    arrowDiv.onclick = null;
+                                    delayedDisable = true;
+                                    // Remove the arrow if it was already added
+                                    const existingArrow = matchDiv.querySelector('.match-arrow');
+                                    if (existingArrow) {
+                                        existingArrow.remove();
+                                    }
                                 }
                             }
                         }, 100);
                         
-                        if (shouldDisableMatch) {
-                            arrowDiv.classList.add('disabled');
-                            arrowDiv.title = 'Match not ready for score entry';
-                        } else {
+                        // Only create arrow if match is not disabled
+                        if (!shouldDisableMatch) {
+                            const arrowDiv = document.createElement('div');
+                            arrowDiv.className = 'match-arrow';
+                            
                             arrowDiv.addEventListener('click', function(e) {
                                 e.stopPropagation();
                                 
@@ -5486,9 +5470,9 @@
                                 };
                                 openMatchResultsModal(matchData);
                             });
+                            
+                            matchDiv.appendChild(arrowDiv);
                         }
-                        
-                        matchDiv.appendChild(arrowDiv);
                     }
                     
 
