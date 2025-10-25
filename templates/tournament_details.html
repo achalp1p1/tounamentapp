@@ -4121,37 +4121,34 @@
             
             console.log('Switching to Step 3 - Create Draws');
             
-            // Sync category selection from Step 1 (if available)
-            if (seedingCategorySelect && seedingCategorySelect.value && drawCategorySelect) {
-                if (drawCategorySelect.value !== seedingCategorySelect.value) {
-                    console.log('Syncing category from Step 1 to Create Draw:', seedingCategorySelect.value);
-                    drawCategorySelect.value = seedingCategorySelect.value;
-                    // Force refresh with cache busting
-                    setTimeout(() => {
-                        const event = new Event('change');
-                        drawCategorySelect.dispatchEvent(event);
-                    }, 100);
-                }
+            // Clear any existing data first to prevent duplication
+            const tbody = document.getElementById('drawPlayersTableBody');
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Loading players...</td></tr>';
             }
             
-            // Sync with Create Draw view from Step 2 (clash resolution)
-            if (drawCategorySelect && clashCategorySelect && clashCategorySelect.value) {
-                if (drawCategorySelect.value !== clashCategorySelect.value) {
-                    console.log('Syncing category from Step 2 to Create Draw:', clashCategorySelect.value);
-                    drawCategorySelect.value = clashCategorySelect.value;
-                    // Force refresh with cache busting to ensure updated seedings are loaded
-                    setTimeout(() => {
-                        const event = new Event('change');
-                        drawCategorySelect.dispatchEvent(event);
-                    }, 100);
-                } else if (drawCategorySelect.value === clashCategorySelect.value) {
-                    // Even if the category is the same, force refresh to get updated seedings
-                    console.log('Forcing refresh of existing category to get updated seedings');
-                    setTimeout(() => {
-                        const event = new Event('change');
-                        drawCategorySelect.dispatchEvent(event);
-                    }, 100);
+            // Determine which category to use (prioritize clash resolution if available)
+            let selectedCategory = null;
+            if (clashCategorySelect && clashCategorySelect.value) {
+                selectedCategory = clashCategorySelect.value;
+                console.log('Using category from Step 2 (clash resolution):', selectedCategory);
+            } else if (seedingCategorySelect && seedingCategorySelect.value) {
+                selectedCategory = seedingCategorySelect.value;
+                console.log('Using category from Step 1 (seeding):', selectedCategory);
+            }
+            
+            // Set the category and load data only once
+            if (selectedCategory && drawCategorySelect) {
+                if (drawCategorySelect.value !== selectedCategory) {
+                    console.log('Setting category for Create Draw:', selectedCategory);
+                    drawCategorySelect.value = selectedCategory;
                 }
+                // Load data with a single event trigger (no matter if category changed or not)
+                console.log('Loading fresh data for Create Draw');
+                setTimeout(() => {
+                    const event = new Event('change');
+                    drawCategorySelect.dispatchEvent(event);
+                }, 100);
             }
             
             if (drawCategorySelect) {
@@ -4249,9 +4246,17 @@
     }
 
     // Function to handle category change in Step 3 (Create Draws)
+    let isDrawDataLoading = false; // Flag to prevent multiple simultaneous loads
+    
     function handleDrawCategoryChange() {
+        if (isDrawDataLoading) {
+            console.log('Draw data already loading, ignoring duplicate call');
+            return;
+        }
+        
         const category = this.value;
         if (category) {
+            isDrawDataLoading = true;
             // Show loading message
             document.getElementById('drawPlayersContainer').style.display = 'block';
             const tbody = document.getElementById('drawPlayersTableBody');
@@ -4288,6 +4293,9 @@
                 .catch(error => {
                     console.error('Error fetching players for draw creation:', error);
                     tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Error loading players</td></tr>';
+                })
+                .finally(() => {
+                    isDrawDataLoading = false; // Reset flag
                 });
         } else {
             document.getElementById('drawPlayersContainer').style.display = 'none';
@@ -4816,15 +4824,7 @@
             });
         }
 
-        // Initialize Step 3
-        const drawCategorySelect = document.getElementById('drawCategorySelect');
-        if (drawCategorySelect) {
-            drawCategorySelect.addEventListener('change', function() {
-                lastSelectedCategory = this.value;
-                console.log('Category selected in Step 3:', lastSelectedCategory);
-                handleDrawCategoryChange.call(this);
-            });
-        }
+        // Initialize Step 3 (REMOVED - event listener is managed in step switching)
 
         const createDrawBtn = document.getElementById('create-draw-btn');
         if (createDrawBtn) {
@@ -8178,44 +8178,27 @@
             showDrawMessage('All seed selections cleared', 'success');
         }
 
-        // Function to load draw players
-        function loadDrawPlayers() {
-            const category = document.getElementById('drawCategorySelect').value;
-            const groupField = document.getElementById('drawGroupSelect').value;
-            
-            if (!category) {
-                document.getElementById('drawPlayersContainer').style.display = 'none';
-                return;
-            }
-
-            // Show loading state
-            const tbody = document.getElementById('drawPlayersTableBody');
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Loading players...</td></tr>';
-            document.getElementById('drawPlayersContainer').style.display = 'block';
-
-            // Fetch players for this category
-            fetch(`/tournament/{{ tournament['Tournament Id'] }}/get_category_players/${category}?fields=full`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        displayDrawPlayers(data.players, groupField);
-                    } else {
-                        showDrawMessage('Error loading players: ' + data.message, 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showDrawMessage('Error loading players', 'error');
-                });
-        }
+        // Function to load draw players (REMOVED - using handleDrawCategoryChange instead)
 
         // Function to display draw players in the table
+        let isDisplayingDrawPlayers = false; // Flag to prevent multiple simultaneous displays
+        
         function displayDrawPlayers(players, groupField) {
+            if (isDisplayingDrawPlayers) {
+                console.log('displayDrawPlayers already in progress, ignoring duplicate call');
+                return;
+            }
+            
+            isDisplayingDrawPlayers = true;
+            console.log('displayDrawPlayers called with', players.length, 'players');
+            console.log('Current tbody children before clear:', document.getElementById('drawPlayersTableBody').children.length);
+            
             const tbody = document.getElementById('drawPlayersTableBody');
             tbody.innerHTML = '';
 
             if (players.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">No players found for this category</td></tr>';
+                isDisplayingDrawPlayers = false; // Reset flag
                 return;
             }
 
@@ -8296,6 +8279,8 @@
                         setTimeout(() => {
                             updateSeedDropdowns();
                         }, 100);
+                        
+                        console.log('displayDrawPlayers completed (main path). Final tbody children:', tbody.children.length);
                     }
                 })
                 .catch(error => {
@@ -8359,7 +8344,12 @@
                     setTimeout(() => {
                         updateSeedDropdowns();
                     }, 100);
+                    
+                    console.log('displayDrawPlayers completed (fallback). Final tbody children:', tbody.children.length);
                 });
+                
+            console.log('displayDrawPlayers completed. Final tbody children:', tbody.children.length);
+            isDisplayingDrawPlayers = false; // Reset flag
         }
 
         // Function to show draw message
@@ -8456,12 +8446,26 @@
             const drawCategorySelect = document.getElementById('drawCategorySelect');
             const drawGroupSelect = document.getElementById('drawGroupSelect');
             
-            if (drawCategorySelect) {
-                drawCategorySelect.addEventListener('change', loadDrawPlayers);
-            }
+            // Event listener managed in step switching
             
             if (drawGroupSelect) {
-                drawGroupSelect.addEventListener('change', loadDrawPlayers);
+                drawGroupSelect.addEventListener('change', function() {
+                    // Refresh the current draw players with new group field
+                    const category = document.getElementById('drawCategorySelect').value;
+                    if (category) {
+                        const url = `/tournament/{{ tournament['Tournament Id'] }}/get_category_players/${encodeURIComponent(category)}?fields=full&t=${Date.now()}`;
+                        fetch(url)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success && data.players && data.players.length > 0) {
+                                    displayDrawPlayers(data.players, this.value);
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error refreshing players for group change:', error);
+                            });
+                    }
+                });
             }
         });
 
@@ -8588,11 +8592,7 @@
             clashCategorySelect.addEventListener('change', loadClashPlayers);
         }
 
-        // Initialize Step 3
-        const drawCategorySelect = document.getElementById('drawCategorySelect');
-        if (drawCategorySelect) {
-            drawCategorySelect.addEventListener('change', handleDrawCategoryChange);
-        }
+        // Initialize Step 3 (REMOVED - event listener is managed in step switching)
 
         const createDrawBtn = document.getElementById('create-draw-btn');
         if (createDrawBtn) {
