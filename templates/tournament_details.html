@@ -1272,8 +1272,8 @@
             flex-direction: column;
             position: relative;
             align-items: center;
-            width: 220px;
-            min-width: 220px;
+            width: 250px;
+            min-width: 250px;
         }
 
         .round:first-child {
@@ -1305,9 +1305,9 @@
             border: 2px solid #1e3c72;
             border-radius: 8px;
             padding: 12px;
-            width: 200px;
-            min-width: 200px;
-            max-width: 200px;
+            width: 230px;
+            min-width: 230px;
+            max-width: 230px;
             position: relative;
             height: 70px;
             display: flex;
@@ -1507,6 +1507,44 @@
         .btn-cancel:hover {
             background-color: #5a6268;
         }
+
+        /* Settings Modal Styles */
+        .settings-content {
+            margin: 20px 0;
+        }
+
+        .setting-item {
+            margin-bottom: 25px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+
+        .setting-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-weight: bold;
+            color: #1e3c72;
+            margin-bottom: 8px;
+        }
+
+        .setting-label input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+
+        .setting-description {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+            font-style: italic;
+        }
+
+        .checkmark {
+            margin-left: 5px;
+        }
         
         /* Match info above match box */
         .match-info-above {
@@ -1534,7 +1572,7 @@
             border-radius: 6px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 200px;
+            max-width: 230px;
             position: relative;
             z-index: 10;
             flex-shrink: 0;
@@ -1567,9 +1605,9 @@
             }
             
             .match {
-                width: 160px;
-                min-width: 160px;
-                max-width: 160px;
+                width: 180px;
+                min-width: 180px;
+                max-width: 180px;
                 height: 60px;
             }
         }
@@ -2681,6 +2719,9 @@
                                     {% endfor %}
                                 </select>
                                 <button id="generateBracket" class="btn btn-primary" disabled>Generate Bracket</button>
+                                <button id="bracketSettings" class="btn btn-secondary" title="Bracket Settings">
+                                    <i class="fas fa-cog"></i>
+                                </button>
                             </div>
 
                             <div class="bracket-container">
@@ -2700,6 +2741,50 @@
                                     <div class="modal-buttons">
                                         <button class="btn-cancel" id="modalCancel">Cancel</button>
                                         <button class="btn-save" id="modalSave">Save Results</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bracket Settings Modal -->
+                            <div id="bracketSettingsModal" class="modal">
+                                <div class="modal-content">
+                                    <span class="close" id="settingsModalClose">&times;</span>
+                                    <h3>Bracket Display Settings</h3>
+                                    <div class="settings-content">
+                                        <div class="setting-item">
+                                            <label class="setting-label">
+                                                <input type="checkbox" id="showSeeds" checked>
+                                                <span class="checkmark"></span>
+                                                Show Seeds
+                                            </label>
+                                            <p class="setting-description">Display seed numbers alongside player names in brackets</p>
+                                        </div>
+                                        <div class="setting-item">
+                                            <label class="setting-label">
+                                                <input type="checkbox" id="showGroupInfo">
+                                                <span class="checkmark"></span>
+                                                Show Group Information
+                                            </label>
+                                            <p class="setting-description">Display group information alongside player names in brackets</p>
+                                        </div>
+                                        <div class="setting-item" id="groupSelectionItem" style="display: none;">
+                                            <label class="setting-label" style="margin-bottom: 10px;">
+                                                Group Type
+                                            </label>
+                                            <select id="groupTypeSelect" class="form-control" style="max-width: 300px;">
+                                                <option value="">Select Group Type</option>
+                                                <option value="None">None</option>
+                                                <option value="State">State</option>
+                                                <option value="District">District</option>
+                                                <option value="School/Institution">School/Institution</option>
+                                                <option value="Academy">Academy</option>
+                                            </select>
+                                            <p class="setting-description">Choose the type of group information to display</p>
+                                        </div>
+                                    </div>
+                                    <div class="modal-buttons">
+                                        <button class="btn-cancel" id="settingsCancel">Cancel</button>
+                                        <button class="btn-save" id="settingsSave">Apply Settings</button>
                                     </div>
                                 </div>
                             </div>
@@ -5493,6 +5578,77 @@
             }
         });
 
+        // Settings modal functionality
+        const bracketSettingsBtn = document.getElementById('bracketSettings');
+        const bracketSettingsModal = document.getElementById('bracketSettingsModal');
+        const settingsModalClose = document.getElementById('settingsModalClose');
+        const settingsCancel = document.getElementById('settingsCancel');
+        const settingsSave = document.getElementById('settingsSave');
+        const showSeedsCheckbox = document.getElementById('showSeeds');
+        const showGroupInfoCheckbox = document.getElementById('showGroupInfo');
+        const groupTypeSelect = document.getElementById('groupTypeSelect');
+        const groupSelectionItem = document.getElementById('groupSelectionItem');
+
+        // Global settings state
+        let bracketSettings = {
+            showSeeds: true,
+            showGroupInfo: false,
+            groupType: ''
+        };
+
+        // Open settings modal
+        bracketSettingsBtn.addEventListener('click', function() {
+            // Set current values
+            showSeedsCheckbox.checked = bracketSettings.showSeeds;
+            showGroupInfoCheckbox.checked = bracketSettings.showGroupInfo;
+            groupTypeSelect.value = bracketSettings.groupType;
+            
+            // Show/hide group selection based on checkbox
+            toggleGroupSelection();
+            
+            bracketSettingsModal.style.display = 'block';
+        });
+
+        // Toggle group selection visibility
+        function toggleGroupSelection() {
+            if (showGroupInfoCheckbox.checked) {
+                groupSelectionItem.style.display = 'block';
+            } else {
+                groupSelectionItem.style.display = 'none';
+            }
+        }
+
+        // Handle group info checkbox change
+        showGroupInfoCheckbox.addEventListener('change', toggleGroupSelection);
+
+        // Close settings modal
+        function closeSettingsModal() {
+            bracketSettingsModal.style.display = 'none';
+        }
+
+        settingsModalClose.addEventListener('click', closeSettingsModal);
+        settingsCancel.addEventListener('click', closeSettingsModal);
+
+        // Apply settings
+        settingsSave.addEventListener('click', function() {
+            bracketSettings.showSeeds = showSeedsCheckbox.checked;
+            bracketSettings.showGroupInfo = showGroupInfoCheckbox.checked;
+            bracketSettings.groupType = groupTypeSelect.value;
+            closeSettingsModal();
+            
+            // Regenerate bracket if it exists
+            if (bracketData.allPlayers && bracketData.allPlayers.length > 0) {
+                generateBracket(bracketData.allPlayers);
+            }
+        });
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            if (event.target === bracketSettingsModal) {
+                closeSettingsModal();
+            }
+        });
+
         // Store bracket data globally for use in swapping
         let bracketData = {
             currentRounds: [],
@@ -5504,9 +5660,91 @@
             targetPlayer: null
         };
         
+        // Helper function to format a player with group info and seed
+        function formatPlayerForBracket(player) {
+            const playerDiv = document.createElement('div');
+            playerDiv.className = `player ${player.name === 'BYE' ? 'bye' : ''}`;
+            playerDiv.style.cssText = `
+                padding: 4px 8px;
+                margin: 2px 0;
+                border-radius: 4px;
+                background: ${player.name === 'BYE' ? '#f0f0f0' : '#f8f9fa'};
+                border: 1px solid ${player.name === 'BYE' ? '#ddd' : '#e9ecef'};
+                cursor: ${player.name !== 'BYE' && !player.name.startsWith('Winner of Match') ? 'pointer' : 'default'};
+                transition: all 0.2s ease;
+            `;
+            
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = player.name;
+            nameSpan.style.cssText = `
+                font-weight: 500;
+                color: ${player.name === 'BYE' ? '#666' : '#1e3c72'};
+            `;
+            playerDiv.appendChild(nameSpan);
+            
+            // Show group information if setting is enabled (before seed)
+            if (bracketSettings.showGroupInfo && bracketSettings.groupType && bracketSettings.groupType !== 'None') {
+                let groupValue = '';
+                
+                // Get the appropriate group value based on selected type
+                switch (bracketSettings.groupType) {
+                    case 'State':
+                        groupValue = player.state || '';
+                        break;
+                    case 'District':
+                        groupValue = player.district || '';
+                        break;
+                    case 'School/Institution':
+                        groupValue = player.school || player.institution || '';
+                        break;
+                    case 'Academy':
+                        groupValue = player.academy || '';
+                        break;
+                }
+                
+                if (groupValue && groupValue !== 'BYE') {
+                    const groupSpan = document.createElement('span');
+                    groupSpan.className = 'group-info';
+                    // Show only first 3 letters in curved brackets
+                    const shortGroupValue = groupValue.substring(0, 3);
+                    groupSpan.textContent = `(${shortGroupValue})`;
+                    groupSpan.style.cssText = `
+                        margin-left: auto;
+                        color: #28a745;
+                        font-size: 0.9em;
+                        font-weight: normal;
+                        padding: 2px 6px;
+                        border-radius: 3px;
+                    `;
+                    playerDiv.appendChild(groupSpan);
+                }
+            }
+            
+            // Show seeds if setting is enabled
+            if (bracketSettings.showSeeds && player.seeding && player.seeding !== 'BYE') {
+                const seedSpan = document.createElement('span');
+                seedSpan.className = 'seed';
+                seedSpan.textContent = `(${player.seeding})`;
+                seedSpan.style.cssText = `
+                    margin-left: 4px;
+                    color: #666;
+                    font-size: 0.9em;
+                    font-weight: 400;
+                `;
+                playerDiv.appendChild(seedSpan);
+            }
+            
+            return playerDiv;
+        }
+        
         function generateBracket(players) {
             // Store all players for reference
             bracketData.allPlayers = players;
+            
+            // Calculate dynamic width based on settings
+            const baseWidth = 230;
+            const groupWidthAdjustment = bracketSettings.showGroupInfo && bracketSettings.groupType && bracketSettings.groupType !== 'None' ? 40 : 0; // 4 characters worth of space
+            const dynamicWidth = baseWidth + groupWidthAdjustment;
             
             // Sort players by seeding (ascending order - seed 1 is best)
             players.sort((a, b) => {
@@ -5571,9 +5809,16 @@
                 const roundDiv = document.createElement('div');
                 roundDiv.className = 'round';
                 
+                // Apply dynamic width to round container
+                roundDiv.style.width = `${dynamicWidth + 20}px`;
+                roundDiv.style.minWidth = `${dynamicWidth + 20}px`;
+                
                 const roundTitle = document.createElement('div');
                 roundTitle.className = 'round-title';
                 roundTitle.textContent = getRoundLabel(roundIndex, rounds.length);
+                
+                // Apply dynamic width to round title
+                roundTitle.style.maxWidth = `${dynamicWidth}px`;
                 roundDiv.appendChild(roundTitle);
 
                 // Calculate spacing for proper alignment
@@ -5585,6 +5830,11 @@
                     const matchDiv = document.createElement('div');
                     matchDiv.className = 'match';
                     matchDiv.id = `round-${roundIndex + 1}-match-${matchIndex + 1}`;
+                    
+                    // Apply dynamic width based on group info setting
+                    matchDiv.style.width = `${dynamicWidth}px`;
+                    matchDiv.style.minWidth = `${dynamicWidth}px`;
+                    matchDiv.style.maxWidth = `${dynamicWidth}px`;
                     
                     // Add specific styling for different rounds
                     if (isFirstRound) {
@@ -5633,12 +5883,51 @@
                         
                         playerDiv.appendChild(nameSpan);
                         
-                        if (player.seeding && player.seeding !== 'BYE') {
+                        // Show group information if setting is enabled (before seed)
+                        if (bracketSettings.showGroupInfo && bracketSettings.groupType && bracketSettings.groupType !== 'None') {
+                            let groupValue = '';
+                            
+                            // Get the appropriate group value based on selected type
+                            switch (bracketSettings.groupType) {
+                                case 'State':
+                                    groupValue = player.state || '';
+                                    break;
+                                case 'District':
+                                    groupValue = player.district || '';
+                                    break;
+                                case 'School/Institution':
+                                    groupValue = player.school || player.institution || '';
+                                    break;
+                                case 'Academy':
+                                    groupValue = player.academy || '';
+                                    break;
+                            }
+                            
+                            if (groupValue && groupValue !== 'BYE') {
+                                const groupSpan = document.createElement('span');
+                                groupSpan.className = 'group-info';
+                                // Show only first 3 letters in curved brackets
+                                const shortGroupValue = groupValue.substring(0, 3);
+                                groupSpan.textContent = `(${shortGroupValue})`;
+                                groupSpan.style.cssText = `
+                                    margin-left: auto;
+                                    color: #28a745;
+                                    font-size: 0.9em;
+                                    font-weight: normal;
+                                    padding: 2px 6px;
+                                    border-radius: 3px;
+                                `;
+                                playerDiv.appendChild(groupSpan);
+                            }
+                        }
+                        
+                        // Show seeds if setting is enabled
+                        if (bracketSettings.showSeeds && player.seeding && player.seeding !== 'BYE') {
                             const seedSpan = document.createElement('span');
                             seedSpan.className = 'seed';
                             seedSpan.textContent = `(${player.seeding})`;
                             seedSpan.style.cssText = `
-                                margin-left: 8px;
+                                margin-left: 4px;
                                 color: #666;
                                 font-size: 0.9em;
                                 font-weight: 400;
@@ -6367,12 +6656,22 @@
                 }
             }
             
-            // Determine winner
+            // Determine winner - return full player object, not just name
             let winner;
             if (player1SetsWon > player2SetsWon) {
-                winner = currentMatchData.player1;
+                // Find the full player object for player1
+                winner = bracketData.allPlayers.find(p => p.name === currentMatchData.player1);
+                if (!winner) {
+                    // Fallback to just the name if player object not found
+                    winner = { name: currentMatchData.player1 };
+                }
             } else if (player2SetsWon > player1SetsWon) {
-                winner = currentMatchData.player2;
+                // Find the full player object for player2
+                winner = bracketData.allPlayers.find(p => p.name === currentMatchData.player2);
+                if (!winner) {
+                    // Fallback to just the name if player object not found
+                    winner = { name: currentMatchData.player2 };
+                }
             } else {
                 winner = 'Tie'; // Handle tie situation
             }
@@ -6408,21 +6707,39 @@
                     if (matchData.winner) {
                         console.log('Winner:', matchData.winner);
                         
-                        const isPlayer1Winner = matchData.winner === matchData.player1;
-                        const isPlayer2Winner = matchData.winner === matchData.player2;
+                        // Handle winner being either a player object or just a name
+                        const winnerName = typeof matchData.winner === 'object' ? matchData.winner.name : matchData.winner;
+                        const isPlayer1Winner = winnerName === matchData.player1;
+                        const isPlayer2Winner = winnerName === matchData.player2;
                         
-                        // Update player 1 display - just add tick if winner
+                        // Update player 1 display - preserve formatting and add tick if winner
                         if (isPlayer1Winner) {
-                            player1Div.innerHTML = `${matchData.player1} <span style="color: #28a745; font-weight: bold; margin-left: 5px;">✓</span>`;
-                        } else {
-                            player1Div.innerHTML = matchData.player1;
+                            // Find existing name span and add tick after it
+                            const nameSpan = player1Div.querySelector('span');
+                            if (nameSpan) {
+                                const tickSpan = document.createElement('span');
+                                tickSpan.style.cssText = 'color: #28a745; font-weight: bold; margin-left: 5px;';
+                                tickSpan.textContent = '✓';
+                                player1Div.appendChild(tickSpan);
+                            } else {
+                                // Fallback if no name span found
+                                player1Div.innerHTML = `${matchData.player1} <span style="color: #28a745; font-weight: bold; margin-left: 5px;">✓</span>`;
+                            }
                         }
                         
-                        // Update player 2 display - just add tick if winner
+                        // Update player 2 display - preserve formatting and add tick if winner
                         if (isPlayer2Winner) {
-                            player2Div.innerHTML = `${matchData.player2} <span style="color: #28a745; font-weight: bold; margin-left: 5px;">✓</span>`;
-                        } else {
-                            player2Div.innerHTML = matchData.player2;
+                            // Find existing name span and add tick after it
+                            const nameSpan = player2Div.querySelector('span');
+                            if (nameSpan) {
+                                const tickSpan = document.createElement('span');
+                                tickSpan.style.cssText = 'color: #28a745; font-weight: bold; margin-left: 5px;';
+                                tickSpan.textContent = '✓';
+                                player2Div.appendChild(tickSpan);
+                            } else {
+                                // Fallback if no name span found
+                                player2Div.innerHTML = `${matchData.player2} <span style="color: #28a745; font-weight: bold; margin-left: 5px;">✓</span>`;
+                            }
                         }
                         
                         console.log('Updated player displays with simple ticks');
@@ -6471,10 +6788,27 @@
                 // Update the next match with the winner
                 const nextMatchPlayerDivs = nextMatchElement.querySelectorAll('.player');
                 if (nextMatchPlayerDivs[targetPlayerIndex]) {
-                    const winnerName = matchData.winner;
-                    // Use the same styling as original players - just plain text
-                    nextMatchPlayerDivs[targetPlayerIndex].innerHTML = winnerName;
+                    // Handle winner being either a player object or just a name
+                    let winnerPlayer;
+                    if (typeof matchData.winner === 'object') {
+                        // Winner is already a player object
+                        winnerPlayer = matchData.winner;
+                    } else {
+                        // Winner is just a name, find the full player object
+                        winnerPlayer = bracketData.allPlayers.find(p => p.name === matchData.winner);
+                    }
                     
+                    if (winnerPlayer) {
+                        // Use the helper function to format the player properly
+                        const formattedPlayerDiv = formatPlayerForBracket(winnerPlayer);
+                        nextMatchPlayerDivs[targetPlayerIndex].innerHTML = formattedPlayerDiv.innerHTML;
+                    } else {
+                        // Fallback to plain text if player data not found
+                        const winnerName = typeof matchData.winner === 'object' ? matchData.winner.name : matchData.winner;
+                        nextMatchPlayerDivs[targetPlayerIndex].innerHTML = winnerName;
+                    }
+                    
+                    const winnerName = typeof matchData.winner === 'object' ? matchData.winner.name : matchData.winner;
                     console.log(`Updated next match position ${targetPlayerIndex} with winner: ${winnerName}`);
                     
                     // Update the bracket data to reflect the progression
@@ -7174,50 +7508,33 @@
                 const selectedPlayerElement = selectedMatchElement.querySelectorAll('.player')[bracketData.selectedPlayerIndex];
                 const targetPlayerElement = targetMatchElement.querySelectorAll('.player')[bracketData.targetPlayer.playerIndex];
                 
-                // Update selected player
-                const selectedNameSpan = selectedPlayerElement.querySelector('span');
-                selectedNameSpan.textContent = round[bracketData.selectedMatch][bracketData.selectedPlayerIndex].name;
+                // Update selected player - use helper function to preserve formatting
+                const selectedPlayer = round[bracketData.selectedMatch][bracketData.selectedPlayerIndex];
+                const formattedSelectedPlayerDiv = formatPlayerForBracket(selectedPlayer);
+                selectedPlayerElement.innerHTML = formattedSelectedPlayerDiv.innerHTML;
                 
-                // Update selected player seeding
-                let selectedSeedSpan = selectedPlayerElement.querySelector('.seed');
-                if (round[bracketData.selectedMatch][bracketData.selectedPlayerIndex].seeding) {
-                    if (!selectedSeedSpan) {
-                        selectedSeedSpan = document.createElement('span');
-                        selectedSeedSpan.className = 'seed';
-                        selectedPlayerElement.appendChild(selectedSeedSpan);
-                    }
-                    selectedSeedSpan.textContent = `(${round[bracketData.selectedMatch][bracketData.selectedPlayerIndex].seeding})`;
-                } else if (selectedSeedSpan) {
-                    selectedSeedSpan.remove();
-                }
-                
-                // Update target player
-                const targetNameSpan = targetPlayerElement.querySelector('span');
-                targetNameSpan.textContent = round[bracketData.targetPlayer.matchIndex][bracketData.targetPlayer.playerIndex].name;
-                
-                // Update target player seeding
-                let targetSeedSpan = targetPlayerElement.querySelector('.seed');
-                if (round[bracketData.targetPlayer.matchIndex][bracketData.targetPlayer.playerIndex].seeding) {
-                    if (!targetSeedSpan) {
-                        targetSeedSpan = document.createElement('span');
-                        targetSeedSpan.className = 'seed';
-                        targetPlayerElement.appendChild(targetSeedSpan);
-                    }
-                    targetSeedSpan.textContent = `(${round[bracketData.targetPlayer.matchIndex][bracketData.targetPlayer.playerIndex].seeding})`;
-                } else if (targetSeedSpan) {
-                    targetSeedSpan.remove();
-                }
+                // Update target player - use helper function to preserve formatting
+                const targetPlayer = round[bracketData.targetPlayer.matchIndex][bracketData.targetPlayer.playerIndex];
+                const formattedTargetPlayerDiv = formatPlayerForBracket(targetPlayer);
+                targetPlayerElement.innerHTML = formattedTargetPlayerDiv.innerHTML;
                 
                 // Update click handlers
-                selectedNameSpan.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    showSwapPopup(bracketData.selectedRound, bracketData.selectedMatch, bracketData.selectedPlayerIndex, round[bracketData.selectedMatch][bracketData.selectedPlayerIndex]);
-                });
+                const selectedNameSpan = selectedPlayerElement.querySelector('span');
+                const targetNameSpan = targetPlayerElement.querySelector('span');
                 
-                targetNameSpan.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    showSwapPopup(bracketData.selectedRound, bracketData.targetPlayer.matchIndex, bracketData.targetPlayer.playerIndex, round[bracketData.targetPlayer.matchIndex][bracketData.targetPlayer.playerIndex]);
-                });
+                if (selectedNameSpan) {
+                    selectedNameSpan.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        showSwapPopup(bracketData.selectedRound, bracketData.selectedMatch, bracketData.selectedPlayerIndex, round[bracketData.selectedMatch][bracketData.selectedPlayerIndex]);
+                    });
+                }
+                
+                if (targetNameSpan) {
+                    targetNameSpan.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        showSwapPopup(bracketData.selectedRound, bracketData.targetPlayer.matchIndex, bracketData.targetPlayer.playerIndex, round[bracketData.targetPlayer.matchIndex][bracketData.targetPlayer.playerIndex]);
+                    });
+                }
             }
             
             // Close the popup
