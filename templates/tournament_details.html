@@ -6473,18 +6473,42 @@
             const matchElement = document.getElementById(matchData.matchId);
             let player1Name = 'Player 1';
             let player2Name = 'Player 2';
+            let player1Seed = '';
+            let player2Seed = '';
             
             if (matchElement) {
                 // Try to find player divs with different selectors
                 const playerDivs = matchElement.querySelectorAll('.player');
                 if (playerDivs.length >= 2) {
-                    // Get first player name
-                    const player1Text = playerDivs[0].textContent.trim();
-                    player1Name = player1Text.replace(/\(\d+\)$/, '').replace(/\(\d+-\d+\)$/, '').trim();
+                    // Get first player name and seed
+                    const nameSpan1 = playerDivs[0].querySelector('span');
+                    if (nameSpan1) {
+                        player1Name = nameSpan1.textContent.trim();
+                    } else {
+                        const player1Text = playerDivs[0].textContent.trim();
+                        player1Name = player1Text.replace(/\(\d+\)$/, '').replace(/\(\d+-\d+\)$/, '').trim();
+                    }
                     
-                    // Get second player name
-                    const player2Text = playerDivs[1].textContent.trim();
-                    player2Name = player2Text.replace(/\(\d+\)$/, '').replace(/\(\d+-\d+\)$/, '').trim();
+                    // Extract seed from first player
+                    const seedSpan1 = playerDivs[0].querySelector('.seed');
+                    if (seedSpan1) {
+                        player1Seed = seedSpan1.textContent.replace(/[()]/g, '').trim();
+                    }
+                    
+                    // Get second player name and seed
+                    const nameSpan2 = playerDivs[1].querySelector('span');
+                    if (nameSpan2) {
+                        player2Name = nameSpan2.textContent.trim();
+                    } else {
+                        const player2Text = playerDivs[1].textContent.trim();
+                        player2Name = player2Text.replace(/\(\d+\)$/, '').replace(/\(\d+-\d+\)$/, '').trim();
+                    }
+                    
+                    // Extract seed from second player
+                    const seedSpan2 = playerDivs[1].querySelector('.seed');
+                    if (seedSpan2) {
+                        player2Seed = seedSpan2.textContent.replace(/[()]/g, '').trim();
+                    }
                 } else {
                     // Fallback: try to get names from any text content
                     const allText = matchElement.textContent;
@@ -6495,12 +6519,14 @@
                     }
                 }
                 
-                console.log('Extracted player names:', player1Name, player2Name);
+                console.log('Extracted player names:', player1Name, player2Name, 'seeds:', player1Seed, player2Seed);
             }
             
-            // Update match data with actual names
+            // Update match data with actual names and seeds
             currentMatchData.player1 = player1Name;
             currentMatchData.player2 = player2Name;
+            currentMatchData.player1Seed = player1Seed;
+            currentMatchData.player2Seed = player2Seed;
             
             // Set modal title
             modalTitle.textContent = `Update Results - ${player1Name} vs ${player2Name}`;
@@ -6662,15 +6688,33 @@
                 // Find the full player object for player1
                 winner = bracketData.allPlayers.find(p => p.name === currentMatchData.player1);
                 if (!winner) {
-                    // Fallback to just the name if player object not found
-                    winner = { name: currentMatchData.player1 };
+                    // Fallback - preserve seed and group info from extracted data
+                    const sourcePlayer = bracketData.allPlayers.find(p => p.name.trim() === currentMatchData.player1.trim()) || {};
+                    winner = { 
+                        name: currentMatchData.player1,
+                        seeding: currentMatchData.player1Seed || sourcePlayer.seeding || '',
+                        state: sourcePlayer.state || '',
+                        district: sourcePlayer.district || '',
+                        school: sourcePlayer.school || '',
+                        institution: sourcePlayer.institution || '',
+                        academy: sourcePlayer.academy || ''
+                    };
                 }
             } else if (player2SetsWon > player1SetsWon) {
                 // Find the full player object for player2
                 winner = bracketData.allPlayers.find(p => p.name === currentMatchData.player2);
                 if (!winner) {
-                    // Fallback to just the name if player object not found
-                    winner = { name: currentMatchData.player2 };
+                    // Fallback - preserve seed and group info from extracted data
+                    const sourcePlayer = bracketData.allPlayers.find(p => p.name.trim() === currentMatchData.player2.trim()) || {};
+                    winner = { 
+                        name: currentMatchData.player2,
+                        seeding: currentMatchData.player2Seed || sourcePlayer.seeding || '',
+                        state: sourcePlayer.state || '',
+                        district: sourcePlayer.district || '',
+                        school: sourcePlayer.school || '',
+                        institution: sourcePlayer.institution || '',
+                        academy: sourcePlayer.academy || ''
+                    };
                 }
             } else {
                 winner = 'Tie'; // Handle tie situation
@@ -6803,9 +6847,51 @@
                         const formattedPlayerDiv = formatPlayerForBracket(winnerPlayer);
                         nextMatchPlayerDivs[targetPlayerIndex].innerHTML = formattedPlayerDiv.innerHTML;
                     } else {
-                        // Fallback to plain text if player data not found
+                        // Construct a best-effort player object to preserve formatting and seed
                         const winnerName = typeof matchData.winner === 'object' ? matchData.winner.name : matchData.winner;
-                        nextMatchPlayerDivs[targetPlayerIndex].innerHTML = winnerName;
+                        let winnerSeed = '';
+                        try {
+                            const currentMatchElement = document.getElementById(matchData.matchId);
+                            if (currentMatchElement) {
+                                const currentPlayers = currentMatchElement.querySelectorAll('.player');
+                                currentPlayers.forEach(pEl => {
+                                    const nameSpan = pEl.querySelector('span');
+                                    if (nameSpan && nameSpan.textContent === winnerName) {
+                                        const seedSpan = pEl.querySelector('.seed');
+                                        if (seedSpan) {
+                                            winnerSeed = (seedSpan.textContent || '').replace(/[()]/g, '');
+                                        }
+                                    }
+                                });
+                            }
+                        } catch (e) {
+                            // ignore parsing errors, fallback to empty seed
+                        }
+
+                        // Try to enrich with group information from the master list
+                        const sourcePlayer = bracketData.allPlayers.find(p => p.name === winnerName) || {};
+                        const constructedPlayer = {
+                            name: winnerName,
+                            seeding: winnerSeed,
+                            state: sourcePlayer.state || '',
+                            district: sourcePlayer.district || '',
+                            school: sourcePlayer.school || '',
+                            institution: sourcePlayer.institution || '',
+                            academy: sourcePlayer.academy || ''
+                        };
+
+                        const formattedPlayerDiv = formatPlayerForBracket(constructedPlayer);
+                        nextMatchPlayerDivs[targetPlayerIndex].innerHTML = formattedPlayerDiv.innerHTML;
+                        // Reattach swap handler on the name span if present
+                        const nameSpan = nextMatchPlayerDivs[targetPlayerIndex].querySelector('span');
+                        if (nameSpan) {
+                            nameSpan.addEventListener('click', function(e) {
+                                e.stopPropagation();
+                                const isFirstPositionLocal = (currentMatch % 2 === 1);
+                                const localTargetIndex = isFirstPositionLocal ? 0 : 1;
+                                showSwapPopup(nextRound - 1, nextMatch - 1, localTargetIndex, constructedPlayer);
+                            });
+                        }
                     }
                     
                     const winnerName = typeof matchData.winner === 'object' ? matchData.winner.name : matchData.winner;
