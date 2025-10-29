@@ -7277,13 +7277,25 @@
                     name: document.getElementById('player1NameHeader').textContent,
                     seeding: playerElements[0].querySelector('.seed') ? 
                              playerElements[0].querySelector('.seed').textContent.replace(/[()]/g, '') : 
-                             ''
+                             '',
+                    // Include group information from original player data
+                    state: bracketData.allPlayers.find(p => p.name === document.getElementById('player1NameHeader').textContent)?.state || '',
+                    district: bracketData.allPlayers.find(p => p.name === document.getElementById('player1NameHeader').textContent)?.district || '',
+                    school: bracketData.allPlayers.find(p => p.name === document.getElementById('player1NameHeader').textContent)?.school || '',
+                    institution: bracketData.allPlayers.find(p => p.name === document.getElementById('player1NameHeader').textContent)?.institution || '',
+                    academy: bracketData.allPlayers.find(p => p.name === document.getElementById('player1NameHeader').textContent)?.academy || ''
                 },
                 { 
                     name: document.getElementById('player2NameHeader').textContent,
                     seeding: playerElements[1].querySelector('.seed') ? 
                              playerElements[1].querySelector('.seed').textContent.replace(/[()]/g, '') : 
-                             ''
+                             '',
+                    // Include group information from original player data
+                    state: bracketData.allPlayers.find(p => p.name === document.getElementById('player2NameHeader').textContent)?.state || '',
+                    district: bracketData.allPlayers.find(p => p.name === document.getElementById('player2NameHeader').textContent)?.district || '',
+                    school: bracketData.allPlayers.find(p => p.name === document.getElementById('player2NameHeader').textContent)?.school || '',
+                    institution: bracketData.allPlayers.find(p => p.name === document.getElementById('player2NameHeader').textContent)?.institution || '',
+                    academy: bracketData.allPlayers.find(p => p.name === document.getElementById('player2NameHeader').textContent)?.academy || ''
                 }
             ];
             
@@ -7353,28 +7365,18 @@
                     const playerElements = nextMatchElement.querySelectorAll('.player');
                     const playerElement = playerElements[positionInNextMatch];
                     
-                    // Update the player name and seeding
-                    const nameSpan = playerElement.querySelector('span');
-                    nameSpan.textContent = winner.name;
-                    
-                    // Update or add seeding if it exists
-                    let seedSpan = playerElement.querySelector('.seed');
-                    if (winner.seeding) {
-                        if (!seedSpan) {
-                            seedSpan = document.createElement('span');
-                            seedSpan.className = 'seed';
-                            playerElement.appendChild(seedSpan);
-                        }
-                        seedSpan.textContent = `(${winner.seeding})`;
-                    } else if (seedSpan) {
-                        seedSpan.remove();
-                    }
+                    // Use the helper function to format the player properly with group info and seed
+                    const formattedPlayerDiv = formatPlayerForBracket(winner);
+                    playerElement.innerHTML = formattedPlayerDiv.innerHTML;
                     
                     // Add click handler for player swapping
-                    nameSpan.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        showSwapPopup(nextRoundIndex, nextMatchIndex, positionInNextMatch, winner);
-                    });
+                    const nameSpan = playerElement.querySelector('span');
+                    if (nameSpan) {
+                        nameSpan.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            showSwapPopup(nextRoundIndex, nextMatchIndex, positionInNextMatch, winner);
+                        });
+                    }
                 }
             }
         }
