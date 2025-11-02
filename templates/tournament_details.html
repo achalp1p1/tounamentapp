@@ -1584,6 +1584,17 @@
             justify-content: space-between;
             align-items: center;
             min-height: 24px;
+            overflow: hidden;
+            width: 100%;
+        }
+        
+        .player span:first-child {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+            min-width: 0;
+            max-width: 100%;
         }
 
         .player.bye {
@@ -5679,6 +5690,12 @@
             nameSpan.style.cssText = `
                 font-weight: 500;
                 color: ${player.name === 'BYE' ? '#666' : '#1e3c72'};
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                flex: 1;
+                min-width: 0;
+                max-width: 100%;
             `;
             playerDiv.appendChild(nameSpan);
             
@@ -5733,6 +5750,18 @@
                 `;
                 playerDiv.appendChild(seedSpan);
             }
+            
+            // Auto-fit text after all elements are added
+            setTimeout(() => {
+                const availableWidth = playerDiv.offsetWidth;
+                const groupInfo = playerDiv.querySelector('.group-info');
+                const seedSpan = playerDiv.querySelector('.seed');
+                let reservedWidth = 0;
+                if (groupInfo) reservedWidth += groupInfo.offsetWidth + 8;
+                if (seedSpan) reservedWidth += seedSpan.offsetWidth + 4;
+                const maxNameWidth = availableWidth - reservedWidth - 16; // 16px for padding
+                autoFitText(nameSpan, maxNameWidth);
+            }, 10);
             
             return playerDiv;
         }
@@ -5862,6 +5891,12 @@
                         nameSpan.style.cssText = `
                             font-weight: 500;
                             color: ${player.name === 'BYE' ? '#666' : '#1e3c72'};
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            white-space: nowrap;
+                            flex: 1;
+                            min-width: 0;
+                            max-width: 100%;
                         `;
                         
                         if (player.name !== 'BYE' && !player.name.startsWith('Winner of Match')) {
@@ -5936,6 +5971,18 @@
                         }
                         
                         matchDiv.appendChild(playerDiv);
+                        
+                        // Auto-fit text after a brief delay to ensure DOM is ready and all elements are added
+                        setTimeout(() => {
+                            const availableWidth = playerDiv.offsetWidth;
+                            const groupInfo = playerDiv.querySelector('.group-info');
+                            const seedSpan = playerDiv.querySelector('.seed');
+                            let reservedWidth = 0;
+                            if (groupInfo) reservedWidth += groupInfo.offsetWidth + 8;
+                            if (seedSpan) reservedWidth += seedSpan.offsetWidth + 4;
+                            const maxNameWidth = availableWidth - reservedWidth - 16; // 16px for padding
+                            autoFitText(nameSpan, maxNameWidth);
+                        }, 10);
                     });
                     
                     // Only add arrow for non-final rounds and non-disabled matches
@@ -6021,6 +6068,10 @@
             // Apply sequential alignment - align each round one by one
             setTimeout(() => {
                 alignBracketRoundsSequential();
+                // Apply auto-fit to all player names after alignment
+                setTimeout(() => {
+                    applyAutoFitToAllPlayers();
+                }, 300);
             }, 300);
         }
 
@@ -6846,6 +6897,20 @@
                         // Use the helper function to format the player properly
                         const formattedPlayerDiv = formatPlayerForBracket(winnerPlayer);
                         nextMatchPlayerDivs[targetPlayerIndex].innerHTML = formattedPlayerDiv.innerHTML;
+                        // Apply auto-fit to the updated player name
+                        setTimeout(() => {
+                            const nameSpan = nextMatchPlayerDivs[targetPlayerIndex].querySelector('span:first-child');
+                            if (nameSpan) {
+                                const availableWidth = nextMatchPlayerDivs[targetPlayerIndex].offsetWidth;
+                                const groupInfo = nextMatchPlayerDivs[targetPlayerIndex].querySelector('.group-info');
+                                const seedSpan = nextMatchPlayerDivs[targetPlayerIndex].querySelector('.seed');
+                                let reservedWidth = 0;
+                                if (groupInfo) reservedWidth += groupInfo.offsetWidth + 8;
+                                if (seedSpan) reservedWidth += seedSpan.offsetWidth + 4;
+                                const maxNameWidth = availableWidth - reservedWidth - 16;
+                                autoFitText(nameSpan, maxNameWidth);
+                            }
+                        }, 10);
                     } else {
                         // Construct a best-effort player object to preserve formatting and seed
                         const winnerName = typeof matchData.winner === 'object' ? matchData.winner.name : matchData.winner;
@@ -6882,6 +6947,20 @@
 
                         const formattedPlayerDiv = formatPlayerForBracket(constructedPlayer);
                         nextMatchPlayerDivs[targetPlayerIndex].innerHTML = formattedPlayerDiv.innerHTML;
+                        // Apply auto-fit to the updated player name
+                        setTimeout(() => {
+                            const nameSpan = nextMatchPlayerDivs[targetPlayerIndex].querySelector('span:first-child');
+                            if (nameSpan) {
+                                const availableWidth = nextMatchPlayerDivs[targetPlayerIndex].offsetWidth;
+                                const groupInfo = nextMatchPlayerDivs[targetPlayerIndex].querySelector('.group-info');
+                                const seedSpan = nextMatchPlayerDivs[targetPlayerIndex].querySelector('.seed');
+                                let reservedWidth = 0;
+                                if (groupInfo) reservedWidth += groupInfo.offsetWidth + 8;
+                                if (seedSpan) reservedWidth += seedSpan.offsetWidth + 4;
+                                const maxNameWidth = availableWidth - reservedWidth - 16;
+                                autoFitText(nameSpan, maxNameWidth);
+                            }
+                        }, 10);
                         // Reattach swap handler on the name span if present
                         const nameSpan = nextMatchPlayerDivs[targetPlayerIndex].querySelector('span');
                         if (nameSpan) {
@@ -7454,6 +7533,21 @@
                     // Use the helper function to format the player properly with group info and seed
                     const formattedPlayerDiv = formatPlayerForBracket(winner);
                     playerElement.innerHTML = formattedPlayerDiv.innerHTML;
+                    
+                    // Apply auto-fit to the updated player name
+                    setTimeout(() => {
+                        const nameSpan = playerElement.querySelector('span:first-child');
+                        if (nameSpan) {
+                            const availableWidth = playerElement.offsetWidth;
+                            const groupInfo = playerElement.querySelector('.group-info');
+                            const seedSpan = playerElement.querySelector('.seed');
+                            let reservedWidth = 0;
+                            if (groupInfo) reservedWidth += groupInfo.offsetWidth + 8;
+                            if (seedSpan) reservedWidth += seedSpan.offsetWidth + 4;
+                            const maxNameWidth = availableWidth - reservedWidth - 16;
+                            autoFitText(nameSpan, maxNameWidth);
+                        }
+                    }, 10);
                     
                     // Add click handler for player swapping
                     const nameSpan = playerElement.querySelector('span');
