@@ -1652,6 +1652,62 @@ def save_tournament_draw():
         print(f"Error saving tournament draw: {str(e)}")
         return jsonify({'success': False, 'message': str(e)})
 
+@app.route('/save_tournament_bracket', methods=['POST'])
+def save_tournament_bracket():
+    """Save complete bracket structure for a category to display on Draws page"""
+    try:
+        data = request.json
+        bracket_data = data.get('bracketData')  # Complete bracket structure (all rounds)
+        tournament_id = data.get('tournamentId')
+        category = data.get('category')
+        
+        print(f"\n=== Saving tournament bracket for Draws page ===")
+        print(f"Tournament ID: {tournament_id}")
+        print(f"Category: {category}")
+        print(f"Number of rounds: {len(bracket_data) if bracket_data else 0}")
+        
+        # Create brackets directory if it doesn't exist
+        brackets_dir = os.path.join('static', 'tournaments', tournament_id)
+        os.makedirs(brackets_dir, exist_ok=True)
+        
+        # Save bracket as JSON file
+        bracket_file = os.path.join(brackets_dir, f'bracket_{category.replace(" ", "_").replace("/", "_")}.json')
+        with open(bracket_file, 'w', encoding='utf-8') as f:
+            json.dump({
+                'tournament_id': tournament_id,
+                'category': category,
+                'bracket_data': bracket_data,
+                'saved_at': datetime.now().isoformat()
+            }, f, indent=2)
+        
+        print(f"Bracket saved to: {bracket_file}")
+        return jsonify({'success': True, 'message': 'Bracket published successfully to Draws page!'})
+    
+    except Exception as e:
+        print(f"Error saving tournament bracket: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/get_tournament_bracket/<tournament_id>/<category>')
+def get_tournament_bracket(tournament_id, category):
+    """Get saved bracket structure for a category from Draws page"""
+    try:
+        # Look for bracket file
+        brackets_dir = os.path.join('static', 'tournaments', tournament_id)
+        bracket_file = os.path.join(brackets_dir, f'bracket_{category.replace(" ", "_").replace("/", "_")}.json')
+        
+        if os.path.exists(bracket_file):
+            with open(bracket_file, 'r', encoding='utf-8') as f:
+                bracket_info = json.load(f)
+            return jsonify({'success': True, 'bracket_data': bracket_info['bracket_data']})
+        else:
+            return jsonify({'success': False, 'message': 'Bracket not found'})
+    
+    except Exception as e:
+        print(f"Error getting tournament bracket: {str(e)}")
+        return jsonify({'success': False, 'message': str(e)})
+
 @app.context_processor
 def inject_current_year():
     return {'current_year': datetime.now().year}

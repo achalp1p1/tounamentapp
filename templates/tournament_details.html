@@ -2730,6 +2730,9 @@
                                     {% endfor %}
                                 </select>
                                 <button id="generateBracket" class="btn btn-primary" disabled>Generate Bracket</button>
+                                <button id="publishBracket" class="btn btn-success" disabled title="Publish bracket to Draws page">
+                                    <i class="fas fa-paper-plane"></i> Publish
+                                </button>
                                 <button id="bracketSettings" class="btn btn-secondary" title="Bracket Settings">
                                     <i class="fas fa-cog"></i>
                                 </button>
@@ -2914,19 +2917,173 @@
         function loadCategoryDraws(categoryName) {
             const drawsDisplay = document.getElementById(`draws-display-${categoryName}`);
             if (drawsDisplay) {
-                drawsDisplay.innerHTML = '<div class="loading">Loading draws for ' + categoryName + '...</div>';
+                drawsDisplay.innerHTML = '<div class="loading">Loading bracket for ' + categoryName + '...</div>';
                 
-                // Here you would typically fetch draws from the server
-                // For now, show a placeholder
+                // Fetch saved bracket structure for this category
+                const tournamentId = '{{ tournament["Tournament Id"] }}';
+                const url = `/get_tournament_bracket/${tournamentId}/${encodeURIComponent(categoryName)}`;
+                
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.bracket_data) {
+                            // Render the complete bracket structure
+                            renderBracketInDrawPage(data.bracket_data, drawsDisplay, categoryName);
+                        } else {
+                            drawsDisplay.innerHTML = `
+                                <div class="no-draws">
+                                    <i class="fas fa-trophy" style="font-size: 3em; color: #ccc; margin-bottom: 15px;"></i>
+                                    <h4>No bracket available</h4>
+                                    <p>Bracket for ${categoryName} will be displayed here when published.</p>
+                                </div>
+                            `;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading bracket:', error);
+                        drawsDisplay.innerHTML = `
+                            <div class="no-draws">
+                                <i class="fas fa-exclamation-triangle" style="font-size: 3em; color: #f39c12; margin-bottom: 15px;"></i>
+                                <h4>Error loading bracket</h4>
+                                <p>There was an error loading bracket for ${categoryName}.</p>
+                            </div>
+                        `;
+                    });
+            }
+        }
+        
+        // Function to render bracket in Draw page
+        function renderBracketInDrawPage(bracketData, container, categoryName) {
+            // Create bracket container
+            const bracketContainer = document.createElement('div');
+            bracketContainer.className = 'bracket';
+            bracketContainer.style.overflowX = 'auto';
+            bracketContainer.style.padding = '20px';
+            bracketContainer.style.backgroundColor = '#f8f9fa';
+            
+            // Calculate dynamic width (same as in generateBracket)
+            const baseWidth = 230;
+            let bracketSettings = { showSeeds: false, showGroupInfo: false, groupType: '' };
+            try {
+                const saved = localStorage.getItem('tournament_bracket_settings');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    bracketSettings = {
+                        showSeeds: parsed.showSeeds !== undefined ? parsed.showSeeds : false,
+                        showGroupInfo: parsed.showGroupInfo !== undefined ? parsed.showGroupInfo : false,
+                        groupType: parsed.groupType || ''
+                    };
+                }
+            } catch (e) {
+                console.warn('Error loading bracket settings:', e);
+            }
+            
+            const groupWidthAdjustment = bracketSettings.showGroupInfo && bracketSettings.groupType && bracketSettings.groupType !== 'None' ? 40 : 0;
+            const dynamicWidth = baseWidth + groupWidthAdjustment;
+            
+            // Helper function to get round label
+            function getRoundLabel(roundIndex, totalRounds) {
+                if (roundIndex === totalRounds - 1) return 'Final';
+                if (roundIndex === totalRounds - 2) return 'Semi-Final';
+                if (roundIndex === totalRounds - 3) return 'Quarter-Final';
+                return `Round ${totalRounds - roundIndex}`;
+            }
+            
+            // Render each round
+            bracketData.forEach((round, roundIndex) => {
+                const roundDiv = document.createElement('div');
+                roundDiv.className = 'round';
+                roundDiv.style.width = `${dynamicWidth + 20}px`;
+                roundDiv.style.minWidth = `${dynamicWidth + 20}px`;
+                roundDiv.style.display = 'inline-block';
+                roundDiv.style.verticalAlign = 'top';
+                roundDiv.style.marginRight = '40px';
+                
+                const roundTitle = document.createElement('div');
+                roundTitle.className = 'round-title';
+                roundTitle.textContent = getRoundLabel(roundIndex, bracketData.length);
+                roundTitle.style.maxWidth = `${dynamicWidth}px`;
+                roundDiv.appendChild(roundTitle);
+                
+                round.forEach((match, matchIndex) => {
+                    const matchDiv = document.createElement('div');
+                    matchDiv.className = 'match';
+                    matchDiv.style.width = `${dynamicWidth}px`;
+                    matchDiv.style.minWidth = `${dynamicWidth}px`;
+                    matchDiv.style.maxWidth = `${dynamicWidth}px`;
+                    matchDiv.style.marginBottom = roundIndex === 0 ? '20px' : '40px';
+                    
+                    match.forEach((player, playerIndex) => {
+                        const playerDiv = document.createElement('div');
+                        playerDiv.className = `player ${player.name === 'BYE' ? 'bye' : ''}`;
+                        playerDiv.style.cssText = `
+                            padding: 4px 8px;
+                            margin: 2px 0;
+                            border-radius: 4px;
+                            background: ${player.name === 'BYE' ? '#f0f0f0' : '#f8f9fa'};
+                            border: 1px solid ${player.name === 'BYE' ? '#ddd' : '#e9ecef'};
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                        `;
+                        
+                        const nameSpan = document.createElement('span');
+                        nameSpan.textContent = player.name || '';
+                        nameSpan.style.cssText = `
+                            font-weight: 500;
+                            color: ${player.name === 'BYE' ? '#666' : '#1e3c72'};
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            white-space: nowrap;
+                            flex: 1;
+                            min-width: 0;
+                        `;
+                        playerDiv.appendChild(nameSpan);
+                        
+                        // Add seed if enabled
+                        if (bracketSettings.showSeeds && player.seeding && player.seeding !== 'BYE') {
+                            const seedSpan = document.createElement('span');
+                            seedSpan.className = 'seed';
+                            seedSpan.textContent = `(${player.seeding})`;
+                            seedSpan.style.cssText = 'margin-left: 8px; color: #666; font-size: 0.9em;';
+                            playerDiv.appendChild(seedSpan);
+                        }
+                        
+                        // Add group info if enabled
+                        if (bracketSettings.showGroupInfo && bracketSettings.groupType && bracketSettings.groupType !== 'None') {
+                            let groupValue = '';
+                            switch(bracketSettings.groupType) {
+                                case 'State': groupValue = player.state || ''; break;
+                                case 'District': groupValue = player.district || ''; break;
+                                case 'School/Institution': groupValue = player.school || player.institution || ''; break;
+                                case 'Academy': groupValue = player.academy || ''; break;
+                            }
+                            if (groupValue && groupValue !== 'BYE') {
+                                const groupSpan = document.createElement('span');
+                                groupSpan.className = 'group-info';
+                                groupSpan.textContent = groupValue;
+                                groupSpan.style.cssText = 'margin-left: 8px; color: #888; font-size: 0.85em;';
+                                playerDiv.appendChild(groupSpan);
+                            }
+                        }
+                        
+                        matchDiv.appendChild(playerDiv);
+                    });
+                    
+                    roundDiv.appendChild(matchDiv);
+                });
+                
+                bracketContainer.appendChild(roundDiv);
+            });
+            
+            container.innerHTML = '';
+            container.appendChild(bracketContainer);
+            
+            // Apply auto-fit after rendering if function exists
+            if (typeof applyAutoFitToAllPlayers === 'function') {
                 setTimeout(() => {
-                    drawsDisplay.innerHTML = `
-                        <div class="no-draws">
-                            <i class="fas fa-trophy" style="font-size: 3em; color: #ccc; margin-bottom: 15px;"></i>
-                            <h4>No draws available</h4>
-                            <p>Draws for ${categoryName} will be displayed here when available.</p>
-                        </div>
-                    `;
-                }, 1000);
+                    applyAutoFitToAllPlayers();
+                }, 100);
             }
         }
 
@@ -5543,8 +5700,14 @@
         const generateBracketBtn = document.getElementById('generateBracket');
         const bracketContainer = document.getElementById('bracket');
 
+        const publishBracketBtn = document.getElementById('publishBracket');
+        
         categorySelect.addEventListener('change', function() {
             generateBracketBtn.disabled = !this.value;
+            // Disable publish button when category changes
+            if (publishBracketBtn) {
+                publishBracketBtn.disabled = true;
+            }
         });
 
         generateBracketBtn.addEventListener('click', async function() {
@@ -5579,6 +5742,10 @@
                 if (data.success && data.players && data.players.length > 0) {
                     console.log('Successfully loaded', data.players.length, 'players');
                     generateBracket(data.players);
+                    // Enable Publish button after bracket is generated
+                    if (publishBracketBtn) {
+                        publishBracketBtn.disabled = false;
+                    }
                 } else {
                     console.log('No players found. Data:', data);
                     alert('No players found for this category. Please check if players are registered for this category.');
@@ -5588,6 +5755,79 @@
                 alert(`Error loading players: ${error.message}`);
             }
         });
+        
+        // Publish bracket functionality
+        if (publishBracketBtn) {
+            publishBracketBtn.addEventListener('click', async function() {
+                const category = categorySelect.value;
+                if (!category) {
+                    alert('Please select a category first');
+                    return;
+                }
+                
+                if (!bracketData.currentRounds || bracketData.currentRounds.length === 0) {
+                    alert('No bracket generated. Please generate a bracket first.');
+                    return;
+                }
+                
+                // Prepare complete bracket data with all rounds and matches
+                const bracketDataToSave = bracketData.currentRounds.map((round, roundIndex) => {
+                    return round.map((match, matchIndex) => {
+                        return match.map((player, playerIndex) => {
+                            return {
+                                name: player.name || '',
+                                seeding: player.seeding || '',
+                                player_id: player.player_id || '',
+                                school: player.school || '',
+                                state: player.state || '',
+                                district: player.district || '',
+                                academy: player.academy || '',
+                                institution: player.institution || ''
+                            };
+                        });
+                    });
+                });
+                
+                // Show loading state
+                const originalText = publishBracketBtn.innerHTML;
+                publishBracketBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
+                publishBracketBtn.disabled = true;
+                
+                try {
+                    // Save complete bracket structure
+                    const response = await fetch('/save_tournament_bracket', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            tournamentId: '{{ tournament["Tournament Id"] }}',
+                            category: category,
+                            bracketData: bracketDataToSave
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        alert(`Bracket published successfully to Draws page for ${category}!`);
+                        // Optionally reload draws if on Draws tab
+                        if (typeof loadCategoryDraws === 'function') {
+                            loadCategoryDraws(category);
+                        }
+                    } else {
+                        alert('Error publishing bracket: ' + (data.message || 'Unknown error'));
+                    }
+                } catch (error) {
+                    console.error('Error publishing bracket:', error);
+                    alert('Error publishing bracket. Please try again.');
+                } finally {
+                    // Restore button state
+                    publishBracketBtn.innerHTML = originalText;
+                    publishBracketBtn.disabled = false;
+                }
+            });
+        }
 
         // Settings modal functionality
         const bracketSettingsBtn = document.getElementById('bracketSettings');
@@ -6784,6 +7024,20 @@
                 }
             }
             
+            // Check if all scores are empty (result being deleted)
+            const allScoresEmpty = scores.player1.every(s => !s || s === '') && 
+                                   scores.player2.every(s => !s || s === '');
+            
+            // If all scores are empty, return null to indicate deletion
+            if (allScoresEmpty) {
+                return {
+                    winner: null,
+                    displayScores: '',
+                    player1SetsWon: 0,
+                    player2SetsWon: 0
+                };
+            }
+            
             // Determine winner - return full player object, not just name
             let winner;
             if (player1SetsWon > player2SetsWon) {
@@ -6849,19 +7103,33 @@
                     console.log('Player 1 div:', player1Div);
                     console.log('Player 2 div:', player2Div);
                     
-                    // Show winner with simple tick
-                    if (matchData.winner) {
+                    // Check if result is deleted or Tie
+                    const winnerName = matchData.winner ? (typeof matchData.winner === 'object' ? matchData.winner.name : matchData.winner) : '';
+                    const isDeletedOrTie = !matchData.winner || winnerName === 'Tie' || winnerName === '';
+                    
+                    // Remove existing ticks first (clean up any previous ticks)
+                    player1Div.querySelectorAll('span').forEach(span => {
+                        if (span.textContent === '✓') {
+                            span.remove();
+                        }
+                    });
+                    player2Div.querySelectorAll('span').forEach(span => {
+                        if (span.textContent === '✓') {
+                            span.remove();
+                        }
+                    });
+                    
+                    // Show winner with simple tick (only if not deleted/tie)
+                    if (matchData.winner && !isDeletedOrTie) {
                         console.log('Winner:', matchData.winner);
                         
-                        // Handle winner being either a player object or just a name
-                        const winnerName = typeof matchData.winner === 'object' ? matchData.winner.name : matchData.winner;
                         const isPlayer1Winner = winnerName === matchData.player1;
                         const isPlayer2Winner = winnerName === matchData.player2;
                         
                         // Update player 1 display - preserve formatting and add tick if winner
                         if (isPlayer1Winner) {
                             // Find existing name span and add tick after it
-                            const nameSpan = player1Div.querySelector('span');
+                            const nameSpan = player1Div.querySelector('span:first-child');
                             if (nameSpan) {
                                 const tickSpan = document.createElement('span');
                                 tickSpan.style.cssText = 'color: #28a745; font-weight: bold; margin-left: 5px;';
@@ -6876,7 +7144,7 @@
                         // Update player 2 display - preserve formatting and add tick if winner
                         if (isPlayer2Winner) {
                             // Find existing name span and add tick after it
-                            const nameSpan = player2Div.querySelector('span');
+                            const nameSpan = player2Div.querySelector('span:first-child');
                             if (nameSpan) {
                                 const tickSpan = document.createElement('span');
                                 tickSpan.style.cssText = 'color: #28a745; font-weight: bold; margin-left: 5px;';
@@ -6890,7 +7158,7 @@
                         
                         console.log('Updated player displays with simple ticks');
                     } else {
-                        console.log('No winner found');
+                        console.log('No winner found or result deleted/tied');
                     }
                 } else {
                     console.log('Not enough player divs found');
@@ -6920,6 +7188,18 @@
             
             console.log('Next round:', nextRound, 'Next match:', nextMatch, 'Next match ID:', nextMatchId);
             
+            // Check if winner is Tie or missing (deleted result)
+            // Handle null, object, or string winner
+            let winnerName = '';
+            if (matchData.winner === null || matchData.winner === undefined) {
+                winnerName = '';
+            } else if (typeof matchData.winner === 'object' && matchData.winner !== null) {
+                winnerName = matchData.winner.name || '';
+            } else {
+                winnerName = matchData.winner || '';
+            }
+            const isTieOrDeleted = !matchData.winner || winnerName === 'Tie' || winnerName === '';
+            
             // Find the next round match element
             const nextMatchElement = document.getElementById(nextMatchId);
             if (nextMatchElement) {
@@ -6931,9 +7211,22 @@
                 
                 console.log('Is first position:', isFirstPosition, 'Target player index:', targetPlayerIndex);
                 
-                // Update the next match with the winner
+                // Update the next match with the winner or clear if Tie/Deleted
                 const nextMatchPlayerDivs = nextMatchElement.querySelectorAll('.player');
                 if (nextMatchPlayerDivs[targetPlayerIndex]) {
+                    
+                    // If Tie or Deleted, clear the progression
+                    if (isTieOrDeleted) {
+                        console.log('Clearing progression - Tie or deleted result');
+                        // Reset to empty player (what would have been there originally)
+                        const emptyPlayer = { name: '', seeding: '' };
+                        const formattedPlayerDiv = formatPlayerForBracket(emptyPlayer);
+                        nextMatchPlayerDivs[targetPlayerIndex].innerHTML = formattedPlayerDiv.innerHTML;
+                        
+                        // Update bracket data to clear progression
+                        clearBracketProgression(currentRound, currentMatch, nextRound, nextMatch, targetPlayerIndex);
+                        return;
+                    }
                     // Handle winner being either a player object or just a name
                     let winnerPlayer;
                     if (typeof matchData.winner === 'object') {
@@ -6944,7 +7237,7 @@
                         winnerPlayer = bracketData.allPlayers.find(p => p.name === matchData.winner);
                     }
                     
-                    if (winnerPlayer) {
+                    if (winnerPlayer && winnerPlayer.name) {
                         // Use the helper function to format the player properly
                         const formattedPlayerDiv = formatPlayerForBracket(winnerPlayer);
                         nextMatchPlayerDivs[targetPlayerIndex].innerHTML = formattedPlayerDiv.innerHTML;
@@ -7024,11 +7317,19 @@
                         }
                     }
                     
-                    const winnerName = typeof matchData.winner === 'object' ? matchData.winner.name : matchData.winner;
-                    console.log(`Updated next match position ${targetPlayerIndex} with winner: ${winnerName}`);
+                    // Safely extract winner name (handle null/undefined)
+                    let winnerNameForUpdate = '';
+                    if (matchData.winner === null || matchData.winner === undefined) {
+                        winnerNameForUpdate = '';
+                    } else if (typeof matchData.winner === 'object' && matchData.winner !== null) {
+                        winnerNameForUpdate = matchData.winner.name || '';
+                    } else {
+                        winnerNameForUpdate = matchData.winner || '';
+                    }
+                    console.log(`Updated next match position ${targetPlayerIndex} with winner: ${winnerNameForUpdate}`);
                     
                     // Update the bracket data to reflect the progression
-                    updateBracketData(currentRound, currentMatch, nextRound, nextMatch, winnerName);
+                    updateBracketData(currentRound, currentMatch, nextRound, nextMatch, winnerNameForUpdate);
                     
                     // Check if both players are now known and add arrow if ready
                     checkAndAddArrowToNextMatch(nextMatchElement, nextRound, nextMatch);
@@ -7050,6 +7351,19 @@
                     nextRoundData[nextMatch - 1][targetPosition] = winnerName;
                     
                     console.log('Updated bracket data:', nextRoundData[nextMatch - 1]);
+                }
+            }
+        }
+        
+        function clearBracketProgression(currentRound, currentMatch, nextRound, nextMatch, targetPlayerIndex) {
+            // Clear the progression in the bracket data structure
+            if (bracketData.currentRounds && bracketData.currentRounds.length > nextRound - 1) {
+                const nextRoundData = bracketData.currentRounds[nextRound - 1];
+                if (nextRoundData && nextRoundData.length > nextMatch - 1) {
+                    // Reset the position to empty
+                    nextRoundData[nextMatch - 1][targetPlayerIndex] = { name: '', seeding: '' };
+                    
+                    console.log('Cleared bracket progression:', nextRoundData[nextMatch - 1]);
                 }
             }
         }
