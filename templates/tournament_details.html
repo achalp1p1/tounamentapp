@@ -7355,17 +7355,20 @@
             const matchId = currentMatchData.matchId;
             matchScores[matchId] = scores;
             
-            // Update the match display in the bracket
+            // Update the match display in the bracket (this triggers progression update)
             updateMatchDisplay(currentMatchData);
             
             // Add score display to connection line
             addScoreToConnectionLine(currentMatchData);
             
-            // Auto-save bracket with updated match results
-            const category = categorySelect.value;
-            if (category && bracketData.currentRounds && bracketData.currentRounds.length > 0) {
-                saveBracketToServer(bracketData.currentRounds, category);
-            }
+            // Wait for progression to complete, then auto-save bracket with updated match results and progression
+            // This ensures bracketData.currentRounds is fully updated with winner progression before saving
+            setTimeout(() => {
+                const category = categorySelect.value;
+                if (category && bracketData.currentRounds && bracketData.currentRounds.length > 0) {
+                    saveBracketToServer(bracketData.currentRounds, category);
+                }
+            }, 150); // Small delay to ensure progression updates to bracketData.currentRounds are complete
             
             // Close modal
             closeMatchResultsModal();
@@ -7715,17 +7718,22 @@
                     
                     // Safely extract winner name (handle null/undefined)
                     let winnerNameForUpdate = '';
+                    let winnerPlayerForUpdate = null;
                     if (matchData.winner === null || matchData.winner === undefined) {
                         winnerNameForUpdate = '';
+                        winnerPlayerForUpdate = null;
                     } else if (typeof matchData.winner === 'object' && matchData.winner !== null) {
                         winnerNameForUpdate = matchData.winner.name || '';
+                        winnerPlayerForUpdate = matchData.winner;
                     } else {
                         winnerNameForUpdate = matchData.winner || '';
+                        // Try to find the full player object
+                        winnerPlayerForUpdate = bracketData.allPlayers.find(p => p.name === winnerNameForUpdate) || null;
                     }
                     console.log(`Updated next match position ${targetPlayerIndex} with winner: ${winnerNameForUpdate}`);
                     
-                    // Update the bracket data to reflect the progression
-                    updateBracketData(currentRound, currentMatch, nextRound, nextMatch, winnerNameForUpdate);
+                    // Update the bracket data to reflect the progression (pass full player object)
+                    updateBracketData(currentRound, currentMatch, nextRound, nextMatch, winnerNameForUpdate, winnerPlayerForUpdate || winnerPlayer);
                     
                     // Check if both players are now known and add arrow if ready
                     checkAndAddArrowToNextMatch(nextMatchElement, nextRound, nextMatch);
@@ -7737,14 +7745,37 @@
             }
         }
         
-        function updateBracketData(currentRound, currentMatch, nextRound, nextMatch, winnerName) {
+        function updateBracketData(currentRound, currentMatch, nextRound, nextMatch, winnerName, winnerPlayer = null) {
             // Update the bracket data structure to reflect the winner progression
             if (bracketData.currentRounds && bracketData.currentRounds.length > nextRound - 1) {
                 const nextRoundData = bracketData.currentRounds[nextRound - 1];
                 if (nextRoundData && nextRoundData.length > nextMatch - 1) {
                     // Update the bracket data with the winner
                     const targetPosition = (currentMatch % 2 === 1) ? 0 : 1;
-                    nextRoundData[nextMatch - 1][targetPosition] = winnerName;
+                    
+                    // If we have the full player object, use it; otherwise construct from name
+                    if (winnerPlayer && typeof winnerPlayer === 'object' && winnerPlayer.name) {
+                        nextRoundData[nextMatch - 1][targetPosition] = winnerPlayer;
+                    } else if (winnerName) {
+                        // Find the full player object from allPlayers
+                        let playerObj = bracketData.allPlayers.find(p => p.name === winnerName);
+                        if (!playerObj) {
+                            // Construct a minimal player object if not found
+                            playerObj = {
+                                name: winnerName,
+                                seeding: '',
+                                state: '',
+                                district: '',
+                                school: '',
+                                institution: '',
+                                academy: ''
+                            };
+                        }
+                        nextRoundData[nextMatch - 1][targetPosition] = playerObj;
+                    } else {
+                        // Clear the position if no winner
+                        nextRoundData[nextMatch - 1][targetPosition] = { name: '', seeding: '' };
+                    }
                     
                     console.log('Updated bracket data:', nextRoundData[nextMatch - 1]);
                 }
