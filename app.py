@@ -99,6 +99,11 @@ def initialize_tournament_registrations_csv():
             writer.writeheader()
     return fieldnames
 
+@app.route('/favicon.ico')
+def favicon():
+    """Handle favicon requests to prevent 404 errors"""
+    return '', 204  # Return 204 No Content
+
 @app.route('/logout')
 def logout():
     # Clear the session
