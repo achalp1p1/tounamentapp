@@ -5671,6 +5671,57 @@
             targetPlayer: null
         };
         
+        // Helper function to auto-fit text by scaling font size
+        function autoFitText(element, maxWidth) {
+            if (!element || !maxWidth || maxWidth <= 0) return;
+            
+            // Reset styles
+            element.style.fontSize = '';
+            element.style.transform = '';
+            element.style.width = '';
+            element.style.display = '';
+            
+            // Check if text overflows
+            const textWidth = element.scrollWidth;
+            
+            if (textWidth > maxWidth) {
+                // Calculate scale factor
+                const scale = (maxWidth / textWidth) * 0.95; // 95% to leave some padding
+                
+                if (scale < 1 && scale > 0.3) { // Don't scale smaller than 30% of original
+                    // Use transform scale for smooth scaling without affecting layout
+                    element.style.transform = `scale(${scale})`;
+                    element.style.transformOrigin = 'left center';
+                    // Set display to inline-block to prevent layout issues
+                    element.style.display = 'inline-block';
+                } else if (scale <= 0.3) {
+                    // If text is too long, use ellipsis as fallback
+                    element.style.textOverflow = 'ellipsis';
+                    element.style.overflow = 'hidden';
+                    element.style.whiteSpace = 'nowrap';
+                    element.style.maxWidth = `${maxWidth}px`;
+                }
+            }
+        }
+        
+        // Function to apply auto-fit to all player names in the bracket
+        function applyAutoFitToAllPlayers() {
+            const playerDivs = document.querySelectorAll('.bracket .player');
+            playerDivs.forEach(playerDiv => {
+                const nameSpan = playerDiv.querySelector('span:first-child');
+                if (nameSpan && nameSpan.textContent && nameSpan.textContent !== 'BYE') {
+                    const availableWidth = playerDiv.offsetWidth;
+                    const groupInfo = playerDiv.querySelector('.group-info');
+                    const seedSpan = playerDiv.querySelector('.seed');
+                    let reservedWidth = 0;
+                    if (groupInfo) reservedWidth += groupInfo.offsetWidth + 8;
+                    if (seedSpan) reservedWidth += seedSpan.offsetWidth + 4;
+                    const maxNameWidth = availableWidth - reservedWidth - 16; // 16px for padding
+                    autoFitText(nameSpan, maxNameWidth);
+                }
+            });
+        }
+        
         // Helper function to format a player with group info and seed
         function formatPlayerForBracket(player) {
             const playerDiv = document.createElement('div');
