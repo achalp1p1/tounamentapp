@@ -2471,7 +2471,7 @@
                         <div class="category-tabs">
                             <div class="category-tab-header">
                                 {% for category in categories %}
-                                <button class="category-tab-button" onclick="showCategoryTab('{{ category['Category'] }}')" id="category-tab-{{ loop.index0 }}">
+                                <button class="category-tab-button" data-category="{{ category['Category'] }}" id="category-tab-{{ loop.index0 }}">
                                     {{ category['Category'] }}
                                 </button>
                                 {% endfor %}
@@ -2905,7 +2905,7 @@
             }
             
             // Add active class to selected button
-            const selectedButton = document.querySelector(`[onclick="showCategoryTab('${categoryName}')"]`);
+            const selectedButton = document.querySelector(`[data-category="${categoryName}"]`);
             if (selectedButton) {
                 selectedButton.classList.add('active');
             }
@@ -3008,12 +3008,16 @@
                 round.forEach((match, matchIndex) => {
                     const matchDiv = document.createElement('div');
                     matchDiv.className = 'match';
+                    matchDiv.id = `round-${roundIndex + 1}-match-${matchIndex + 1}`;
                     matchDiv.style.width = `${dynamicWidth}px`;
                     matchDiv.style.minWidth = `${dynamicWidth}px`;
                     matchDiv.style.maxWidth = `${dynamicWidth}px`;
                     matchDiv.style.marginBottom = roundIndex === 0 ? '20px' : '40px';
                     
-                    match.forEach((player, playerIndex) => {
+                    // Handle both old format (players array) and new format (with players property)
+                    const players = match.players || match;
+                    
+                    players.forEach((player, playerIndex) => {
                         const playerDiv = document.createElement('div');
                         playerDiv.className = `player ${player.name === 'BYE' ? 'bye' : ''}`;
                         playerDiv.style.cssText = `
@@ -3079,12 +3083,62 @@
             container.innerHTML = '';
             container.appendChild(bracketContainer);
             
+            // Restore match results after rendering
+            setTimeout(() => {
+                restoreMatchResultsForDrawPage(bracketData);
+            }, 500);
+            
             // Apply auto-fit after rendering if function exists
             if (typeof applyAutoFitToAllPlayers === 'function') {
                 setTimeout(() => {
                     applyAutoFitToAllPlayers();
                 }, 100);
             }
+        }
+        
+        // Function to restore match results for Draw page display
+        function restoreMatchResultsForDrawPage(bracketData) {
+            bracketData.forEach((round, roundIndex) => {
+                round.forEach((match, matchIndex) => {
+                    const matchId = `round-${roundIndex + 1}-match-${matchIndex + 1}`;
+                    
+                    // Check if this is the new format with scores/winner
+                    const hasScores = match.scores !== null && match.scores !== undefined;
+                    const hasWinner = match.winner !== null && match.winner !== undefined && match.winner !== '';
+                    
+                    if (hasScores || hasWinner) {
+                        const matchElement = document.getElementById(matchId);
+                        if (matchElement) {
+                            const playerDivs = matchElement.querySelectorAll('.player');
+                            if (playerDivs.length >= 2) {
+                                const player1Name = playerDivs[0].querySelector('span:first-child')?.textContent || '';
+                                const player2Name = playerDivs[1].querySelector('span:first-child')?.textContent || '';
+                                
+                                // Show winner with tick
+                                if (hasWinner) {
+                                    const winnerName = typeof match.winner === 'object' ? match.winner.name : match.winner;
+                                    const isPlayer1Winner = winnerName === player1Name;
+                                    const isPlayer2Winner = winnerName === player2Name;
+                                    
+                                    if (isPlayer1Winner) {
+                                        const tickSpan = document.createElement('span');
+                                        tickSpan.style.cssText = 'color: #28a745; font-weight: bold; margin-left: 5px;';
+                                        tickSpan.textContent = '✓';
+                                        playerDivs[0].appendChild(tickSpan);
+                                    }
+                                    
+                                    if (isPlayer2Winner) {
+                                        const tickSpan = document.createElement('span');
+                                        tickSpan.style.cssText = 'color: #28a745; font-weight: bold; margin-left: 5px;';
+                                        tickSpan.textContent = '✓';
+                                        playerDivs[1].appendChild(tickSpan);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            });
         }
 
         // Event listeners for filters
@@ -3103,10 +3157,17 @@
         // Initialize category tabs when draws tab is shown
         function initializeCategoryTabs() {
             const categories = document.querySelectorAll('.category-tab-button');
+            categories.forEach(button => {
+                button.addEventListener('click', function() {
+                    const categoryName = this.getAttribute('data-category');
+                    showCategoryTab(categoryName);
+                });
+            });
+            
             if (categories.length > 0) {
                 // Show first category by default
                 const firstCategory = categories[0];
-                const categoryName = firstCategory.textContent.trim();
+                const categoryName = firstCategory.getAttribute('data-category');
                 showCategoryTab(categoryName);
             }
         }
@@ -5702,11 +5763,22 @@
 
         const publishBracketBtn = document.getElementById('publishBracket');
         
-        categorySelect.addEventListener('change', function() {
-            generateBracketBtn.disabled = !this.value;
+        categorySelect.addEventListener('change', async function() {
+            const category = this.value;
+            generateBracketBtn.disabled = !category;
             // Disable publish button when category changes
             if (publishBracketBtn) {
                 publishBracketBtn.disabled = true;
+            }
+            
+            // Clear existing bracket
+            if (bracketContainer) {
+                bracketContainer.innerHTML = '';
+            }
+            
+            // If category is selected, try to load existing bracket
+            if (category) {
+                await loadExistingBracket(category);
             }
         });
 
@@ -5770,21 +5842,51 @@
                     return;
                 }
                 
-                // Prepare complete bracket data with all rounds and matches
+                // Prepare complete bracket data with all rounds, matches, and match results
                 const bracketDataToSave = bracketData.currentRounds.map((round, roundIndex) => {
                     return round.map((match, matchIndex) => {
-                        return match.map((player, playerIndex) => {
-                            return {
-                                name: player.name || '',
-                                seeding: player.seeding || '',
-                                player_id: player.player_id || '',
-                                school: player.school || '',
-                                state: player.state || '',
-                                district: player.district || '',
-                                academy: player.academy || '',
-                                institution: player.institution || ''
-                            };
-                        });
+                        const matchId = `round-${roundIndex + 1}-match-${matchIndex + 1}`;
+                        const matchScore = matchScores[matchId] || null;
+                        
+                        // Get match result if exists
+                        let matchWinner = null;
+                        if (matchScore) {
+                            // Calculate winner from scores if available
+                            try {
+                                // Extract player names from match for calculateMatchResult
+                                const player1Name = match && match.length > 0 && match[0] ? (typeof match[0] === 'string' ? match[0] : match[0].name || '') : '';
+                                const player2Name = match && match.length > 1 && match[1] ? (typeof match[1] === 'string' ? match[1] : match[1].name || '') : '';
+                                
+                                const matchResult = calculateMatchResult(matchScore, player1Name, player2Name);
+                                if (matchResult.winner) {
+                                    const winnerObj = matchResult.winner;
+                                    if (typeof winnerObj === 'object' && winnerObj !== null) {
+                                        matchWinner = winnerObj.name || '';
+                                    } else if (winnerObj !== 'Tie' && winnerObj !== '' && winnerObj !== null) {
+                                        matchWinner = winnerObj;
+                                    }
+                                }
+                            } catch (e) {
+                                console.warn('Error calculating match result for publish:', e);
+                            }
+                        }
+                        
+                        return {
+                            players: match.map((player, playerIndex) => {
+                                return {
+                                    name: player.name || '',
+                                    seeding: player.seeding || '',
+                                    player_id: player.player_id || '',
+                                    school: player.school || '',
+                                    state: player.state || '',
+                                    district: player.district || '',
+                                    academy: player.academy || '',
+                                    institution: player.institution || ''
+                                };
+                            }),
+                            scores: matchScore,
+                            winner: matchWinner
+                        };
                     });
                 });
                 
@@ -5942,6 +6044,260 @@
                     element.style.maxWidth = `${maxWidth}px`;
                 }
             }
+        }
+        
+        // Function to save bracket to server (includes match scores)
+        async function saveBracketToServer(rounds, category) {
+            try {
+                // Prepare bracket data with match scores
+                const bracketDataToSave = rounds.map((round, roundIndex) => {
+                    return round.map((match, matchIndex) => {
+                        const matchId = `round-${roundIndex + 1}-match-${matchIndex + 1}`;
+                        const matchScore = matchScores[matchId] || null;
+                        
+                        // Get match result if exists
+                        let matchWinner = null;
+                        if (matchScore) {
+                            // Calculate winner from scores if available
+                            try {
+                                // Extract player names from match for calculateMatchResult
+                                const player1Name = match && match.length > 0 && match[0] ? (typeof match[0] === 'string' ? match[0] : match[0].name || '') : '';
+                                const player2Name = match && match.length > 1 && match[1] ? (typeof match[1] === 'string' ? match[1] : match[1].name || '') : '';
+                                
+                                const matchResult = calculateMatchResult(matchScore, player1Name, player2Name);
+                                if (matchResult.winner) {
+                                    const winnerObj = matchResult.winner;
+                                    if (typeof winnerObj === 'object' && winnerObj !== null) {
+                                        matchWinner = winnerObj.name || '';
+                                    } else if (winnerObj !== 'Tie' && winnerObj !== '' && winnerObj !== null) {
+                                        matchWinner = winnerObj;
+                                    }
+                                }
+                            } catch (e) {
+                                console.warn('Error calculating match result for save:', e);
+                            }
+                        }
+                        
+                        return {
+                            players: match.map((player, playerIndex) => {
+                                return {
+                                    name: player.name || '',
+                                    seeding: player.seeding || '',
+                                    player_id: player.player_id || '',
+                                    school: player.school || '',
+                                    state: player.state || '',
+                                    district: player.district || '',
+                                    academy: player.academy || '',
+                                    institution: player.institution || ''
+                                };
+                            }),
+                            scores: matchScore,
+                            winner: matchWinner
+                        };
+                    });
+                });
+                
+                const response = await fetch('/save_tournament_bracket', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        tournamentId: '{{ tournament["Tournament Id"] }}',
+                        category: category,
+                        bracketData: bracketDataToSave
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    console.log('Bracket saved successfully with match results');
+                } else {
+                    console.error('Error saving bracket:', data.message);
+                }
+            } catch (error) {
+                console.error('Error saving bracket:', error);
+            }
+        }
+        
+        // Function to load existing bracket for a category
+        async function loadExistingBracket(category) {
+            try {
+                const tournamentId = '{{ tournament["Tournament Id"] }}';
+                const url = `/get_tournament_bracket/${tournamentId}/${encodeURIComponent(category)}`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.success && data.bracket_data) {
+                    // Convert saved bracket data back to rounds format
+                    // Handle both old format (just players array) and new format (with scores/winner)
+                    const rounds = data.bracket_data.map((round, roundIndex) => {
+                        return round.map((match, matchIndex) => {
+                            // Restore match scores
+                            const matchId = `round-${roundIndex + 1}-match-${matchIndex + 1}`;
+                            
+                            // Check if this is new format with players/scores/winner
+                            if (match.players) {
+                                // New format
+                                if (match.scores) {
+                                    matchScores[matchId] = match.scores;
+                                }
+                                // Store full match data (with scores/winner) for later restoration
+                                // Store in bracketData.currentRounds with metadata
+                                return {
+                                    players: match.players,
+                                    scores: match.scores || null,
+                                    winner: match.winner || null
+                                };
+                            } else {
+                                // Old format - just players array
+                                if (match.scores) {
+                                    matchScores[matchId] = match.scores;
+                                }
+                                return match;
+                            }
+                        });
+                    });
+                    
+                    // Store the loaded bracket data (preserving scores/winner info)
+                    bracketData.currentRounds = rounds;
+                    
+                    // Re-render the bracket using existing data
+                    renderBracketFromData(rounds);
+                    
+                    // Enable Publish button since bracket exists
+                    if (publishBracketBtn) {
+                        publishBracketBtn.disabled = false;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading existing bracket:', error);
+                // Silently fail - just means no bracket exists yet
+            }
+        }
+        
+        // Function to render bracket from saved data (uses same rendering as generateBracket)
+        function renderBracketFromData(savedRounds) {
+            const bracketContainer = document.getElementById('bracket');
+            if (!bracketContainer) return;
+            
+            bracketContainer.innerHTML = '';
+            
+            // Calculate dynamic width based on settings
+            const baseWidth = 230;
+            const groupWidthAdjustment = bracketSettings.showGroupInfo && bracketSettings.groupType && bracketSettings.groupType !== 'None' ? 40 : 0;
+            const dynamicWidth = baseWidth + groupWidthAdjustment;
+            
+            let globalMatchCounter = 1;
+            savedRounds.forEach((round, roundIndex) => {
+                const roundDiv = document.createElement('div');
+                roundDiv.className = 'round';
+                roundDiv.style.width = `${dynamicWidth + 20}px`;
+                roundDiv.style.minWidth = `${dynamicWidth + 20}px`;
+                
+                const roundTitle = document.createElement('div');
+                roundTitle.className = 'round-title';
+                roundTitle.textContent = getRoundLabel(roundIndex, savedRounds.length);
+                roundTitle.style.maxWidth = `${dynamicWidth}px`;
+                roundDiv.appendChild(roundTitle);
+                
+                const totalMatches = round.length;
+                const isFirstRound = roundIndex === 0;
+                
+                round.forEach((match, matchIndex) => {
+                    const matchDiv = document.createElement('div');
+                    matchDiv.className = 'match';
+                    matchDiv.id = `round-${roundIndex + 1}-match-${matchIndex + 1}`;
+                    matchDiv.style.width = `${dynamicWidth}px`;
+                    matchDiv.style.minWidth = `${dynamicWidth}px`;
+                    matchDiv.style.maxWidth = `${dynamicWidth}px`;
+                    matchDiv.style.marginBottom = isFirstRound ? '20px' : '40px';
+                    
+                    // Handle both old format (players array) and new format (with players property)
+                    const players = match.players || match;
+                    
+                    players.forEach((player, playerIndex) => {
+                        const playerDiv = formatPlayerForBracket(player);
+                        matchDiv.appendChild(playerDiv);
+                    });
+                    
+                    // Add match number for non-BYE matches
+                    const hasBye = players.some(p => p && (p.name === 'BYE' || (typeof p === 'object' && p.name === 'BYE')));
+                    if (!hasBye) {
+                        const matchInfoDiv = document.createElement('div');
+                        matchInfoDiv.className = 'match-info-above';
+                        matchInfoDiv.textContent = `M${globalMatchCounter}`;
+                        roundDiv.appendChild(matchInfoDiv);
+                        globalMatchCounter++;
+                    }
+                    
+                    roundDiv.appendChild(matchDiv);
+                });
+                
+                bracketContainer.appendChild(roundDiv);
+            });
+            
+            // Restore match results after rendering
+            setTimeout(() => {
+                restoreMatchResults(savedRounds);
+            }, 500);
+            
+            // Apply alignment and auto-fit
+            setTimeout(() => {
+                alignBracketRoundsSequential();
+                setTimeout(() => {
+                    applyAutoFitToAllPlayers();
+                }, 300);
+            }, 300);
+        }
+        
+        // Function to restore match results from saved bracket data
+        function restoreMatchResults(savedRounds) {
+            savedRounds.forEach((round, roundIndex) => {
+                round.forEach((match, matchIndex) => {
+                    const matchId = `round-${roundIndex + 1}-match-${matchIndex + 1}`;
+                    
+                    // Check if this is the new format with scores/winner
+                    const hasScores = match.scores !== null && match.scores !== undefined;
+                    const hasWinner = match.winner !== null && match.winner !== undefined && match.winner !== '';
+                    
+                    if (hasScores || hasWinner) {
+                        // Restore scores to matchScores
+                        if (hasScores) {
+                            matchScores[matchId] = match.scores;
+                        }
+                        
+                        // Restore match display with winner if exists
+                        if (hasWinner) {
+                            const matchElement = document.getElementById(matchId);
+                            if (matchElement) {
+                                const playerDivs = matchElement.querySelectorAll('.player');
+                                if (playerDivs.length >= 2) {
+                                    const player1Name = playerDivs[0].querySelector('span:first-child')?.textContent || '';
+                                    const player2Name = playerDivs[1].querySelector('span:first-child')?.textContent || '';
+                                    
+                                    const matchData = {
+                                        matchId: matchId,
+                                        player1: player1Name,
+                                        player2: player2Name,
+                                        winner: match.winner,
+                                        scores: match.scores
+                                    };
+                                    
+                                    // Update match display
+                                    updateMatchDisplay(matchData);
+                                    
+                                    // Add score to connection line if scores exist
+                                    if (hasScores) {
+                                        addScoreToConnectionLine(matchData);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            });
         }
         
         // Function to apply auto-fit to all player names in the bracket
@@ -6355,6 +6711,12 @@
             });
             
             bracketData.currentRounds = rounds;
+            
+            // Auto-save bracket after generation
+            const category = categorySelect.value;
+            if (category) {
+                saveBracketToServer(rounds, category);
+            }
             
             // Apply sequential alignment - align each round one by one
             setTimeout(() => {
@@ -6999,11 +7361,27 @@
             // Add score display to connection line
             addScoreToConnectionLine(currentMatchData);
             
+            // Auto-save bracket with updated match results
+            const category = categorySelect.value;
+            if (category && bracketData.currentRounds && bracketData.currentRounds.length > 0) {
+                saveBracketToServer(bracketData.currentRounds, category);
+            }
+            
             // Close modal
             closeMatchResultsModal();
         }
         
-        function calculateMatchResult(scores) {
+        function calculateMatchResult(scores, player1Name = null, player2Name = null) {
+            // Validate scores input
+            if (!scores || !scores.player1 || !scores.player2) {
+                return {
+                    winner: null,
+                    displayScores: '',
+                    player1SetsWon: 0,
+                    player2SetsWon: 0
+                };
+            }
+            
             let player1SetsWon = 0;
             let player2SetsWon = 0;
             const displayScores = [];
@@ -7038,39 +7416,57 @@
                 };
             }
             
+            // Use provided player names or fall back to currentMatchData
+            const p1Name = player1Name || (currentMatchData ? currentMatchData.player1 : null);
+            const p2Name = player2Name || (currentMatchData ? currentMatchData.player2 : null);
+            
             // Determine winner - return full player object, not just name
             let winner;
             if (player1SetsWon > player2SetsWon) {
                 // Find the full player object for player1
-                winner = bracketData.allPlayers.find(p => p.name === currentMatchData.player1);
-                if (!winner) {
-                    // Fallback - preserve seed and group info from extracted data
-                    const sourcePlayer = bracketData.allPlayers.find(p => p.name.trim() === currentMatchData.player1.trim()) || {};
-                    winner = { 
-                        name: currentMatchData.player1,
-                        seeding: currentMatchData.player1Seed || sourcePlayer.seeding || '',
-                        state: sourcePlayer.state || '',
-                        district: sourcePlayer.district || '',
-                        school: sourcePlayer.school || '',
-                        institution: sourcePlayer.institution || '',
-                        academy: sourcePlayer.academy || ''
-                    };
+                if (p1Name) {
+                    winner = bracketData.allPlayers.find(p => p.name === p1Name);
+                    if (!winner && currentMatchData) {
+                        // Fallback - preserve seed and group info from extracted data
+                        const sourcePlayer = bracketData.allPlayers.find(p => p.name.trim() === currentMatchData.player1.trim()) || {};
+                        winner = { 
+                            name: currentMatchData.player1,
+                            seeding: currentMatchData.player1Seed || sourcePlayer.seeding || '',
+                            state: sourcePlayer.state || '',
+                            district: sourcePlayer.district || '',
+                            school: sourcePlayer.school || '',
+                            institution: sourcePlayer.institution || '',
+                            academy: sourcePlayer.academy || ''
+                        };
+                    } else if (!winner) {
+                        // If no currentMatchData, just return the name as a string
+                        winner = p1Name;
+                    }
+                } else {
+                    winner = null;
                 }
             } else if (player2SetsWon > player1SetsWon) {
                 // Find the full player object for player2
-                winner = bracketData.allPlayers.find(p => p.name === currentMatchData.player2);
-                if (!winner) {
-                    // Fallback - preserve seed and group info from extracted data
-                    const sourcePlayer = bracketData.allPlayers.find(p => p.name.trim() === currentMatchData.player2.trim()) || {};
-                    winner = { 
-                        name: currentMatchData.player2,
-                        seeding: currentMatchData.player2Seed || sourcePlayer.seeding || '',
-                        state: sourcePlayer.state || '',
-                        district: sourcePlayer.district || '',
-                        school: sourcePlayer.school || '',
-                        institution: sourcePlayer.institution || '',
-                        academy: sourcePlayer.academy || ''
-                    };
+                if (p2Name) {
+                    winner = bracketData.allPlayers.find(p => p.name === p2Name);
+                    if (!winner && currentMatchData) {
+                        // Fallback - preserve seed and group info from extracted data
+                        const sourcePlayer = bracketData.allPlayers.find(p => p.name.trim() === currentMatchData.player2.trim()) || {};
+                        winner = { 
+                            name: currentMatchData.player2,
+                            seeding: currentMatchData.player2Seed || sourcePlayer.seeding || '',
+                            state: sourcePlayer.state || '',
+                            district: sourcePlayer.district || '',
+                            school: sourcePlayer.school || '',
+                            institution: sourcePlayer.institution || '',
+                            academy: sourcePlayer.academy || ''
+                        };
+                    } else if (!winner) {
+                        // If no currentMatchData, just return the name as a string
+                        winner = p2Name;
+                    }
+                } else {
+                    winner = null;
                 }
             } else {
                 winner = 'Tie'; // Handle tie situation
