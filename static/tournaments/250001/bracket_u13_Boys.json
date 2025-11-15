@@ -1,0 +1,89 @@
+{
+  "tournament_id": "250001",
+  "category": "u13 Boys",
+  "bracket_data": [
+    [
+      {
+        "players": [
+          {
+            "name": "Arunim Agarwal",
+            "seeding": "",
+            "player_id": "24-14-1045",
+            "school": "Modern School",
+            "state": "Delhi",
+            "district": "East-Delhi",
+            "academy": "",
+            "institution": ""
+          },
+          {
+            "name": "BYE",
+            "seeding": "BYE",
+            "player_id": "",
+            "school": "",
+            "state": "",
+            "district": "",
+            "academy": "",
+            "institution": ""
+          }
+        ],
+        "scores": null,
+        "winner": null
+      },
+      {
+        "players": [
+          {
+            "name": "Yuvaan chauhan",
+            "seeding": "",
+            "player_id": "25-18-1702",
+            "school": "",
+            "state": "Delhi",
+            "district": "North-Delhi",
+            "academy": "",
+            "institution": ""
+          },
+          {
+            "name": "BISRAJ SINGH KHURANA",
+            "seeding": "",
+            "player_id": "24-15-1236",
+            "school": "DELHI PUBLIC SCHOOL, EAST OF KAILASH",
+            "state": "Delhi",
+            "district": "South-Delhi",
+            "academy": "",
+            "institution": ""
+          }
+        ],
+        "scores": null,
+        "winner": null
+      }
+    ],
+    [
+      {
+        "players": [
+          {
+            "name": "Arunim Agarwal",
+            "seeding": "",
+            "player_id": "24-14-1045",
+            "school": "Modern School",
+            "state": "Delhi",
+            "district": "East-Delhi",
+            "academy": "",
+            "institution": ""
+          },
+          {
+            "name": "",
+            "seeding": "",
+            "player_id": "",
+            "school": "",
+            "state": "",
+            "district": "",
+            "academy": "",
+            "institution": ""
+          }
+        ],
+        "scores": null,
+        "winner": null
+      }
+    ]
+  ],
+  "saved_at": "2025-11-15T22:41:38.763897"
+}

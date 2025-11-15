@@ -5981,8 +5981,12 @@
                 publishBracketBtn.disabled = true;
             }
             
-            // Clear existing bracket
+            // Clear existing bracket and all connecting lines
             if (bracketContainer) {
+                // Clear all connecting lines first
+                const allConnectingLines = document.querySelectorAll('.connecting-line, .score-display');
+                allConnectingLines.forEach(line => line.remove());
+                // Then clear the bracket container
                 bracketContainer.innerHTML = '';
             }
             
@@ -6422,6 +6426,10 @@
             const bracketContainer = document.getElementById('bracket');
             if (!bracketContainer) return;
             
+            // Clear all existing connecting lines before rendering
+            const allConnectingLines = document.querySelectorAll('.connecting-line, .score-display');
+            allConnectingLines.forEach(line => line.remove());
+            
             bracketContainer.innerHTML = '';
             
             // Calculate dynamic width based on settings
@@ -6760,6 +6768,10 @@
                 currentRound = nextRound;
             }
 
+            // Clear all existing connecting lines before rendering new bracket
+            const allConnectingLines = document.querySelectorAll('.connecting-line, .score-display');
+            allConnectingLines.forEach(line => line.remove());
+            
             // Render bracket
             bracketContainer.innerHTML = '';
             let globalMatchCounter = 1; // Global counter for sequential match numbering
@@ -7089,11 +7101,18 @@
             const existingLines = document.querySelectorAll(`[data-connection="${parentMatch1.id}-${parentMatch2.id}-${childMatch.id}"]`);
             existingLines.forEach(line => line.remove());
             
+            // Get the bracket container - use the bracket element that contains the matches
+            const bracketElement = parentMatch1.closest('.bracket') || document.querySelector('.bracket');
+            if (!bracketElement) {
+                console.warn('Bracket element not found for drawing connecting lines');
+                return;
+            }
+            
             // Get positions after any transforms
             const parent1Rect = parentMatch1.getBoundingClientRect();
             const parent2Rect = parentMatch2.getBoundingClientRect();
             const childRect = childMatch.getBoundingClientRect();
-            const bracketRect = document.querySelector('.bracket').getBoundingClientRect();
+            const bracketRect = bracketElement.getBoundingClientRect();
             
             // Calculate relative positions within the bracket
             const parent1X = parent1Rect.right - bracketRect.left;
@@ -7127,9 +7146,9 @@
             verticalLine.setAttribute('data-connection', `${parentMatch1.id}-${parentMatch2.id}-${childMatch.id}`);
             
             // Add lines to bracket
-            document.querySelector('.bracket').appendChild(line1);
-            document.querySelector('.bracket').appendChild(line2);
-            document.querySelector('.bracket').appendChild(verticalLine);
+            bracketElement.appendChild(line1);
+            bracketElement.appendChild(line2);
+            bracketElement.appendChild(verticalLine);
             
             // Add score display if scores are provided
             if (scores && scores.length > 0) {

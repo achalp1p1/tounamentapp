@@ -1,0 +1,35 @@
+{
+  "tournament_id": "250001",
+  "category": "u17 Boys",
+  "bracket_data": [
+    [
+      {
+        "players": [
+          {
+            "name": "Arunim Agarwal",
+            "seeding": "1",
+            "player_id": "24-14-1045",
+            "school": "Modern School",
+            "state": "Delhi",
+            "district": "East-Delhi",
+            "academy": "",
+            "institution": ""
+          },
+          {
+            "name": "Yashaan Sachdeva",
+            "seeding": "2",
+            "player_id": "24-11-1090",
+            "school": "Tagore International School",
+            "state": "Delhi",
+            "district": "North-West-Delhi",
+            "academy": "",
+            "institution": ""
+          }
+        ],
+        "scores": null,
+        "winner": null
+      }
+    ]
+  ],
+  "saved_at": "2025-11-15T22:41:04.164306"
+}
