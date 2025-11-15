@@ -2960,6 +2960,7 @@
             bracketContainer.style.overflowX = 'auto';
             bracketContainer.style.padding = '20px';
             bracketContainer.style.backgroundColor = '#f8f9fa';
+            bracketContainer.style.position = 'relative'; // Required for absolute positioned connecting lines
             
             // Calculate dynamic width (same as in generateBracket)
             const baseWidth = 230;
@@ -3083,6 +3084,11 @@
             container.innerHTML = '';
             container.appendChild(bracketContainer);
             
+            // Align matches and draw connecting lines after rendering
+            setTimeout(() => {
+                alignBracketRoundsForDrawPage(bracketContainer, bracketData);
+            }, 100);
+            
             // Restore match results after rendering
             setTimeout(() => {
                 restoreMatchResultsForDrawPage(bracketData);
@@ -3094,6 +3100,206 @@
                     applyAutoFitToAllPlayers();
                 }, 100);
             }
+        }
+        
+        // Function to align bracket rounds for Draw page
+        function alignBracketRoundsForDrawPage(bracketContainer, bracketData) {
+            const rounds = bracketContainer.querySelectorAll('.round');
+            if (rounds.length < 2) return;
+            
+            console.log('Starting alignment for Draw page bracket...');
+            
+            // Align each round sequentially with proper delays
+            for (let roundIndex = 1; roundIndex < rounds.length; roundIndex++) {
+                setTimeout(() => {
+                    alignSingleRoundForDrawPage(roundIndex, bracketContainer, bracketData);
+                }, roundIndex * 200); // 200ms delay between each round
+            }
+        }
+        
+        function alignSingleRoundForDrawPage(roundIndex, bracketContainer, bracketData) {
+            const rounds = bracketContainer.querySelectorAll('.round');
+            if (roundIndex >= rounds.length) return;
+            
+            const currentRound = rounds[roundIndex];
+            const previousRound = rounds[roundIndex - 1];
+            const currentMatches = currentRound.querySelectorAll('.match');
+            const previousMatches = previousRound.querySelectorAll('.match');
+            
+            console.log(`Aligning Round ${roundIndex + 1} with ${currentMatches.length} matches for Draw page...`);
+            
+            currentMatches.forEach((currentMatch, matchIndex) => {
+                // Calculate which parent matches this current match should be centered between
+                const parentMatch1Index = matchIndex * 2;
+                const parentMatch2Index = parentMatch1Index + 1;
+                
+                if (parentMatch1Index < previousMatches.length && parentMatch2Index < previousMatches.length) {
+                    const parentMatch1 = previousMatches[parentMatch1Index];
+                    const parentMatch2 = previousMatches[parentMatch2Index];
+                    
+                    // Get positions using getBoundingClientRect for accuracy
+                    const parent1Rect = parentMatch1.getBoundingClientRect();
+                    const parent2Rect = parentMatch2.getBoundingClientRect();
+                    const currentRect = currentMatch.getBoundingClientRect();
+                    
+                    // Calculate the center between the two parent matches
+                    const parent1Center = parent1Rect.top + parent1Rect.height / 2;
+                    const parent2Center = parent2Rect.top + parent2Rect.height / 2;
+                    const targetCenter = (parent1Center + parent2Center) / 2;
+                    
+                    // Get current match position
+                    const currentMatchCenter = currentRect.top + currentRect.height / 2;
+                    
+                    // Calculate the offset needed
+                    const offset = targetCenter - currentMatchCenter;
+                    
+                    console.log(`Round ${roundIndex + 1}, Match ${matchIndex + 1}: Target: ${targetCenter}, Current: ${currentMatchCenter}, Offset: ${offset}`);
+                    
+                    // Apply the offset
+                    if (Math.abs(offset) > 2) {
+                        currentMatch.style.transform = `translateY(${offset}px)`;
+                        currentMatch.style.transition = 'transform 0.3s ease';
+                    }
+                    
+                    // Draw connecting lines after positioning
+                    setTimeout(() => {
+                        // Get scores from bracket data if available
+                        const roundData = bracketData[roundIndex];
+                        const matchData = roundData[matchIndex];
+                        const scores = matchData && matchData.scores ? matchData.scores : null;
+                        drawConnectingLinesForDrawPage(parentMatch1, parentMatch2, currentMatch, bracketContainer, scores);
+                    }, 100);
+                } else if (parentMatch1Index < previousMatches.length) {
+                    // Only one parent match (odd number of matches in previous round)
+                    const parentMatch1 = previousMatches[parentMatch1Index];
+                    
+                    // Get positions
+                    const parent1Rect = parentMatch1.getBoundingClientRect();
+                    const currentRect = currentMatch.getBoundingClientRect();
+                    
+                    // Align to parent match center
+                    const parent1Center = parent1Rect.top + parent1Rect.height / 2;
+                    const currentMatchCenter = currentRect.top + currentRect.height / 2;
+                    const offset = parent1Center - currentMatchCenter;
+                    
+                    if (Math.abs(offset) > 2) {
+                        currentMatch.style.transform = `translateY(${offset}px)`;
+                        currentMatch.style.transition = 'transform 0.3s ease';
+                    }
+                    
+                    // Draw connecting line from single parent
+                    setTimeout(() => {
+                        drawConnectingLineFromSingleParentForDrawPage(parentMatch1, currentMatch, bracketContainer);
+                    }, 100);
+                }
+            });
+        }
+        
+        function drawConnectingLinesForDrawPage(parentMatch1, parentMatch2, childMatch, bracketContainer, scores = null) {
+            // Remove any existing lines for this connection
+            const existingLines = bracketContainer.querySelectorAll(`[data-connection="${parentMatch1.id}-${parentMatch2.id}-${childMatch.id}"]`);
+            existingLines.forEach(line => line.remove());
+            
+            // Get positions after any transforms
+            const parent1Rect = parentMatch1.getBoundingClientRect();
+            const parent2Rect = parentMatch2.getBoundingClientRect();
+            const childRect = childMatch.getBoundingClientRect();
+            const bracketRect = bracketContainer.getBoundingClientRect();
+            
+            // Calculate relative positions within the bracket
+            const parent1X = parent1Rect.right - bracketRect.left;
+            const parent1Y = parent1Rect.top + parent1Rect.height / 2 - bracketRect.top;
+            const parent2X = parent2Rect.right - bracketRect.left;
+            const parent2Y = parent2Rect.top + parent2Rect.height / 2 - bracketRect.top;
+            const childX = childRect.left - bracketRect.left;
+            const childY = childRect.top + childRect.height / 2 - bracketRect.top;
+            
+            // Create horizontal lines from parent matches
+            const line1 = document.createElement('div');
+            line1.className = 'connecting-line horizontal-line';
+            line1.style.left = `${parent1X}px`;
+            line1.style.top = `${parent1Y}px`;
+            line1.style.width = `${childX - parent1X}px`;
+            line1.setAttribute('data-connection', `${parentMatch1.id}-${parentMatch2.id}-${childMatch.id}`);
+            
+            const line2 = document.createElement('div');
+            line2.className = 'connecting-line horizontal-line';
+            line2.style.left = `${parent2X}px`;
+            line2.style.top = `${parent2Y}px`;
+            line2.style.width = `${childX - parent2X}px`;
+            line2.setAttribute('data-connection', `${parentMatch1.id}-${parentMatch2.id}-${childMatch.id}`);
+            
+            // Create vertical line connecting the horizontal lines
+            const verticalLine = document.createElement('div');
+            verticalLine.className = 'connecting-line vertical-line';
+            verticalLine.style.left = `${childX}px`;
+            verticalLine.style.top = `${Math.min(parent1Y, parent2Y)}px`;
+            verticalLine.style.height = `${Math.abs(parent2Y - parent1Y)}px`;
+            verticalLine.setAttribute('data-connection', `${parentMatch1.id}-${parentMatch2.id}-${childMatch.id}`);
+            
+            // Add lines to bracket container
+            bracketContainer.appendChild(line1);
+            bracketContainer.appendChild(line2);
+            bracketContainer.appendChild(verticalLine);
+            
+            // Add score display if scores are provided
+            if (scores && scores.player1 && scores.player2) {
+                const scoreStrings = [];
+                const player1Scores = Array.isArray(scores.player1) ? scores.player1 : [];
+                const player2Scores = Array.isArray(scores.player2) ? scores.player2 : [];
+                
+                for (let i = 0; i < Math.max(player1Scores.length, player2Scores.length); i++) {
+                    const score1 = player1Scores[i] || '0';
+                    const score2 = player2Scores[i] || '0';
+                    if (score1 && score2 && (score1 !== '' || score2 !== '')) {
+                        scoreStrings.push(`${score1}-${score2}`);
+                    }
+                }
+                
+                if (scoreStrings.length > 0) {
+                    const scoreDisplay = document.createElement('div');
+                    scoreDisplay.className = 'score-display';
+                    scoreDisplay.textContent = scoreStrings.join(', ');
+                    
+                    // Position the score display on the vertical line
+                    const scoreX = childX - 10; // Slightly to the left of the vertical line
+                    const scoreY = childY - 10; // Slightly above the center
+                    
+                    scoreDisplay.style.left = `${scoreX}px`;
+                    scoreDisplay.style.top = `${scoreY}px`;
+                    scoreDisplay.setAttribute('data-connection', `${parentMatch1.id}-${parentMatch2.id}-${childMatch.id}`);
+                    
+                    bracketContainer.appendChild(scoreDisplay);
+                }
+            }
+        }
+        
+        function drawConnectingLineFromSingleParentForDrawPage(parentMatch, childMatch, bracketContainer) {
+            // Remove any existing lines for this connection
+            const existingLines = bracketContainer.querySelectorAll(`[data-connection="${parentMatch.id}-${childMatch.id}"]`);
+            existingLines.forEach(line => line.remove());
+            
+            // Get positions after any transforms
+            const parentRect = parentMatch.getBoundingClientRect();
+            const childRect = childMatch.getBoundingClientRect();
+            const bracketRect = bracketContainer.getBoundingClientRect();
+            
+            // Calculate relative positions within the bracket
+            const parentX = parentRect.right - bracketRect.left;
+            const parentY = parentRect.top + parentRect.height / 2 - bracketRect.top;
+            const childX = childRect.left - bracketRect.left;
+            const childY = childRect.top + childRect.height / 2 - bracketRect.top;
+            
+            // Create horizontal line from parent match
+            const horizontalLine = document.createElement('div');
+            horizontalLine.className = 'connecting-line horizontal-line';
+            horizontalLine.style.left = `${parentX}px`;
+            horizontalLine.style.top = `${parentY}px`;
+            horizontalLine.style.width = `${childX - parentX}px`;
+            horizontalLine.setAttribute('data-connection', `${parentMatch.id}-${childMatch.id}`);
+            
+            // Add line to bracket container
+            bracketContainer.appendChild(horizontalLine);
         }
         
         // Function to restore match results for Draw page display
@@ -5763,10 +5969,14 @@
 
         const publishBracketBtn = document.getElementById('publishBracket');
         
+        // Track if bracket has been published (to enable/disable Publish button)
+        let bracketPublished = false;
+        
         categorySelect.addEventListener('change', async function() {
             const category = this.value;
             generateBracketBtn.disabled = !category;
-            // Disable publish button when category changes
+            // Disable publish button when category changes and reset published state
+            bracketPublished = false;
             if (publishBracketBtn) {
                 publishBracketBtn.disabled = true;
             }
@@ -5814,7 +6024,8 @@
                 if (data.success && data.players && data.players.length > 0) {
                     console.log('Successfully loaded', data.players.length, 'players');
                     generateBracket(data.players);
-                    // Enable Publish button after bracket is generated
+                    // Enable Publish button after bracket is generated and reset published state
+                    bracketPublished = false;
                     if (publishBracketBtn) {
                         publishBracketBtn.disabled = false;
                     }
@@ -5912,11 +6123,33 @@
                     const data = await response.json();
                     
                     if (data.success) {
-                        alert(`Bracket published successfully to Draws page for ${category}!`);
-                        // Optionally reload draws if on Draws tab
-                        if (typeof loadCategoryDraws === 'function') {
-                            loadCategoryDraws(category);
+                        // Mark bracket as published
+                        bracketPublished = true;
+                        
+                        // Switch to Draws tab
+                        if (typeof showTab === 'function') {
+                            showTab('draws');
                         }
+                        
+                        // Wait a bit for tab to switch, then show the relevant category tab
+                        setTimeout(() => {
+                            // Initialize category tabs if needed
+                            if (typeof initializeCategoryTabs === 'function') {
+                                initializeCategoryTabs();
+                            }
+                            
+                            // Show the category tab that was just published
+                            if (typeof showCategoryTab === 'function') {
+                                showCategoryTab(category);
+                            }
+                            
+                            // Reload draws for this category
+                            if (typeof loadCategoryDraws === 'function') {
+                                loadCategoryDraws(category);
+                            }
+                        }, 200);
+                        
+                        alert(`Bracket published successfully to Draws page for ${category}!`);
                     } else {
                         alert('Error publishing bracket: ' + (data.message || 'Unknown error'));
                     }
@@ -5926,7 +6159,12 @@
                 } finally {
                     // Restore button state
                     publishBracketBtn.innerHTML = originalText;
-                    publishBracketBtn.disabled = false;
+                    // Disable button if published successfully, otherwise keep it enabled
+                    if (bracketPublished) {
+                        publishBracketBtn.disabled = true;
+                    } else {
+                        publishBracketBtn.disabled = false;
+                    }
                 }
             });
         }
@@ -6166,7 +6404,9 @@
                     // Re-render the bracket using existing data
                     renderBracketFromData(rounds);
                     
-                    // Enable Publish button since bracket exists
+                    // Enable Publish button since bracket exists (bracket may have been modified)
+                    // Reset published state when loading existing bracket
+                    bracketPublished = false;
                     if (publishBracketBtn) {
                         publishBracketBtn.disabled = false;
                     }
@@ -6268,7 +6508,7 @@
                             matchScores[matchId] = match.scores;
                         }
                         
-                        // Restore match display with winner if exists
+                        // Restore match display with winner if exists (but don't trigger progression during restore)
                         if (hasWinner) {
                             const matchElement = document.getElementById(matchId);
                             if (matchElement) {
@@ -6277,19 +6517,61 @@
                                     const player1Name = playerDivs[0].querySelector('span:first-child')?.textContent || '';
                                     const player2Name = playerDivs[1].querySelector('span:first-child')?.textContent || '';
                                     
-                                    const matchData = {
-                                        matchId: matchId,
-                                        player1: player1Name,
-                                        player2: player2Name,
-                                        winner: match.winner,
-                                        scores: match.scores
-                                    };
+                                    // Extract winner name
+                                    let winnerName = '';
+                                    if (typeof match.winner === 'object' && match.winner !== null) {
+                                        winnerName = match.winner.name || '';
+                                    } else {
+                                        winnerName = match.winner || '';
+                                    }
                                     
-                                    // Update match display
-                                    updateMatchDisplay(matchData);
+                                    // Just update the visual display without triggering progression
+                                    // (progression is already in the bracket data from when it was saved)
+                                    if (winnerName && winnerName !== 'Tie' && winnerName !== '') {
+                                        const isPlayer1Winner = winnerName === player1Name;
+                                        const isPlayer2Winner = winnerName === player2Name;
+                                        
+                                        // Remove existing ticks
+                                        playerDivs[0].querySelectorAll('span').forEach(span => {
+                                            if (span.textContent === '✓') {
+                                                span.remove();
+                                            }
+                                        });
+                                        playerDivs[1].querySelectorAll('span').forEach(span => {
+                                            if (span.textContent === '✓') {
+                                                span.remove();
+                                            }
+                                        });
+                                        
+                                        // Add tick to winner
+                                        if (isPlayer1Winner) {
+                                            const nameSpan = playerDivs[0].querySelector('span:first-child');
+                                            if (nameSpan) {
+                                                const tickSpan = document.createElement('span');
+                                                tickSpan.style.cssText = 'color: #28a745; font-weight: bold; margin-left: 5px;';
+                                                tickSpan.textContent = '✓';
+                                                playerDivs[0].appendChild(tickSpan);
+                                            }
+                                        } else if (isPlayer2Winner) {
+                                            const nameSpan = playerDivs[1].querySelector('span:first-child');
+                                            if (nameSpan) {
+                                                const tickSpan = document.createElement('span');
+                                                tickSpan.style.cssText = 'color: #28a745; font-weight: bold; margin-left: 5px;';
+                                                tickSpan.textContent = '✓';
+                                                playerDivs[1].appendChild(tickSpan);
+                                            }
+                                        }
+                                    }
                                     
                                     // Add score to connection line if scores exist
                                     if (hasScores) {
+                                        const matchData = {
+                                            matchId: matchId,
+                                            player1: player1Name,
+                                            player2: player2Name,
+                                            winner: match.winner,
+                                            scores: match.scores
+                                        };
                                         addScoreToConnectionLine(matchData);
                                     }
                                 }
@@ -7355,11 +7637,56 @@
             const matchId = currentMatchData.matchId;
             matchScores[matchId] = scores;
             
-            // Update the match display in the bracket (this triggers progression update)
-            updateMatchDisplay(currentMatchData);
+            // Update the bracket data structure first to ensure progression works correctly
+            // Extract round and match indices from matchId
+            const matchIdParts = matchId.split('-');
+            const currentRound = parseInt(matchIdParts[1]);
+            const currentMatch = parseInt(matchIdParts[3]);
             
-            // Add score display to connection line
-            addScoreToConnectionLine(currentMatchData);
+            // Update the match data in bracketData.currentRounds if it exists
+            if (bracketData.currentRounds && bracketData.currentRounds.length >= currentRound) {
+                const roundData = bracketData.currentRounds[currentRound - 1];
+                if (roundData && roundData.length >= currentMatch) {
+                    const matchDataInBracket = roundData[currentMatch - 1];
+                    
+                    // Handle both old format (players array) and new format (with players property)
+                    if (matchDataInBracket.players) {
+                        // New format - update scores and winner
+                        matchDataInBracket.scores = scores;
+                        matchDataInBracket.winner = matchResult.winner;
+                    } else {
+                        // Old format - convert to new format
+                        const players = Array.isArray(matchDataInBracket) ? matchDataInBracket : [matchDataInBracket];
+                        roundData[currentMatch - 1] = {
+                            players: players,
+                            scores: scores,
+                            winner: matchResult.winner
+                        };
+                    }
+                }
+            }
+            
+            // Update the match display in the bracket (this triggers progression update)
+            // Use setTimeout to ensure DOM is ready and bracket data is updated
+            setTimeout(() => {
+                // Make sure currentMatchData has the correct winner format
+                if (currentMatchData.winner && typeof currentMatchData.winner === 'object' && currentMatchData.winner.name) {
+                    // Winner is already an object, good
+                } else if (currentMatchData.winner && typeof currentMatchData.winner === 'string') {
+                    // Winner is a string, try to find the player object
+                    const winnerPlayer = bracketData.allPlayers.find(p => p.name === currentMatchData.winner);
+                    if (winnerPlayer) {
+                        currentMatchData.winner = winnerPlayer;
+                    }
+                }
+                
+                updateMatchDisplay(currentMatchData);
+                
+                // Add score display to connection line after a small delay
+                setTimeout(() => {
+                    addScoreToConnectionLine(currentMatchData);
+                }, 50);
+            }, 50); // Increased delay to ensure bracket data structure is updated
             
             // Wait for progression to complete, then auto-save bracket with updated match results and progression
             // This ensures bracketData.currentRounds is fully updated with winner progression before saving
@@ -7368,7 +7695,13 @@
                 if (category && bracketData.currentRounds && bracketData.currentRounds.length > 0) {
                     saveBracketToServer(bracketData.currentRounds, category);
                 }
-            }, 150); // Small delay to ensure progression updates to bracketData.currentRounds are complete
+            }, 300); // Increased delay to ensure all progression updates are complete
+            
+            // Enable Publish button after score is updated and reset published state
+            bracketPublished = false;
+            if (publishBracketBtn) {
+                publishBracketBtn.disabled = false;
+            }
             
             // Close modal
             closeMatchResultsModal();
@@ -7570,7 +7903,7 @@
             }
         }
         
-        function updateMatchProgression(matchData) {
+        function updateMatchProgression(matchData, skipCascade = false) {
             console.log(`Winner of ${matchData.matchId}: ${matchData.winner}`);
             
             // Extract round and match numbers from matchId (e.g., "round-2-match-1")
@@ -7737,11 +8070,77 @@
                     
                     // Check if both players are now known and add arrow if ready
                     checkAndAddArrowToNextMatch(nextMatchElement, nextRound, nextMatch);
+                    
+                    // Cascade updates through subsequent rounds if not skipping
+                    if (!skipCascade) {
+                        setTimeout(() => {
+                            cascadeProgressionUpdates(nextRound, nextMatch);
+                        }, 100);
+                    }
                 } else {
                     console.log('Target player div not found in next match');
                 }
             } else {
                 console.log('Next match element not found:', nextMatchId);
+            }
+        }
+        
+        function cascadeProgressionUpdates(startRound, startMatch) {
+            // Recursively update all subsequent rounds that might be affected by this change
+            let currentRound = startRound + 1;
+            let currentMatch = Math.ceil(startMatch / 2);
+            
+            while (currentRound <= bracketData.currentRounds.length) {
+                const nextMatchId = `round-${currentRound}-match-${currentMatch}`;
+                const nextMatchElement = document.getElementById(nextMatchId);
+                
+                if (!nextMatchElement) {
+                    break; // No more rounds
+                }
+                
+                // Check if this match has both players filled
+                const playerDivs = nextMatchElement.querySelectorAll('.player');
+                if (playerDivs.length >= 2) {
+                    const player1Name = playerDivs[0].querySelector('span:first-child')?.textContent?.trim() || '';
+                    const player2Name = playerDivs[1].querySelector('span:first-child')?.textContent?.trim() || '';
+                    
+                    // If both players are present, check if this match has a result
+                    if (player1Name && player2Name) {
+                        const matchId = nextMatchId;
+                        const matchScore = matchScores[matchId];
+                        
+                        if (matchScore) {
+                            // This match has a result, so we need to recalculate and update subsequent rounds
+                            const matchData = {
+                                matchId: matchId,
+                                player1: player1Name,
+                                player2: player2Name,
+                                scores: matchScore,
+                                winner: null // Will be recalculated
+                            };
+                            
+                            // Recalculate winner from scores
+                            const matchResult = calculateMatchResult(matchScore, player1Name, player2Name);
+                            matchData.winner = matchResult.winner;
+                            
+                            // Update this match's progression (skip cascade to avoid infinite loop)
+                            updateMatchProgression(matchData, true);
+                            
+                            // Move to next round
+                            currentRound++;
+                            currentMatch = Math.ceil(currentMatch / 2);
+                        } else {
+                            // No result for this match, stop cascading
+                            break;
+                        }
+                    } else {
+                        // Match not fully populated, stop cascading
+                        break;
+                    }
+                } else {
+                    // Match not found or incomplete, stop cascading
+                    break;
+                }
             }
         }
         
@@ -7753,15 +8152,16 @@
                     // Update the bracket data with the winner
                     const targetPosition = (currentMatch % 2 === 1) ? 0 : 1;
                     
-                    // If we have the full player object, use it; otherwise construct from name
+                    // Determine the player object to use
+                    let playerObjToUse = null;
                     if (winnerPlayer && typeof winnerPlayer === 'object' && winnerPlayer.name) {
-                        nextRoundData[nextMatch - 1][targetPosition] = winnerPlayer;
+                        playerObjToUse = winnerPlayer;
                     } else if (winnerName) {
                         // Find the full player object from allPlayers
-                        let playerObj = bracketData.allPlayers.find(p => p.name === winnerName);
-                        if (!playerObj) {
+                        playerObjToUse = bracketData.allPlayers.find(p => p.name === winnerName);
+                        if (!playerObjToUse) {
                             // Construct a minimal player object if not found
-                            playerObj = {
+                            playerObjToUse = {
                                 name: winnerName,
                                 seeding: '',
                                 state: '',
@@ -7771,10 +8171,19 @@
                                 academy: ''
                             };
                         }
-                        nextRoundData[nextMatch - 1][targetPosition] = playerObj;
                     } else {
                         // Clear the position if no winner
-                        nextRoundData[nextMatch - 1][targetPosition] = { name: '', seeding: '' };
+                        playerObjToUse = { name: '', seeding: '' };
+                    }
+                    
+                    // Handle both old format (players array) and new format (with players property)
+                    const nextMatchData = nextRoundData[nextMatch - 1];
+                    if (nextMatchData.players) {
+                        // New format - update the players array
+                        nextMatchData.players[targetPosition] = playerObjToUse;
+                    } else {
+                        // Old format - update directly
+                        nextRoundData[nextMatch - 1][targetPosition] = playerObjToUse;
                     }
                     
                     console.log('Updated bracket data:', nextRoundData[nextMatch - 1]);

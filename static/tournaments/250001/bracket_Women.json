@@ -1,0 +1,405 @@
+{
+  "tournament_id": "250001",
+  "category": "Women",
+  "bracket_data": [
+    [
+      {
+        "players": [
+          {
+            "name": "Akanksha Singhal",
+            "seeding": "1",
+            "player_id": "24-12-1005",
+            "school": "BBPS",
+            "state": "Delhi",
+            "district": "New-Delhi",
+            "academy": "",
+            "institution": ""
+          },
+          {
+            "name": "BYE",
+            "seeding": "BYE",
+            "player_id": "",
+            "school": "",
+            "state": "",
+            "district": "",
+            "academy": "",
+            "institution": ""
+          }
+        ],
+        "scores": null,
+        "winner": null
+      },
+      {
+        "players": [
+          {
+            "name": "DIYA BRAMHACHARY",
+            "seeding": "9",
+            "player_id": "24-08-1163",
+            "school": "MANAV STHALI SCHOOL",
+            "state": "Delhi",
+            "district": "East-Delhi",
+            "academy": "",
+            "institution": ""
+          },
+          {
+            "name": "Payal sharma",
+            "seeding": "8",
+            "player_id": "24-02-1191",
+            "school": "Du sol",
+            "state": "Delhi",
+            "district": "New-Delhi",
+            "academy": "",
+            "institution": ""
+          }
+        ],
+        "scores": null,
+        "winner": null
+      },
+      {
+        "players": [
+          {
+            "name": "ADITI GUSAIN",
+            "seeding": "5",
+            "player_id": "24-10-1260",
+            "school": "KENDRIYA VIDYALAYA",
+            "state": "Delhi",
+            "district": "South-West",
+            "academy": "",
+            "institution": ""
+          },
+          {
+            "name": "ARNIKA VISHWAKARMA",
+            "seeding": "12",
+            "player_id": "24-12-1117",
+            "school": "DELHI SPORTS SCHOOL",
+            "state": "Delhi",
+            "district": "North-East-Delhi",
+            "academy": "",
+            "institution": ""
+          }
+        ],
+        "scores": null,
+        "winner": null
+      },
+      {
+        "players": [
+          {
+            "name": "AYAAN SINGHAL",
+            "seeding": "13",
+            "player_id": "24-11-1062",
+            "school": "MATA JAI KAUR PUBLIC SCHOOL",
+            "state": "Delhi",
+            "district": "North-Delhi",
+            "academy": "",
+            "institution": ""
+          },
+          {
+            "name": "Sayanika Maji",
+            "seeding": "4",
+            "player_id": "24-08-1027",
+            "school": "Manav Sthali School",
+            "state": "Delhi",
+            "district": "East-Delhi",
+            "academy": "",
+            "institution": ""
+          }
+        ],
+        "scores": null,
+        "winner": null
+      },
+      {
+        "players": [
+          {
+            "name": "Riddhi",
+            "seeding": "3",
+            "player_id": "24-11-1018",
+            "school": "Little flower public school",
+            "state": "Delhi",
+            "district": "North-East-Delhi",
+            "academy": "",
+            "institution": ""
+          },
+          {
+            "name": "BYE",
+            "seeding": "BYE",
+            "player_id": "",
+            "school": "",
+            "state": "",
+            "district": "",
+            "academy": "",
+            "institution": ""
+          }
+        ],
+        "scores": null,
+        "winner": null
+      },
+      {
+        "players": [
+          {
+            "name": "Vanshika Bhargava",
+            "seeding": "11",
+            "player_id": "24-03-1103",
+            "school": "Hansraj delhi University",
+            "state": "Delhi",
+            "district": "North-West-Delhi",
+            "academy": "",
+            "institution": ""
+          },
+          {
+            "name": "Ankana Kalra",
+            "seeding": "6",
+            "player_id": "24-08-1014",
+            "school": "Manav sthali school",
+            "state": "Delhi",
+            "district": "East-Delhi",
+            "academy": "",
+            "institution": ""
+          }
+        ],
+        "scores": null,
+        "winner": null
+      },
+      {
+        "players": [
+          {
+            "name": "Yashika Sharma",
+            "seeding": "7",
+            "player_id": "24-06-1067",
+            "school": "Hansraj Model School",
+            "state": "Delhi",
+            "district": "West-Delhi",
+            "academy": "",
+            "institution": ""
+          },
+          {
+            "name": "Riddhi Mittal",
+            "seeding": "10",
+            "player_id": "24-11-1565",
+            "school": "Mount Carmel Dwarka",
+            "state": "Delhi",
+            "district": "New-Delhi",
+            "academy": "",
+            "institution": ""
+          }
+        ],
+        "scores": null,
+        "winner": null
+      },
+      {
+        "players": [
+          {
+            "name": "BYE",
+            "seeding": "BYE",
+            "player_id": "",
+            "school": "",
+            "state": "",
+            "district": "",
+            "academy": "",
+            "institution": ""
+          },
+          {
+            "name": "Janvi garg",
+            "seeding": "2",
+            "player_id": "24-12-1002",
+            "school": "Manav sthali school",
+            "state": "Delhi",
+            "district": "East-Delhi",
+            "academy": "",
+            "institution": ""
+          }
+        ],
+        "scores": null,
+        "winner": null
+      }
+    ],
+    [
+      {
+        "players": [
+          {
+            "name": "Akanksha Singhal",
+            "seeding": "1",
+            "player_id": "24-12-1005",
+            "school": "BBPS",
+            "state": "Delhi",
+            "district": "New-Delhi",
+            "academy": "",
+            "institution": ""
+          },
+          {
+            "name": "",
+            "seeding": "",
+            "player_id": "",
+            "school": "",
+            "state": "",
+            "district": "",
+            "academy": "",
+            "institution": ""
+          }
+        ],
+        "scores": null,
+        "winner": null
+      },
+      {
+        "players": [
+          {
+            "name": "",
+            "seeding": "",
+            "player_id": "",
+            "school": "",
+            "state": "",
+            "district": "",
+            "academy": "",
+            "institution": ""
+          },
+          {
+            "name": "",
+            "seeding": "",
+            "player_id": "",
+            "school": "",
+            "state": "",
+            "district": "",
+            "academy": "",
+            "institution": ""
+          }
+        ],
+        "scores": null,
+        "winner": null
+      },
+      {
+        "players": [
+          {
+            "name": "Riddhi",
+            "seeding": "3",
+            "player_id": "24-11-1018",
+            "school": "Little flower public school",
+            "state": "Delhi",
+            "district": "North-East-Delhi",
+            "academy": "",
+            "institution": ""
+          },
+          {
+            "name": "",
+            "seeding": "",
+            "player_id": "",
+            "school": "",
+            "state": "",
+            "district": "",
+            "academy": "",
+            "institution": ""
+          }
+        ],
+        "scores": null,
+        "winner": null
+      },
+      {
+        "players": [
+          {
+            "name": "",
+            "seeding": "",
+            "player_id": "",
+            "school": "",
+            "state": "",
+            "district": "",
+            "academy": "",
+            "institution": ""
+          },
+          {
+            "name": "Janvi garg",
+            "seeding": "2",
+            "player_id": "24-12-1002",
+            "school": "Manav sthali school",
+            "state": "Delhi",
+            "district": "East-Delhi",
+            "academy": "",
+            "institution": ""
+          }
+        ],
+        "scores": null,
+        "winner": null
+      }
+    ],
+    [
+      {
+        "players": [
+          {
+            "name": "",
+            "seeding": "",
+            "player_id": "",
+            "school": "",
+            "state": "",
+            "district": "",
+            "academy": "",
+            "institution": ""
+          },
+          {
+            "name": "",
+            "seeding": "",
+            "player_id": "",
+            "school": "",
+            "state": "",
+            "district": "",
+            "academy": "",
+            "institution": ""
+          }
+        ],
+        "scores": null,
+        "winner": null
+      },
+      {
+        "players": [
+          {
+            "name": "",
+            "seeding": "",
+            "player_id": "",
+            "school": "",
+            "state": "",
+            "district": "",
+            "academy": "",
+            "institution": ""
+          },
+          {
+            "name": "",
+            "seeding": "",
+            "player_id": "",
+            "school": "",
+            "state": "",
+            "district": "",
+            "academy": "",
+            "institution": ""
+          }
+        ],
+        "scores": null,
+        "winner": null
+      }
+    ],
+    [
+      {
+        "players": [
+          {
+            "name": "",
+            "seeding": "",
+            "player_id": "",
+            "school": "",
+            "state": "",
+            "district": "",
+            "academy": "",
+            "institution": ""
+          },
+          {
+            "name": "",
+            "seeding": "",
+            "player_id": "",
+            "school": "",
+            "state": "",
+            "district": "",
+            "academy": "",
+            "institution": ""
+          }
+        ],
+        "scores": null,
+        "winner": null
+      }
+    ]
+  ],
+  "saved_at": "2025-11-15T17:14:30.102858"
+}
